@@ -15,6 +15,16 @@ A next-generation, production-grade enterprise Data-as-a-Service (DaaS) platform
   - Export results to CSV
   - Over 6M healthcare facilities indexed
 
+- **Advanced Filtering System**
+  - Filter by 50+ attributes including location, bed count, ownership, and specialties
+  - Multi-criteria filtering with precise results
+  - Range filters for beds, ratings, and capacity
+
+- **HealthData Catalog**
+  - Browse 6M+ verified healthcare records across 12 facility categories
+  - Interactive search and filtering capabilities
+  - Detailed breakdowns for each category (Hospitals, Clinics, Agencies, etc.)
+
 - **AI-Powered Assistant**
   - GPT-4 powered conversational interface
   - Context-aware responses with citations
@@ -87,11 +97,14 @@ healthcare-daas/
 │   │   ├── signup/
 │   │   ├── forgot-password/
 │   │   ├── search/             # Search interface
+│   │   ├── filtering/          # Advanced filtering page
+│   │   ├── healthdata-book/    # Data catalog page
 │   │   ├── insights/           # Insights feed
 │   │   └── account/            # Account settings
 │   ├── components/
 │   │   ├── ui/                 # Design system components
-│   │   └── shared/             # Shared business components
+│   │   ├── shared/             # Shared business components
+│   │   └── three/              # Three.js visualizations
 │   ├── lib/                    # Utilities and helpers
 │   ├── stores/                 # Zustand state management
 │   │   ├── auth-store.ts
@@ -149,14 +162,14 @@ npm install
 npm run dev
 ```
 
-The application will be available at `http://localhost:3000`
+The application will be available at `http://localhost:3001`
 
 ## 📄 Pages
 
 ### Landing Page (/)
 
 - Hero section with animated stats ticker
-- Feature grid with hover effects
+- Feature grid with hover effects including new filtering and data catalog features
 - Pricing comparison table (Free, Pro, Enterprise)
 - Footer with navigation links
 
@@ -172,6 +185,20 @@ The application will be available at `http://localhost:3000`
 - Grid/Table view toggle
 - Export to CSV functionality
 - AI Assistant drawer (floating button)
+
+### Advanced Filtering (/filtering)
+
+- Comprehensive filtering interface with 50+ attributes
+- Filter by location, bed count, ownership, specialties, certifications, and more
+- Beautiful UI with orange accent colors and modern design
+- Multi-criteria filtering with precise results
+
+### HealthData Catalog (/healthdata-book)
+
+- Data catalog showing 6M+ healthcare records across 12 facility categories
+- Interactive search and filtering capabilities
+- Detailed breakdowns for each category (Hospitals, Clinics, Agencies, etc.)
+- Professional blue-themed design with hover effects
 
 ### Insights (/insights)
 
@@ -265,6 +292,14 @@ Mock authentication is implemented with Zustand:
 - Range sliders for numeric values
 - Active filter badges with remove option
 - Reset all filters button
+
+### Three.js Visualizations
+
+- DNA Helix background animations
+- Neural network visualizations
+- Particle background effects
+- Floating sphere animations
+- Loading cube components
 
 ### Responsive Design
 
