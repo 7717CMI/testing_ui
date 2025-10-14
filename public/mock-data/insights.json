@@ -1,0 +1,75 @@
+[
+  {
+    "id": "1",
+    "title": "Major Hospital Expansion in Texas Healthcare Market",
+    "category": "Expansion",
+    "type": "Hospitals",
+    "summary": "Three major hospital systems announce significant expansion plans across Texas metropolitan areas, adding over 500 beds to regional capacity.",
+    "content": "In a coordinated effort to address growing healthcare demands, multiple hospital systems are investing heavily in Texas infrastructure...",
+    "views": 15420,
+    "date": "2025-10-05T10:30:00Z",
+    "author": "Dr. Sarah Johnson",
+    "tags": ["expansion", "hospitals", "texas", "infrastructure"]
+  },
+  {
+    "id": "2",
+    "title": "Telehealth Adoption Reaches Record Highs in Rural Clinics",
+    "category": "Technology",
+    "type": "Clinics",
+    "summary": "Rural healthcare facilities report 300% increase in telehealth services, improving access to specialized care for underserved communities.",
+    "content": "The rapid adoption of telehealth technologies has transformed rural healthcare delivery...",
+    "views": 8930,
+    "date": "2025-10-03T14:15:00Z",
+    "author": "Michael Chen, MBA",
+    "tags": ["telehealth", "rural health", "technology", "access"]
+  },
+  {
+    "id": "3",
+    "title": "Mental Health Services See $2.5B in New Funding",
+    "category": "Funding",
+    "type": "Mental Health",
+    "summary": "Federal and state initiatives allocate unprecedented funding to expand mental health facilities and workforce development programs.",
+    "content": "A historic investment in mental health infrastructure aims to address the growing mental health crisis...",
+    "views": 22150,
+    "date": "2025-10-01T09:00:00Z",
+    "author": "Jennifer Martinez",
+    "tags": ["mental health", "funding", "policy", "workforce"]
+  },
+  {
+    "id": "4",
+    "title": "Private Equity Firm Acquires Regional Urgent Care Network",
+    "category": "M&A",
+    "type": "Urgent Care",
+    "summary": "Healthcare Partners LLC completes acquisition of 45-location urgent care network in Southeast region for $420M.",
+    "content": "The consolidation of urgent care facilities continues as private equity shows strong interest in the sector...",
+    "views": 11780,
+    "date": "2025-09-28T11:45:00Z",
+    "author": "Robert Williams, CFA",
+    "tags": ["M&A", "urgent care", "private equity", "consolidation"]
+  },
+  {
+    "id": "5",
+    "title": "New CMS Regulations Impact Hospital Payment Models",
+    "category": "Regulation",
+    "type": "Policy",
+    "summary": "Centers for Medicare & Medicaid Services announces updated payment structures affecting value-based care programs.",
+    "content": "Healthcare providers must adapt to new regulatory requirements that emphasize quality outcomes over volume...",
+    "views": 18640,
+    "date": "2025-09-25T08:30:00Z",
+    "author": "Amanda Foster, JD",
+    "tags": ["regulation", "CMS", "payment", "value-based care"]
+  },
+  {
+    "id": "6",
+    "title": "AI-Powered Diagnostics Deployed in 50+ Hospital Systems",
+    "category": "Technology",
+    "type": "Hospitals",
+    "summary": "Advanced AI diagnostic tools show 95% accuracy in early disease detection, transforming radiology departments nationwide.",
+    "content": "Artificial intelligence is revolutionizing medical diagnostics with unprecedented accuracy and speed...",
+    "views": 25300,
+    "date": "2025-09-22T13:20:00Z",
+    "author": "Dr. Kevin Park",
+    "tags": ["AI", "diagnostics", "technology", "radiology"]
+  }
+]
+
