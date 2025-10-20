@@ -1,0 +1,348 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 142 76% 36%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 48 96% 53%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
+    --radius: 10px;
+
+    /* Phase 2 Enhanced Variables */
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --neuro-shadow-1: 8px 8px 16px rgba(163, 177, 198, 0.6);
+    --neuro-shadow-2: -8px -8px 16px rgba(255, 255, 255, 0.5);
+    --ambient-glow: 0 0 40px rgba(37, 99, 235, 0.15);
+    --gradient-primary: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+    --gradient-secondary: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    --gradient-accent: linear-gradient(135deg, #FACC15 0%, #F59E0B 100%);
+    --gradient-surface: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 100%);
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 15%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 15%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 142 76% 36%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 48 96% 53%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 221 83% 53%;
+
+    /* Phase 2 Enhanced Variables - Dark Mode */
+    --glass-bg: rgba(17, 24, 39, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --neuro-shadow-1: 8px 8px 16px rgba(0, 0, 0, 0.4);
+    --neuro-shadow-2: -8px -8px 16px rgba(255, 255, 255, 0.02);
+    --ambient-glow: 0 0 40px rgba(37, 99, 235, 0.2);
+    --gradient-primary: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+    --gradient-secondary: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+    --gradient-accent: linear-gradient(135deg, #FCD34D 0%, #FACC15 100%);
+    --gradient-surface: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0) 100%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Shimmer effect for loading */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.1),
+      transparent
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  .dark .shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.05),
+      transparent
+    );
+    background-size: 200% 100%;
+  }
+
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-muted rounded-md;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-primary-300 dark:bg-primary-700 rounded-md;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-400 dark:bg-primary-600;
+  }
+
+  /* Focus visible styles */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  /* Phase 2: Enhanced Glassmorphism */
+  .glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  }
+
+  .glass-heavy {
+    background: var(--glass-bg);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2), 
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* Phase 2: Neuromorphic Shadows */
+  .neuro-card {
+    background: hsl(var(--card));
+    border-radius: 20px;
+    box-shadow: var(--neuro-shadow-1), var(--neuro-shadow-2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .neuro-card:hover {
+    box-shadow: 12px 12px 24px rgba(163, 177, 198, 0.7),
+                -12px -12px 24px rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+  }
+
+  .dark .neuro-card:hover {
+    box-shadow: 12px 12px 24px rgba(0, 0, 0, 0.5),
+                -12px -12px 24px rgba(255, 255, 255, 0.03);
+  }
+
+  /* Phase 2: Ambient Glow */
+  .ambient-glow {
+    position: relative;
+  }
+
+  .ambient-glow::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.15) 0%, transparent 70%);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .ambient-glow:hover::before {
+    opacity: 1;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+
+  /* Phase 2: Enhanced Card Hover */
+  .card-hover-2 {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+
+  .card-hover-2:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 
+                0 0 0 1px rgba(37, 99, 235, 0.3),
+                var(--ambient-glow);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent;
+  }
+
+  /* Phase 2: Enhanced Gradients */
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+
+  /* Phase 2: Animated Counter */
+  @keyframes countUp {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .counter-animate {
+    animation: countUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Phase 2: Waveform Animation */
+  @keyframes waveform {
+    0%, 100% {
+      height: 20%;
+    }
+    50% {
+      height: 100%;
+    }
+  }
+
+  .waveform-bar {
+    animation: waveform 1s ease-in-out infinite;
+  }
+
+  /* Phase 2: Pulse Animation */
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+    }
+    50% {
+      box-shadow: 0 0 0 10px rgba(37, 99, 235, 0);
+    }
+  }
+
+  .pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  /* Phase 2: Gradient Border */
+  .gradient-border {
+    position: relative;
+    background: hsl(var(--card));
+    border-radius: 12px;
+  }
+
+  .gradient-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    padding: 2px;
+    background: var(--gradient-primary);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+}
+
+/* Mapbox GL overrides */
+.mapboxgl-popup-content {
+  @apply rounded-lg p-4 shadow-xl;
+}
+
+.mapboxgl-popup-close-button {
+  @apply text-foreground hover:text-primary-500;
+}
+
+/* React Plotly overrides */
+.js-plotly-plot .plotly {
+  @apply rounded-lg;
+}
+
+/* React Markdown overrides */
+.markdown {
+  @apply prose dark:prose-invert max-w-none;
+}
+
+.markdown h1 {
+  @apply text-3xl font-bold mb-4;
+}
+
+.markdown h2 {
+  @apply text-2xl font-bold mb-3;
+}
+
+.markdown h3 {
+  @apply text-xl font-semibold mb-2;
+}
+
+.markdown p {
+  @apply mb-4;
+}
+
+.markdown ul,
+.markdown ol {
+  @apply ml-6 mb-4;
+}
+
+.markdown code {
+  @apply bg-muted px-2 py-1 rounded font-mono text-sm;
+}
+
+.markdown pre {
+  @apply bg-muted p-4 rounded-lg overflow-x-auto mb-4;
+}
+
+.markdown a {
+  @apply text-primary-500 hover:underline;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
