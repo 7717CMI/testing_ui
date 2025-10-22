@@ -144,6 +144,7 @@ You'll see a real-time count of matching providers as you apply filters!"
 - Numbers should be written naturally (e.g., "60 different types" not "**60 different types**")
 - When providing navigation, always mention "click the link below" or "use the button below" so users know there's a clickable link
 - NEVER write incomplete URLs like "/suppliers" - the system will generate complete clickable links automatically
+- ALWAYS mention specific facility types by name (e.g., "military hospitals", "urgent care centers") so the system can generate accurate links
 
 **Communication Style**:
 - Always be helpful, conversational, and professional
@@ -194,28 +195,41 @@ export async function POST(request: NextRequest) {
   try {
     const { message, history } = await request.json()
 
-    // Get dynamic system prompt with real-time data
-    const systemPrompt = await getSystemPrompt()
+    // Check if OpenAI API key is configured
+    const hasValidApiKey = process.env.OPENAI_API_KEY && 
+                          process.env.OPENAI_API_KEY !== 'your_openai_api_key_here' &&
+                          process.env.OPENAI_API_KEY.startsWith('sk-')
 
-    // Build conversation history
-    const messages: any[] = [
-      { role: 'system', content: systemPrompt },
-      ...history.slice(-5).map((msg: Message) => ({
-        role: msg.role,
-        content: msg.content,
-      })),
-      { role: 'user', content: message },
-    ]
+    let responseMessage: string
 
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages,
-      temperature: 0.7,
-      max_tokens: 800, // Increased for better responses
-    })
+    if (!hasValidApiKey) {
+      // Use mock response when API key is not configured
+      console.log('⚠️ OpenAI API key not configured, using mock response')
+      responseMessage = generateMockResponse(message)
+    } else {
+      // Get dynamic system prompt with real-time data
+      const systemPrompt = await getSystemPrompt()
 
-    const responseMessage = completion.choices[0].message.content || 'I apologize, I could not generate a response.'
+      // Build conversation history
+      const messages: any[] = [
+        { role: 'system', content: systemPrompt },
+        ...history.slice(-5).map((msg: Message) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+        { role: 'user', content: message },
+      ]
+
+      // Call OpenAI API
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages,
+        temperature: 0.7,
+        max_tokens: 800,
+      })
+
+      responseMessage = completion.choices[0].message.content || 'I apologize, I could not generate a response.'
+    }
 
     // Extract links from response
     const links = extractLinks(message, responseMessage)
@@ -236,105 +250,196 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// Generate mock response when OpenAI API is not available
+function generateMockResponse(userMessage: string): string {
+  const lowerMessage = userMessage.toLowerCase()
+  
+  // Military hospitals
+  if (lowerMessage.includes('military hospital')) {
+    return "I can help you find military hospitals in our database! We have military hospital data that you can access by clicking the link below. These facilities serve active duty military personnel and their families across the United States."
+  }
+  
+  // Urgent care
+  if (lowerMessage.includes('urgent care')) {
+    return "We have comprehensive urgent care center data in our platform. You can view all urgent care facilities by clicking the link below, or use our Custom Dataset Builder to filter by location, state, or other criteria and export the data."
+  }
+  
+  // Pharmacies
+  if (lowerMessage.includes('pharmac')) {
+    return "Our database includes thousands of pharmacies across the United States. Click the link below to browse all pharmacies, or use the Custom Dataset Builder to filter by specific locations and export your custom dataset."
+  }
+  
+  // Mental health
+  if (lowerMessage.includes('mental health')) {
+    return "We have extensive mental health clinic and facility data. You can explore mental health clinics by clicking the link below. Use our filtering tools to narrow down by location, services, or other criteria."
+  }
+  
+  // Dialysis
+  if (lowerMessage.includes('dialysis')) {
+    return "Our platform includes dialysis center data from across the country. Click the link below to view all dialysis facilities, and you can filter by state, city, or ZIP code using our Custom Dataset Builder."
+  }
+  
+  // Export/filter
+  if (lowerMessage.includes('export') || lowerMessage.includes('download') || lowerMessage.includes('csv')) {
+    return "To export data, use our Custom Dataset Builder! You can select specific healthcare categories, facility types, filter by location (states, cities, ZIP codes), and add additional filters like phone number availability. Then export your customized dataset as a CSV file. Click the link below to get started."
+  }
+  
+  // Location-based
+  if (lowerMessage.includes('california') || lowerMessage.includes('texas') || lowerMessage.includes('florida')) {
+    const state = lowerMessage.includes('california') ? 'California' : lowerMessage.includes('texas') ? 'Texas' : 'Florida'
+    return `To find healthcare facilities in ${state}, I recommend using our Custom Dataset Builder. You can select the categories you need (hospitals, clinics, agencies, etc.), choose specific facility types, then filter by ${state}. You'll see a real-time count of matching providers and can export the data as CSV. Click the link below to start building your custom dataset.`
+  }
+  
+  // General facilities
+  if (lowerMessage.includes('hospital') && !lowerMessage.includes('military')) {
+    return "We have 189,547+ hospitals in our database across all types including general acute care, children's hospitals, psychiatric hospitals, and more. Click the link below to browse all hospitals or search for specific types."
+  }
+  
+  if (lowerMessage.includes('clinic')) {
+    return "Our platform includes 239,713+ clinics covering urgent care, mental health clinics, rural health clinics, ambulatory care, and more. Browse all clinics using the link below or filter by specific types."
+  }
+  
+  // About platform
+  if (lowerMessage.includes('what') || lowerMessage.includes('about') || lowerMessage.includes('platform')) {
+    return "HealthData AI is a comprehensive healthcare provider database platform with 658,859+ verified providers across the United States. We offer real-time data covering 10 major categories and 122+ facility types. You can browse our data catalog, use advanced search, build custom datasets, and export data for your analysis needs."
+  }
+  
+  // Default response
+  return "I can help you navigate our healthcare database with 658,859+ verified providers. You can browse by categories (hospitals, clinics, agencies, pharmacies, etc.), search for specific facilities, or use our Custom Dataset Builder to create and export customized datasets. What specific information are you looking for?"
+}
+
 function extractLinks(userMessage: string, aiResponse: string): Array<{ text: string; url: string }> {
   const links: Array<{ text: string; url: string }> = []
   const lowerMessage = userMessage.toLowerCase()
+  const lowerResponse = aiResponse.toLowerCase()
 
-  // Comprehensive facility type mappings
-  const facilityMappings: Record<string, { category: string; type?: string; text: string }> = {
-    // Hospitals
-    'military hospital': { category: 'hospital', type: 'military-hospital', text: 'View Military Hospitals' },
-    'children hospital': { category: 'hospital', type: 'childrens-hospital', text: 'View Children\'s Hospitals' },
-    'childrens hospital': { category: 'hospital', type: 'childrens-hospital', text: 'View Children\'s Hospitals' },
-    'pediatric hospital': { category: 'hospital', type: 'childrens-hospital', text: 'View Children\'s Hospitals' },
-    'critical access hospital': { category: 'hospital', type: 'critical-access-hospital', text: 'View Critical Access Hospitals' },
-    'chronic disease hospital': { category: 'hospital', type: 'chronic-disease-hospital', text: 'View Chronic Disease Hospitals' },
-    'psychiatric hospital': { category: 'hospital', type: 'psychiatric-hospital', text: 'View Psychiatric Hospitals' },
-    'rehabilitation hospital': { category: 'hospital', type: 'rehabilitation-hospital', text: 'View Rehabilitation Hospitals' },
+  // Comprehensive facility type mappings - EXPANDED
+  const facilityMappings: Record<string, { category: string; type?: string; text: string; priority: number }> = {
+    // Hospitals - Priority 10 (most specific)
+    'military hospital': { category: 'hospital', type: 'military-hospital', text: '🏥 View Military Hospitals', priority: 10 },
+    'children hospital': { category: 'hospital', type: 'childrens-hospital', text: '🏥 View Children\'s Hospitals', priority: 10 },
+    'childrens hospital': { category: 'hospital', type: 'childrens-hospital', text: '🏥 View Children\'s Hospitals', priority: 10 },
+    'pediatric hospital': { category: 'hospital', type: 'childrens-hospital', text: '🏥 View Children\'s Hospitals', priority: 10 },
+    'critical access hospital': { category: 'hospital', type: 'critical-access-hospital', text: '🏥 View Critical Access Hospitals', priority: 10 },
+    'chronic disease hospital': { category: 'hospital', type: 'chronic-disease-hospital', text: '🏥 View Chronic Disease Hospitals', priority: 10 },
+    'psychiatric hospital': { category: 'hospital', type: 'psychiatric-hospital', text: '🏥 View Psychiatric Hospitals', priority: 10 },
+    'mental hospital': { category: 'hospital', type: 'psychiatric-hospital', text: '🏥 View Psychiatric Hospitals', priority: 10 },
+    'rehabilitation hospital': { category: 'hospital', type: 'rehabilitation-hospital', text: '🏥 View Rehabilitation Hospitals', priority: 10 },
+    'rehab hospital': { category: 'hospital', type: 'rehabilitation-hospital', text: '🏥 View Rehabilitation Hospitals', priority: 10 },
+    'general hospital': { category: 'hospital', type: 'general-acute-care-hospital', text: '🏥 View General Hospitals', priority: 10 },
+    'acute care hospital': { category: 'hospital', type: 'general-acute-care-hospital', text: '🏥 View Acute Care Hospitals', priority: 10 },
     
-    // Clinics
-    'mental health clinic': { category: 'clinic', type: 'mental-health-clinic', text: 'View Mental Health Clinics' },
-    'adult day care': { category: 'clinic', type: 'adult-day-care', text: 'View Adult Day Care Clinics' },
-    'rural health clinic': { category: 'clinic', type: 'rural-health-clinic', text: 'View Rural Health Clinics' },
-    'urgent care': { category: 'clinic', type: 'urgent-care', text: 'View Urgent Care Centers' },
-    'ambulatory': { category: 'clinic', type: 'ambulatory', text: 'View Ambulatory Clinics' },
+    // Clinics - Priority 10
+    'mental health clinic': { category: 'clinic', type: 'mental-health-clinic', text: '🏥 View Mental Health Clinics', priority: 10 },
+    'adult day care': { category: 'clinic', type: 'adult-day-care', text: '🏥 View Adult Day Care Clinics', priority: 10 },
+    'rural health clinic': { category: 'clinic', type: 'rural-health-clinic', text: '🏥 View Rural Health Clinics', priority: 10 },
+    'rural clinic': { category: 'clinic', type: 'rural-health-clinic', text: '🏥 View Rural Health Clinics', priority: 10 },
+    'urgent care': { category: 'clinic', type: 'urgent-care', text: '🏥 View Urgent Care Centers', priority: 10 },
+    'ambulatory': { category: 'clinic', type: 'ambulatory', text: '🏥 View Ambulatory Clinics', priority: 10 },
+    'ambulatory clinic': { category: 'clinic', type: 'ambulatory', text: '🏥 View Ambulatory Clinics', priority: 10 },
+    'dialysis': { category: 'clinic', type: 'dialysis', text: '🏥 View Dialysis Centers', priority: 10 },
+    'dialysis center': { category: 'clinic', type: 'dialysis', text: '🏥 View Dialysis Centers', priority: 10 },
     
-    // Categories
-    'supplier': { category: 'supplier', text: 'View Suppliers' },
-    'suppliers': { category: 'supplier', text: 'View Suppliers' },
-    'hospice': { category: 'hospice', text: 'View Hospice Facilities' },
-    'pharmacy': { category: 'pharmacy', text: 'View Pharmacies' },
-    'pharmacies': { category: 'pharmacy', text: 'View Pharmacies' },
-    'laboratory': { category: 'laboratory', text: 'View Laboratories' },
-    'lab': { category: 'laboratory', text: 'View Laboratories' },
-    'home health': { category: 'home-health-agency', text: 'View Home Health Agencies' },
-    'assisted living': { category: 'assisted-living', text: 'View Assisted Living Facilities' },
-    'nursing home': { category: 'snf-skilled-nursing', text: 'View Skilled Nursing Facilities' },
-    'skilled nursing': { category: 'snf-skilled-nursing', text: 'View Skilled Nursing Facilities' },
-    'blood bank': { category: 'blood-eye-banks', text: 'View Blood & Eye Banks' },
-    'eye bank': { category: 'blood-eye-banks', text: 'View Blood & Eye Banks' },
-    'agency': { category: 'agency', text: 'View Healthcare Agencies' },
-    'agencies': { category: 'agency', text: 'View Healthcare Agencies' },
+    // Agencies - Priority 10
+    'home health agency': { category: 'agency', type: 'home-health-agency', text: '🏥 View Home Health Agencies', priority: 10 },
+    'home health': { category: 'agency', type: 'home-health-agency', text: '🏥 View Home Health Agencies', priority: 10 },
+    'hospice': { category: 'agency', type: 'hospice', text: '🏥 View Hospice Agencies', priority: 10 },
+    
+    // Suppliers - Priority 10
+    'dme supplier': { category: 'supplier', type: 'durable-medical-equipment', text: '🏥 View DME Suppliers', priority: 10 },
+    'medical equipment': { category: 'supplier', type: 'durable-medical-equipment', text: '🏥 View Medical Equipment Suppliers', priority: 10 },
+    
+    // Categories - Priority 5 (less specific)
+    'hospital': { category: 'hospital', text: '🏥 Browse All Hospitals', priority: 5 },
+    'hospitals': { category: 'hospital', text: '🏥 Browse All Hospitals', priority: 5 },
+    'clinic': { category: 'clinic', text: '🏥 Browse All Clinics', priority: 5 },
+    'clinics': { category: 'clinic', text: '🏥 Browse All Clinics', priority: 5 },
+    'supplier': { category: 'supplier', text: '🏥 View All Suppliers', priority: 5 },
+    'suppliers': { category: 'supplier', text: '🏥 View All Suppliers', priority: 5 },
+    'pharmacy': { category: 'pharmacy', text: '💊 View All Pharmacies', priority: 5 },
+    'pharmacies': { category: 'pharmacy', text: '💊 View All Pharmacies', priority: 5 },
+    'laboratory': { category: 'laboratory', text: '🔬 View All Laboratories', priority: 5 },
+    'lab': { category: 'laboratory', text: '🔬 View All Laboratories', priority: 5 },
+    'labs': { category: 'laboratory', text: '🔬 View All Laboratories', priority: 5 },
+    'assisted living': { category: 'assisted-living', text: '🏡 View Assisted Living Facilities', priority: 5 },
+    'nursing home': { category: 'snf-skilled-nursing', text: '🏥 View Skilled Nursing Facilities', priority: 5 },
+    'skilled nursing': { category: 'snf-skilled-nursing', text: '🏥 View Skilled Nursing Facilities', priority: 5 },
+    'nursing facility': { category: 'snf-skilled-nursing', text: '🏥 View Skilled Nursing Facilities', priority: 5 },
+    'blood bank': { category: 'blood-eye-banks', text: '🏥 View Blood & Eye Banks', priority: 5 },
+    'eye bank': { category: 'blood-eye-banks', text: '🏥 View Blood & Eye Banks', priority: 5 },
+    'agency': { category: 'agency', text: '🏥 View Healthcare Agencies', priority: 5 },
+    'agencies': { category: 'agency', text: '🏥 View Healthcare Agencies', priority: 5 },
   }
 
-  // Check for specific matches
+  // Find matches with priority sorting
+  const matchedLinks: Array<{ text: string; url: string; priority: number }> = []
+
   for (const [keyword, mapping] of Object.entries(facilityMappings)) {
-    if (lowerMessage.includes(keyword)) {
+    // Check both user message and AI response for better accuracy
+    if (lowerMessage.includes(keyword) || lowerResponse.includes(keyword)) {
       const url = mapping.type 
         ? `/data-catalog/${mapping.category}/${mapping.type}`
         : `/data-catalog/${mapping.category}`
-      links.push({ text: mapping.text, url })
-      break // Only add the most specific match
+      
+      // Avoid duplicates
+      if (!matchedLinks.some(link => link.url === url)) {
+        matchedLinks.push({ 
+          text: mapping.text, 
+          url, 
+          priority: mapping.priority 
+        })
+      }
     }
   }
 
-  // General category links (if no specific match found)
-  if (links.length === 0) {
-    if (lowerMessage.includes('hospital')) {
-    links.push({ text: 'Browse All Hospitals', url: '/data-catalog/hospital' })
-  }
-    if (lowerMessage.includes('clinic')) {
-    links.push({ text: 'Browse All Clinics', url: '/data-catalog/clinic' })
-  }
-  }
+  // Sort by priority (highest first) and add to links
+  matchedLinks
+    .sort((a, b) => b.priority - a.priority)
+    .slice(0, 3) // Limit to top 3 most relevant links
+    .forEach(link => links.push({ text: link.text, url: link.url }))
 
-  // Feature-based links
-  if (lowerMessage.includes('custom') || lowerMessage.includes('filter') || 
-      lowerMessage.includes('export') || lowerMessage.includes('csv') ||
-      lowerMessage.includes('download') || lowerMessage.includes('build dataset')) {
+  // Feature-based links - Add if relevant
+  const hasLocationQuery = lowerMessage.includes('state') || lowerMessage.includes('city') || 
+      lowerMessage.includes('zip') || lowerMessage.includes('location') ||
+      lowerMessage.match(/\b(california|texas|florida|new york|ohio|pennsylvania|illinois|michigan|georgia|north carolina|alabama|alaska|arizona|arkansas|colorado|connecticut|delaware|hawaii|idaho|indiana|iowa|kansas|kentucky|louisiana|maine|maryland|massachusetts|minnesota|mississippi|missouri|montana|nebraska|nevada|new hampshire|new jersey|new mexico|north dakota|oklahoma|oregon|rhode island|south carolina|south dakota|tennessee|utah|vermont|virginia|washington|west virginia|wisconsin|wyoming)\b/i)
+
+  const hasFilterQuery = lowerMessage.includes('filter') || lowerMessage.includes('export') || 
+      lowerMessage.includes('csv') || lowerMessage.includes('download') || 
+      lowerMessage.includes('build dataset') || lowerMessage.includes('custom')
+
+  const hasSearchQuery = lowerMessage.includes('search') || lowerMessage.includes('find') ||
+      lowerMessage.includes('look for') || lowerMessage.includes('locate')
+
+  // Add Custom Dataset Builder if location or filter mentioned
+  if ((hasLocationQuery || hasFilterQuery) && !links.some(link => link.url === '/data-catalog/custom')) {
     links.push({ text: '🎯 Build Custom Dataset', url: '/data-catalog/custom' })
   }
-  
-  if (lowerMessage.includes('search') || lowerMessage.includes('find') ||
-      lowerMessage.includes('look for') || lowerMessage.includes('locate')) {
+
+  // Add Search if searching mentioned
+  if (hasSearchQuery && !links.some(link => link.url === '/search')) {
     links.push({ text: '🔍 Advanced Search', url: '/search' })
   }
 
-  // Location-based queries
-  if (lowerMessage.includes('state') || lowerMessage.includes('city') || 
-      lowerMessage.includes('zip') || lowerMessage.includes('location') ||
-      lowerMessage.match(/\b(california|texas|florida|new york|ohio|pennsylvania|illinois|michigan|georgia|north carolina)\b/i)) {
-    if (!links.some(link => link.url === '/data-catalog/custom')) {
-      links.push({ text: '📍 Filter by Location', url: '/data-catalog/custom' })
-    }
-  }
-
-  // General navigation links
-  if (lowerMessage.includes('all data') || lowerMessage.includes('browse') || 
-      lowerMessage.includes('catalog') || lowerMessage.includes('categories')) {
+  // Add main catalog if asking about overview/browsing
+  if ((lowerMessage.includes('all data') || lowerMessage.includes('browse all') || 
+      lowerMessage.includes('show all') || lowerMessage.includes('view all') ||
+      lowerMessage.includes('catalog') || lowerMessage.includes('categories')) &&
+      !links.some(link => link.url === '/data-catalog')) {
     links.push({ text: '📚 View Full Data Catalog', url: '/data-catalog' })
   }
 
-  // Introduction/overview queries
-  if (lowerMessage.includes('what do you') || lowerMessage.includes('about') ||
-      lowerMessage.includes('tell me') || lowerMessage.includes('explain') ||
-      lowerMessage.includes('how does') || lowerMessage.includes('what is')) {
-    if (lowerMessage.includes('platform') || lowerMessage.includes('website') || 
-        lowerMessage.includes('service') || lowerMessage.includes('healthdata')) {
-      links.push({ text: '🏥 About HealthData AI', url: '/data-catalog' })
-    }
+  // Add About/Dashboard link for intro queries
+  if ((lowerMessage.includes('what is') || lowerMessage.includes('about') ||
+      lowerMessage.includes('tell me') || lowerMessage.includes('how does') ||
+      lowerMessage.includes('what do you')) &&
+      (lowerMessage.includes('platform') || lowerMessage.includes('website') || 
+       lowerMessage.includes('service') || lowerMessage.includes('healthdata') || 
+       lowerMessage.includes('this site')) &&
+      !links.some(link => link.url === '/dashboard')) {
+    links.push({ text: '🏠 Go to Dashboard', url: '/dashboard' })
   }
 
-  return links
+  // Limit total links to 4 for cleaner UI
+  return links.slice(0, 4)
 }
 
