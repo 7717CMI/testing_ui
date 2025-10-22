@@ -284,10 +284,10 @@ export default function DataCatalogPage() {
                   </div>
                   <div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                      Customize Your Hospital Data
+                      Customize Your Healthcare Data
                     </h3>
                     <p className="text-gray-600 max-w-2xl">
-                      Build your perfect dataset by selecting facility types, states, cities, ZIP codes, and more. 
+                      Build your perfect dataset by selecting categories (Hospitals, Clinics, etc.), their types, states, cities, ZIP codes, and more. 
                       Export only the data you need for your research or analysis.
                     </p>
                   </div>

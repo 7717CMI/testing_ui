@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react'
 
 interface FilterState {
+  categories: number[]
   facility_types: number[]
   states: string[]
   cities: string[]
@@ -30,11 +32,20 @@ interface FilterState {
   has_fax: boolean
 }
 
+interface Category {
+  id: number
+  name: string
+  display_name: string
+  provider_count: number
+}
+
 interface FacilityType {
   id: number
   name: string
   display_name: string
   provider_count: number
+  category_id?: number
+  category_name?: string
 }
 
 interface State {
@@ -44,10 +55,11 @@ interface State {
 }
 
 export default function CustomDataPage() {
-  const { searchParams } = new URL(window.location.href)
+  const searchParams = useSearchParams()
   const preSelectedCategoryId = searchParams.get('category')
   
   const [filters, setFilters] = useState<FilterState>({
+    categories: [],
     facility_types: [],
     states: [],
     cities: [],
@@ -56,6 +68,7 @@ export default function CustomDataPage() {
     has_fax: false,
   })
 
+  const [categories, setCategories] = useState<Category[]>([])
   const [facilityTypes, setFacilityTypes] = useState<FacilityType[]>([])
   const [states, setStates] = useState<State[]>([])
   const [cityInput, setCityInput] = useState('')
@@ -64,47 +77,57 @@ export default function CustomDataPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [searchFacilityType, setSearchFacilityType] = useState('')
 
-  // Fetch facility types
+  // Fetch categories
   useEffect(() => {
-    async function fetchFacilityTypes() {
+    async function fetchCategories() {
       try {
         const response = await fetch('/api/v1/catalog/categories')
         const data = await response.json()
+        setCategories(data.data?.categories || data.categories || [])
         
-        // Get all facility types from all categories
-        const allTypesPromises = data.data.categories.map(async (cat: any) => {
-          const typesResponse = await fetch(`/api/v1/catalog/categories/${cat.id}/types`)
+        if (preSelectedCategoryId) {
+          setFilters(prev => ({
+            ...prev,
+            categories: [parseInt(preSelectedCategoryId)]
+          }))
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+      }
+    }
+    
+    fetchCategories()
+  }, [preSelectedCategoryId])
+
+  // Fetch facility types based on selected categories
+  useEffect(() => {
+    async function fetchFacilityTypes() {
+      if (filters.categories.length === 0) {
+        setFacilityTypes([])
+        return
+      }
+
+      try {
+        const allTypesPromises = filters.categories.map(async (categoryId) => {
+          const typesResponse = await fetch(`/api/v1/catalog/categories/${categoryId}/types`)
           const typesData = await typesResponse.json()
+          const category = categories.find(c => c.id === categoryId)
           return typesData.data.facility_types.map((type: any) => ({
             ...type,
-            category_id: cat.id,
-            category_name: cat.display_name
+            category_id: categoryId,
+            category_name: category?.display_name || ''
           }))
         })
         
         const allTypes = (await Promise.all(allTypesPromises)).flat()
-        
-        // If pre-selected category, filter types
-        if (preSelectedCategoryId) {
-          const filteredTypes = allTypes.filter((type: any) => 
-            type.category_id === parseInt(preSelectedCategoryId)
-          )
-          setFacilityTypes(allTypes)
-          // Pre-select all types in this category
-          setFilters(prev => ({
-            ...prev,
-            facility_types: filteredTypes.map((type: any) => type.id)
-          }))
-        } else {
-          setFacilityTypes(allTypes)
-        }
+        setFacilityTypes(allTypes)
       } catch (error) {
         console.error('Error fetching facility types:', error)
       }
     }
     
     fetchFacilityTypes()
-  }, [preSelectedCategoryId])
+  }, [filters.categories, categories])
 
   // Mock states data - in production, fetch from API
   useEffect(() => {
@@ -208,6 +231,22 @@ export default function CustomDataPage() {
     return () => clearTimeout(debounce)
   }, [filters])
 
+  function toggleCategory(categoryId: number) {
+    setFilters(prev => ({
+      ...prev,
+      categories: prev.categories.includes(categoryId)
+        ? prev.categories.filter(id => id !== categoryId)
+        : [...prev.categories, categoryId],
+      // Clear facility types when categories change
+      facility_types: prev.categories.includes(categoryId)
+        ? prev.facility_types.filter(ftId => {
+            const ft = facilityTypes.find(t => t.id === ftId)
+            return ft?.category_id !== categoryId
+          })
+        : prev.facility_types
+    }))
+  }
+
   function toggleFacilityType(typeId: number) {
     setFilters(prev => ({
       ...prev,
@@ -303,6 +342,7 @@ export default function CustomDataPage() {
   )
 
   const activeFiltersCount = 
+    filters.categories.length +
     filters.facility_types.length +
     filters.states.length +
     filters.cities.length +
@@ -363,11 +403,11 @@ export default function CustomDataPage() {
             </Badge>
             
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-gray-900">
-              Customize Your Hospital Data
+              Customize Your Healthcare Data
             </h1>
             
             <p className="text-xl text-gray-600 leading-relaxed max-w-3xl mx-auto">
-              Build your perfect dataset by selecting facility types, states, cities, and more. 
+              Build your perfect dataset by selecting categories (Hospitals, Clinics, etc.), their types, states, cities, ZIP codes, and more. 
               Export only the data you need for your research or analysis.
             </p>
 
@@ -397,6 +437,43 @@ export default function CustomDataPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Filters */}
             <div className="lg:col-span-2 space-y-6">
+              {/* Categories */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <Database className="h-5 w-5 text-[#006AFF]" />
+                      Categories
+                    </span>
+                    {filters.categories.length > 0 && (
+                      <Badge variant="secondary">{filters.categories.length} selected</Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Select healthcare categories (Hospitals, Clinics, etc.) to filter facility types
+                  </p>
+                  <div className="max-h-64 overflow-y-auto space-y-2 border rounded-lg p-4">
+                    {categories.map((category) => (
+                      <label
+                        key={category.id}
+                        className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded cursor-pointer border border-transparent hover:border-[#006AFF]/20"
+                      >
+                        <Checkbox
+                          checked={filters.categories.includes(category.id)}
+                          onCheckedChange={() => toggleCategory(category.id)}
+                        />
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{category.display_name}</p>
+                          <p className="text-xs text-gray-500">{category.provider_count?.toLocaleString() || 0} providers</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Facility Types */}
               <Card>
                 <CardHeader>
@@ -411,32 +488,47 @@ export default function CustomDataPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Search facility types..."
-                      className="pl-10"
-                      value={searchFacilityType}
-                      onChange={(e) => setSearchFacilityType(e.target.value)}
-                    />
-                  </div>
-                  <div className="max-h-64 overflow-y-auto space-y-2 border rounded-lg p-4">
-                    {filteredFacilityTypes.map((type) => (
-                      <label
-                        key={type.id}
-                        className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
-                      >
-                        <Checkbox
-                          checked={filters.facility_types.includes(type.id)}
-                          onCheckedChange={() => toggleFacilityType(type.id)}
+                  {filters.categories.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Building2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                      <p className="text-sm">Select categories above to view facility types</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                        <Input
+                          placeholder="Search facility types..."
+                          className="pl-10"
+                          value={searchFacilityType}
+                          onChange={(e) => setSearchFacilityType(e.target.value)}
                         />
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{type.display_name}</p>
-                          <p className="text-xs text-gray-500">{type.provider_count.toLocaleString()} providers</p>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto space-y-3 border rounded-lg p-4">
+                        {filteredFacilityTypes.map((type) => (
+                          <label
+                            key={type.id}
+                            className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={filters.facility_types.includes(type.id)}
+                              onCheckedChange={() => toggleFacilityType(type.id)}
+                            />
+                            <div className="flex-1">
+                              <p className="font-medium text-sm">{type.display_name}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="outline" className="text-xs">{type.category_name}</Badge>
+                                <span className="text-xs text-gray-500">{type.provider_count?.toLocaleString() || 0} providers</span>
+                              </div>
+                            </div>
+                          </label>
+                        ))}
+                        {filteredFacilityTypes.length === 0 && (
+                          <p className="text-center text-sm text-gray-500 py-4">No facility types found</p>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
 

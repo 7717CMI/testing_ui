@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { Navbar } from "@/components/shared/navbar"
 import { FacilityCard } from "@/components/shared/facility-card"
 import { Button } from "@/components/ui/button"
@@ -26,7 +27,8 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Bookmark
+  Bookmark,
+  Loader2
 } from "lucide-react"
 import { Facility } from "@/types"
 import { useFiltersStore } from "@/stores/filters-store"
@@ -35,35 +37,116 @@ import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { ParticleBackground } from "@/components/three"
 
+// Provider type from database
+interface Provider {
+  id: number
+  npi_number: string
+  provider_name: string
+  business_address_line1: string | null
+  business_city: string | null
+  business_state: string | null
+  business_state_code: string | null
+  business_zip_code: string | null
+  business_phone: string | null
+  entity_type_name: string | null
+  facility_category_name: string | null
+  facility_type_name: string | null
+}
+
+// Convert Provider to Facility for compatibility
+function providerToFacility(provider: Provider): Facility {
+  return {
+    id: provider.id.toString(),
+    name: provider.provider_name,
+    type: provider.facility_type_name || provider.facility_category_name || 'Unknown',
+    city: provider.business_city || '',
+    state: provider.business_state_code || '',
+    address: provider.business_address_line1 || '',
+    phone: provider.business_phone || '',
+    ownership: provider.entity_type_name || 'Unknown',
+    bedCount: 0,
+    rating: 0,
+    accreditation: [],
+    specialties: []
+  }
+}
+
 export default function SearchPage() {
+  const searchParams = useSearchParams()
+  const prefilterType = searchParams.get('type')
+  const prefilterCategory = searchParams.get('category')
+  
+  const [providers, setProviders] = useState<Provider[]>([])
   const [facilities, setFacilities] = useState<Facility[]>([])
   const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>([])
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid")
   const [searchQuery, setSearchQuery] = useState("")
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [isLoading, setIsLoading] = useState(true)
   const [expandedSections, setExpandedSections] = useState({
     facilityType: true,
     ownership: true,
-    accreditation: true,
+    accreditation: false,
     bedCount: false,
     rating: false,
   })
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [searchName, setSearchName] = useState("")
   const [searchDescription, setSearchDescription] = useState("")
+  const [availableTypes, setAvailableTypes] = useState<string[]>([])
+  const [availableOwnership, setAvailableOwnership] = useState<string[]>([])
 
   const { filters, updateFilters, resetFilters } = useFiltersStore()
   const { addSavedSearch } = useSavedSearchesStore()
 
-  // Load facilities
+  // Load providers from PostgreSQL database
   useEffect(() => {
-    fetch("/mock-data/facilities.json")
-      .then((res) => res.json())
-      .then((data) => {
-        setFacilities(data)
-        setFilteredFacilities(data)
-      })
+    async function fetchProviders() {
+      setIsLoading(true)
+      try {
+        // Fetch from database via API
+        const response = await fetch('/api/v1/catalog/providers?limit=100&offset=0')
+        const data = await response.json()
+        
+        if (data.success && data.data.providers) {
+          setProviders(data.data.providers)
+          const facilityData = data.data.providers.map(providerToFacility)
+          setFacilities(facilityData)
+          setFilteredFacilities(facilityData)
+          
+          // Extract unique types and ownership for filters
+          const types = new Set<string>()
+          const ownership = new Set<string>()
+          
+          data.data.providers.forEach((p: Provider) => {
+            if (p.facility_type_name) types.add(p.facility_type_name)
+            if (p.facility_category_name) types.add(p.facility_category_name)
+            if (p.entity_type_name) ownership.add(p.entity_type_name)
+          })
+          
+          setAvailableTypes(Array.from(types).sort())
+          setAvailableOwnership(Array.from(ownership).sort())
+        }
+      } catch (error) {
+        console.error('Error fetching providers:', error)
+        toast.error('Failed to load providers from database')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchProviders()
   }, [])
+
+  // Apply prefilters from URL
+  useEffect(() => {
+    if (prefilterType && availableTypes.includes(prefilterType)) {
+      updateFilters({ facilityType: [prefilterType] })
+    }
+    if (prefilterCategory && availableTypes.includes(prefilterCategory)) {
+      updateFilters({ facilityType: [prefilterCategory] })
+    }
+  }, [prefilterType, prefilterCategory, availableTypes, updateFilters])
 
   // Filter facilities
   useEffect(() => {
@@ -221,16 +304,22 @@ export default function SearchPage() {
                     )}
                   </button>
                   {expandedSections.facilityType && (
-                    <div className="mt-3 space-y-2">
-                      {["Hospital", "Clinic", "Urgent Care", "Mental Health"].map((type) => (
-                        <label key={type} className="flex items-center gap-2 cursor-pointer">
-                          <Checkbox
-                            checked={filters.facilityType.includes(type)}
-                            onCheckedChange={() => toggleFilter("facilityType", type)}
-                          />
-                          <span className="text-sm">{type}</span>
-                        </label>
-                      ))}
+                    <div className="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                      {isLoading ? (
+                        <p className="text-sm text-gray-500">Loading types...</p>
+                      ) : availableTypes.length > 0 ? (
+                        availableTypes.slice(0, 20).map((type) => (
+                          <label key={type} className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={filters.facilityType.includes(type)}
+                              onCheckedChange={() => toggleFilter("facilityType", type)}
+                            />
+                            <span className="text-sm">{type}</span>
+                          </label>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">No types available</p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -250,15 +339,21 @@ export default function SearchPage() {
                   </button>
                   {expandedSections.ownership && (
                     <div className="mt-3 space-y-2">
-                      {["Public", "Private", "Non-Profit"].map((type) => (
-                        <label key={type} className="flex items-center gap-2 cursor-pointer">
-                          <Checkbox
-                            checked={filters.ownership.includes(type)}
-                            onCheckedChange={() => toggleFilter("ownership", type)}
-                          />
-                          <span className="text-sm">{type}</span>
-                        </label>
-                      ))}
+                      {isLoading ? (
+                        <p className="text-sm text-gray-500">Loading...</p>
+                      ) : availableOwnership.length > 0 ? (
+                        availableOwnership.map((type) => (
+                          <label key={type} className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={filters.ownership.includes(type)}
+                              onCheckedChange={() => toggleFilter("ownership", type)}
+                            />
+                            <span className="text-sm">{type}</span>
+                          </label>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500">No ownership data</p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -511,11 +606,29 @@ export default function SearchPage() {
 
             {/* Results Count */}
             <div className="text-sm text-muted-foreground">
-              Found {filteredFacilities.length} facilities
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading facilities from database...
+                </div>
+              ) : (
+                `Found ${filteredFacilities.length} facilities`
+              )}
             </div>
 
             {/* Results Grid */}
-            {viewMode === "grid" ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="text-center space-y-4">
+                  <Loader2 className="h-12 w-12 animate-spin mx-auto text-[#006AFF]" />
+                  <p className="text-gray-600">Loading real data from PostgreSQL database...</p>
+                </div>
+              </div>
+            ) : filteredFacilities.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-gray-600">No facilities found matching your criteria</p>
+              </div>
+            ) : viewMode === "grid" ? (
               <div className="grid md:grid-cols-2 gap-6">
                 {filteredFacilities.map((facility) => (
                   <FacilityCard

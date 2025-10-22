@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { useParams } from 'next/navigation'
@@ -10,6 +10,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Building2,
   Activity,
@@ -31,7 +38,10 @@ import {
   FileText,
   Briefcase,
   X,
+  Bookmark,
+  BookmarkCheck,
 } from 'lucide-react'
+import { useBookmarksStore } from '@/stores/bookmarks-store'
 
 interface ProviderInfo {
   id: number
@@ -135,6 +145,18 @@ function getCategoryIcon(categoryName: string): string {
   return iconMap[categoryName] || '🏥'
 }
 
+// All 50 US States
+const US_STATES = [
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 
+  'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 
+  'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 
+  'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 
+  'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 
+  'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 
+  'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 
+  'Wisconsin', 'Wyoming'
+]
+
 export default function FacilityTypePage() {
   const params = useParams()
   const categorySlug = params.category as string
@@ -144,11 +166,16 @@ export default function FacilityTypePage() {
   const [pageSize] = useState(50)
   const [showFilters, setShowFilters] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState<ProviderInfo | null>(null)
+  const [citySearch, setCitySearch] = useState('')
   const [filters, setFilters] = useState({
     state: '',
     city: '',
+    zipcode: '',
     hasPhone: false
   })
+
+  // Bookmarks store
+  const { addBookmark, removeBookmark, isBookmarked, bookmarks } = useBookmarksStore()
 
   const { data: categoryInfo, isLoading: categoryLoading, error: categoryError } = useQuery({
     queryKey: ['category-info', categorySlug],
@@ -168,23 +195,83 @@ export default function FacilityTypePage() {
     enabled: !!facilityTypeInfo?.id,
   })
 
+  // Extract unique cities with counts for dropdowns
+  const { citiesWithCounts } = useMemo(() => {
+    if (!providersData?.providers) {
+      return { citiesWithCounts: [] }
+    }
+
+    const cityCountMap = new Map<string, number>()
+
+    providersData.providers.forEach(provider => {
+      // Only add cities that match the selected state (or all if no state selected)
+      if (!filters.state || filters.state === 'all' || provider.business_state === filters.state) {
+        if (provider.business_city) {
+          const city = provider.business_city
+          cityCountMap.set(city, (cityCountMap.get(city) || 0) + 1)
+        }
+      }
+    })
+
+    // Convert to array and sort by name
+    const citiesArray = Array.from(cityCountMap.entries()).map(([city, count]) => ({
+      name: city,
+      count: count
+    })).sort((a, b) => a.name.localeCompare(b.name))
+
+    return {
+      citiesWithCounts: citiesArray,
+    }
+  }, [providersData, filters.state])
+
+  // Filter cities based on search with fuzzy matching
+  const filteredCities = useMemo(() => {
+    if (!citySearch.trim()) {
+      return citiesWithCounts
+    }
+
+    const searchLower = citySearch.toLowerCase().trim()
+    
+    return citiesWithCounts.filter(city => {
+      const cityLower = city.name.toLowerCase()
+      
+      // Exact match or starts with
+      if (cityLower.includes(searchLower)) {
+        return true
+      }
+      
+      // Fuzzy match - check if all characters appear in order
+      let searchIndex = 0
+      for (let i = 0; i < cityLower.length && searchIndex < searchLower.length; i++) {
+        if (cityLower[i] === searchLower[searchIndex]) {
+          searchIndex++
+        }
+      }
+      return searchIndex === searchLower.length
+    }).slice(0, 100) // Limit to 100 results for performance
+  }, [citiesWithCounts, citySearch])
+
   const filteredProviders = providersData?.providers.filter(provider => {
     // Search filter
     const searchMatch = !searchQuery || 
       provider.provider_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       provider.business_city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      provider.business_state?.toLowerCase().includes(searchQuery.toLowerCase())
+      provider.business_state?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      provider.business_zip_code?.toLowerCase().includes(searchQuery.toLowerCase())
     
     // State filter
-    const stateMatch = !filters.state || provider.business_state?.toLowerCase().includes(filters.state.toLowerCase())
+    const stateMatch = !filters.state || filters.state === 'all' || provider.business_state === filters.state
     
     // City filter
-    const cityMatch = !filters.city || provider.business_city?.toLowerCase().includes(filters.city.toLowerCase())
+    const cityMatch = !filters.city || filters.city === 'all' || provider.business_city === filters.city
+    
+    // Zipcode filter (partial match for text input)
+    const zipcodeMatch = !filters.zipcode || provider.business_zip_code?.includes(filters.zipcode)
     
     // Phone filter
     const phoneMatch = !filters.hasPhone || (provider.business_phone && provider.business_phone.trim() !== '')
     
-    return searchMatch && stateMatch && cityMatch && phoneMatch
+    return searchMatch && stateMatch && cityMatch && zipcodeMatch && phoneMatch
   }) || []
 
   const isLoading = categoryLoading || typeLoading || providersLoading
@@ -321,6 +408,7 @@ export default function FacilityTypePage() {
     setFilters({
       state: '',
       city: '',
+      zipcode: '',
       hasPhone: false
     })
   }
@@ -352,32 +440,38 @@ export default function FacilityTypePage() {
     <div className="min-h-screen bg-[#f8faff]">
       {/* Header */}
       <nav className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-sm">
-        <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <Activity className="h-6 w-6 text-[#006AFF]" />
-            <span className="text-xl font-bold text-gray-900">HealthData AI</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-sm font-medium text-gray-600 hover:text-[#006AFF] transition-colors">
-              Home
-            </Link>
-            <Link href="/data-catalog" className="text-sm font-medium text-[#006AFF]">
-              Data Catalog
-            </Link>
-            <Link href="/search" className="text-sm font-medium text-gray-600 hover:text-[#006AFF] transition-colors">
-              Search
-            </Link>
-            <Link href="/insights" className="text-sm font-medium text-gray-600 hover:text-[#006AFF] transition-colors">
-              Insights
-            </Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="outline" size="sm" className="border-gray-300">Login</Button>
-            </Link>
-            <Link href="/signup">
-              <Button size="sm" className="bg-[#006AFF] hover:bg-[#0052CC]">Sign Up</Button>
-            </Link>
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            {/* Left side: Logo + Navigation */}
+            <div className="flex items-center gap-8">
+              <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+                <Activity className="h-6 w-6 text-[#006AFF]" />
+                <span className="text-xl font-bold text-gray-900">HealthData AI</span>
+              </Link>
+              <div className="hidden md:flex items-center gap-6">
+                <Link href="/" className="text-sm font-medium text-gray-600 hover:text-[#006AFF] transition-colors">
+                  Home
+                </Link>
+                <Link href="/data-catalog" className="text-sm font-medium text-[#006AFF]">
+                  Data Catalog
+                </Link>
+                <Link href="/search" className="text-sm font-medium text-gray-600 hover:text-[#006AFF] transition-colors">
+                  Search
+                </Link>
+                <Link href="/insights" className="text-sm font-medium text-gray-600 hover:text-[#006AFF] transition-colors">
+                  Insights
+                </Link>
+              </div>
+            </div>
+            {/* Right side: Auth buttons */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <Link href="/login">
+                <Button variant="outline" size="sm" className="border-gray-300">Login</Button>
+              </Link>
+              <Link href="/signup">
+                <Button size="sm" className="bg-[#006AFF] hover:bg-[#0052CC]">Sign Up</Button>
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
@@ -524,33 +618,125 @@ export default function FacilityTypePage() {
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
               </Button>
+              <Link href="/bookmarks">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="border-[#006AFF] text-[#006AFF] hover:bg-[#006AFF] hover:text-white"
+                >
+                  <BookmarkCheck className="h-4 w-4 mr-2" />
+                  View Bookmarks
+                  {bookmarks.length > 0 && (
+                    <span className="ml-2 px-1.5 py-0.5 text-xs bg-[#006AFF] text-white rounded">
+                      {bookmarks.length}
+                    </span>
+                  )}
+                </Button>
+              </Link>
             </div>
           </div>
           
           {/* Filter Panel */}
           {showFilters && (
             <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    State
+                    State <span className="text-xs text-gray-500">(Select state first)</span>
                   </label>
-                  <Input
-                    placeholder="e.g., CA, NY, TX"
+                  <Select
                     value={filters.state}
-                    onChange={(e) => setFilters({ ...filters, state: e.target.value })}
-                    className="bg-white"
-                  />
+                    onValueChange={(value) => {
+                      setFilters({ ...filters, state: value, city: '' }) // Reset city when state changes
+                    }}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="All States" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      <SelectItem value="all">All States</SelectItem>
+                      {US_STATES.map((state) => (
+                        <SelectItem key={state} value={state}>
+                          {state}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    City
+                    City <span className="text-xs text-gray-500">(Type to search)</span>
+                  </label>
+                  <div className="relative">
+                    <Select
+                      value={filters.city}
+                      onValueChange={(value) => {
+                        setFilters({ ...filters, city: value })
+                        setCitySearch('')
+                      }}
+                      disabled={!filters.state || filters.state === 'all'}
+                      onOpenChange={(open) => {
+                        if (!open) setCitySearch('')
+                      }}
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder={
+                          !filters.state || filters.state === 'all' 
+                            ? "Select state first" 
+                            : filters.city && filters.city !== 'all'
+                              ? `${filters.city} (${citiesWithCounts.find(c => c.name === filters.city)?.count || 0})`
+                              : "All Cities"
+                        } />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        <div className="px-2 py-2 sticky top-0 bg-white border-b">
+                          <Input
+                            placeholder="Type to search cities..."
+                            value={citySearch}
+                            onChange={(e) => setCitySearch(e.target.value)}
+                            className="h-8 text-sm"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        <SelectItem value="all">
+                          All Cities ({citiesWithCounts.reduce((sum, c) => sum + c.count, 0)} facilities)
+                        </SelectItem>
+                        {filteredCities.length > 0 ? (
+                          filteredCities.map((city) => (
+                            <SelectItem key={city.name} value={city.name}>
+                              {city.name} ({city.count} {city.count === 1 ? 'facility' : 'facilities'})
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="px-2 py-6 text-center text-sm text-gray-500">
+                            No cities found. Try a different search.
+                          </div>
+                        )}
+                        {citySearch && filteredCities.length === citiesWithCounts.length && (
+                          <div className="px-2 py-2 text-xs text-gray-500 border-t">
+                            Showing all {filteredCities.length} cities
+                          </div>
+                        )}
+                        {citySearch && filteredCities.length < citiesWithCounts.length && filteredCities.length > 0 && (
+                          <div className="px-2 py-2 text-xs text-gray-500 border-t">
+                            Showing {filteredCities.length} of {citiesWithCounts.length} cities
+                          </div>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ZIP Code <span className="text-xs text-gray-500">(Type to search)</span>
                   </label>
                   <Input
-                    placeholder="e.g., Los Angeles"
-                    value={filters.city}
-                    onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                    placeholder="e.g., 90210"
+                    value={filters.zipcode}
+                    onChange={(e) => setFilters({ ...filters, zipcode: e.target.value })}
                     className="bg-white"
+                    maxLength={10}
                   />
                 </div>
                 <div className="flex items-end">
@@ -567,7 +753,7 @@ export default function FacilityTypePage() {
                   </label>
                 </div>
               </div>
-              <div className="mt-4 flex gap-2">
+              <div className="mt-4 flex gap-2 flex-wrap">
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -578,6 +764,21 @@ export default function FacilityTypePage() {
                 <div className="text-sm text-gray-600 flex items-center">
                   Showing {filteredProviders.length} of {providersData?.providers.length || 0} providers
                 </div>
+                {filters.state && filters.state !== 'all' && (
+                  <Badge variant="secondary" className="text-xs">
+                    State: {filters.state}
+                  </Badge>
+                )}
+                {filters.city && filters.city !== 'all' && (
+                  <Badge variant="secondary" className="text-xs">
+                    City: {filters.city}
+                  </Badge>
+                )}
+                {filters.zipcode && (
+                  <Badge variant="secondary" className="text-xs">
+                    ZIP: {filters.zipcode}
+                  </Badge>
+                )}
               </div>
             </div>
           )}
@@ -611,13 +812,48 @@ export default function FacilityTypePage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredProviders.map((provider) => (
+              {filteredProviders.map((provider) => {
+                const bookmarked = isBookmarked(provider.npi_number || '')
+                
+                return (
                 <Card 
                   key={provider.id} 
-                  className="bg-white border-gray-200 hover:shadow-lg hover:border-[#006AFF]/30 transition-all cursor-pointer"
-                  onClick={() => setSelectedProvider(provider)}
+                  className="bg-white border-gray-200 hover:shadow-lg hover:border-[#006AFF]/30 transition-all cursor-pointer relative group"
                 >
-                  <CardContent className="p-6">
+                  {/* Bookmark Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (bookmarked) {
+                        removeBookmark(provider.npi_number || '')
+                      } else {
+                        addBookmark({
+                          id: provider.id.toString(),
+                          npi: provider.npi_number || '',
+                          name: provider.provider_name,
+                          city: provider.business_city || '',
+                          state: provider.business_state || '',
+                          phone: provider.business_phone || undefined,
+                          facilityType: facilityTypeInfo?.name || '',
+                          category: categoryInfo?.name || '',
+                        })
+                      }
+                    }}
+                    className={`absolute top-4 right-4 p-2 rounded-full transition-all z-10 ${
+                      bookmarked 
+                        ? 'bg-[#006AFF] text-white shadow-lg' 
+                        : 'bg-white text-gray-400 hover:text-[#006AFF] hover:bg-[#006AFF]/10 opacity-0 group-hover:opacity-100'
+                    }`}
+                    title={bookmarked ? 'Remove bookmark' : 'Bookmark facility'}
+                  >
+                    {bookmarked ? (
+                      <BookmarkCheck className="h-5 w-5" />
+                    ) : (
+                      <Bookmark className="h-5 w-5" />
+                    )}
+                  </button>
+
+                  <CardContent className="p-6" onClick={() => setSelectedProvider(provider)}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-lg bg-[#006AFF]/10 flex items-center justify-center text-2xl">
@@ -669,7 +905,8 @@ export default function FacilityTypePage() {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                )
+              })}
             </div>
           )}
 

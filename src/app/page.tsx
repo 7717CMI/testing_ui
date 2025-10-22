@@ -47,48 +47,68 @@ export default function LandingPage() {
         animate={{ y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <motion.div
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.6 }}
-            >
-              <Building2 className="h-6 w-6 text-primary-500" />
-            </motion.div>
-            <span className="font-bold text-xl gradient-text">HealthData</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/login">
-              <Button variant="ghost">Login</Button>
-            </Link>
-            <Link href="/signup">
-              <Button>Start Free Trial</Button>
-            </Link>
+        <div className="w-full px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            {/* Left side: Logo + Navigation */}
+            <div className="flex items-center gap-8">
+              <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+                <motion.div
+                  whileHover={{ rotate: 360 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <Building2 className="h-6 w-6 text-primary-500" />
+                </motion.div>
+                <span className="font-bold text-xl gradient-text">HealthData</span>
+              </Link>
+              <div className="hidden md:flex items-center gap-6">
+                <Link href="/" className="text-sm font-medium text-gray-900 dark:text-white">
+                  Home
+                </Link>
+                <Link href="/data-catalog" className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
+                  Data Catalog
+                </Link>
+                <Link href="/search" className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
+                  Search
+                </Link>
+                <Link href="/insights" className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
+                  Insights
+                </Link>
+              </div>
+            </div>
+            {/* Right side: Auth buttons */}
+            <div className="flex items-center gap-4 flex-shrink-0">
+              <Link href="/login">
+                <Button variant="ghost">Login</Button>
+              </Link>
+              <Link href="/signup">
+                <Button>Start Free Trial</Button>
+              </Link>
+            </div>
           </div>
         </div>
       </motion.nav>
 
       {/* Hero Section */}
-      <section className="container py-24 md:py-32 relative overflow-hidden">
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-24 lg:py-32 relative overflow-hidden">
         {/* Three.js Background Animation */}
         <div className="absolute inset-0 pointer-events-none opacity-30">
           <ParticleBackground particleCount={800} color="#3B82F6" speed={0.0003} />
         </div>
         
         <motion.div 
-          className="flex flex-col items-center text-center gap-8 relative z-10"
+          className="flex flex-col items-center text-center gap-4 sm:gap-6 md:gap-8 relative z-10 max-w-7xl mx-auto"
           initial="initial"
           animate="animate"
           variants={staggerContainer}
         >
           <motion.div variants={fadeInUp}>
-            <Badge variant="secondary" className="px-4 py-2 glass">
+            <Badge variant="secondary" className="px-3 py-1.5 sm:px-4 sm:py-2 glass text-xs sm:text-sm">
               Over 6M healthcare facilities indexed
             </Badge>
           </motion.div>
           
           <motion.h1 
-            className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight max-w-4xl"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight max-w-5xl px-4"
             variants={fadeInUp}
           >
             Healthcare Data.{" "}
@@ -96,7 +116,7 @@ export default function LandingPage() {
           </motion.h1>
           
           <motion.p 
-            className="text-xl text-muted-foreground max-w-2xl"
+            className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl px-4"
             variants={fadeInUp}
           >
             Next-generation intelligence platform for U.S. healthcare providers. 
@@ -105,19 +125,19 @@ export default function LandingPage() {
           </motion.p>
           
           <motion.div 
-            className="flex flex-col sm:flex-row gap-4 mt-4"
+            className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2 sm:mt-4 w-full sm:w-auto px-4"
             variants={fadeInUp}
           >
-            <Link href="/signup">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link href="/signup" className="w-full sm:w-auto">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full">
                 <Button size="lg" className="w-full sm:w-auto gradient-primary">
                   Start Free Trial
                   <Zap className="ml-2 h-4 w-4" />
                 </Button>
               </motion.div>
             </Link>
-            <Link href="/search">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link href="/search" className="w-full sm:w-auto">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto">
                   Explore Insights
                   <TrendingUp className="ml-2 h-4 w-4" />
@@ -128,7 +148,7 @@ export default function LandingPage() {
 
           {/* Stats Ticker */}
           <motion.div 
-            className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16 w-full max-w-4xl relative"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 mt-8 sm:mt-12 md:mt-16 w-full max-w-5xl relative px-4"
             variants={staggerContainer}
           >
             {/* Decorative Floating Spheres */}
@@ -138,28 +158,28 @@ export default function LandingPage() {
             <div className="absolute -bottom-20 -right-20 opacity-15 pointer-events-none hidden md:block">
               <FloatingSphere size={150} color="#8B5CF6" />
             </div>
-            <motion.div className="space-y-2" variants={fadeInUp}>
-              <div className="text-3xl font-bold text-primary-500 counter-animate">6M+</div>
-              <div className="text-sm text-muted-foreground">Facilities Tracked</div>
+            <motion.div className="space-y-1 sm:space-y-2" variants={fadeInUp}>
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-500 counter-animate">6M+</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Facilities Tracked</div>
             </motion.div>
-            <motion.div className="space-y-2" variants={fadeInUp}>
-              <div className="text-3xl font-bold text-secondary-500 counter-animate">99.9%</div>
-              <div className="text-sm text-muted-foreground">Data Accuracy</div>
+            <motion.div className="space-y-1 sm:space-y-2" variants={fadeInUp}>
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-secondary-500 counter-animate">99.9%</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Data Accuracy</div>
             </motion.div>
-            <motion.div className="space-y-2" variants={fadeInUp}>
-              <div className="text-3xl font-bold text-accent-500 counter-animate">50K+</div>
-              <div className="text-sm text-muted-foreground">Daily Updates</div>
+            <motion.div className="space-y-1 sm:space-y-2" variants={fadeInUp}>
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-accent-500 counter-animate">50K+</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Daily Updates</div>
             </motion.div>
-            <motion.div className="space-y-2" variants={fadeInUp}>
-              <div className="text-3xl font-bold text-primary-500 counter-animate">24/7</div>
-              <div className="text-sm text-muted-foreground">AI Support</div>
+            <motion.div className="space-y-1 sm:space-y-2" variants={fadeInUp}>
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-500 counter-animate">24/7</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">AI Support</div>
             </motion.div>
           </motion.div>
         </motion.div>
       </section>
 
       {/* Features Grid */}
-      <section className="container py-24 bg-background/50 relative overflow-hidden">
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-24 bg-background/50 relative overflow-hidden">
         {/* Three.js Decorative Elements */}
         <div className="absolute top-10 right-10 opacity-20 pointer-events-none hidden lg:block">
           <FloatingSphere size={250} color="#10B981" />
@@ -168,22 +188,22 @@ export default function LandingPage() {
           <NeuralNetwork width={400} height={300} />
         </div>
         
-        <div className="text-center mb-16 relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+        <div className="text-center mb-8 sm:mb-12 md:mb-16 relative z-10 max-w-7xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 px-4">
             Everything you need to make informed decisions
           </h2>
-          <p className="text-xl text-muted-foreground">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground px-4">
             Powerful tools built for healthcare intelligence professionals
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 relative z-10 max-w-7xl mx-auto">
           <Link href="/intent" className="block">
             <Card className="card-hover h-full cursor-pointer transition-all hover:border-accent-300 dark:hover:border-accent-700">
               <CardHeader>
-                <Zap className="h-12 w-12 text-accent-500 mb-4" />
-                <CardTitle>Intent Signals</CardTitle>
-                <CardDescription>
+                <Zap className="h-10 w-10 sm:h-12 sm:w-12 text-accent-500 mb-3 sm:mb-4" />
+                <CardTitle className="text-lg sm:text-xl">Intent Signals</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
                   Identify in-market companies showing active research behavior across healthcare topics
                 </CardDescription>
               </CardHeader>
@@ -193,9 +213,9 @@ export default function LandingPage() {
           <Link href="/search" className="block">
             <Card className="card-hover h-full cursor-pointer transition-all hover:border-primary-300 dark:hover:border-primary-700">
               <CardHeader>
-                <Search className="h-12 w-12 text-primary-500 mb-4" />
-                <CardTitle>Advanced Search</CardTitle>
-                <CardDescription>
+                <Search className="h-10 w-10 sm:h-12 sm:w-12 text-primary-500 mb-3 sm:mb-4" />
+                <CardTitle className="text-lg sm:text-xl">Advanced Search</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
                   Lightning-fast search across millions of healthcare facilities with intelligent filtering
                 </CardDescription>
               </CardHeader>
@@ -205,9 +225,9 @@ export default function LandingPage() {
           <Link href="/filtering" className="block">
             <Card className="card-hover h-full cursor-pointer transition-all hover:border-orange-300 dark:hover:border-orange-700">
               <CardHeader>
-                <Filter className="h-12 w-12 text-orange-500 mb-4" />
-                <CardTitle>Advanced Filtering</CardTitle>
-                <CardDescription>
+                <Filter className="h-10 w-10 sm:h-12 sm:w-12 text-orange-500 mb-3 sm:mb-4" />
+                <CardTitle className="text-lg sm:text-xl">Advanced Filtering</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
                   Filter by 50+ attributes including location, bed count, ownership, and specialties
                 </CardDescription>
               </CardHeader>
@@ -217,9 +237,9 @@ export default function LandingPage() {
           <Link href="/data-catalog" className="block">
             <Card className="card-hover h-full cursor-pointer transition-all hover:border-blue-300 dark:hover:border-blue-700">
               <CardHeader>
-                <Database className="h-12 w-12 text-blue-500 mb-4" />
-                <CardTitle>Data Catalog</CardTitle>
-                <CardDescription>
+                <Database className="h-10 w-10 sm:h-12 sm:w-12 text-blue-500 mb-3 sm:mb-4" />
+                <CardTitle className="text-lg sm:text-xl">Data Catalog</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
                   Browse 6M+ verified healthcare records across 12 facility categories with detailed breakdowns
                 </CardDescription>
               </CardHeader>
@@ -229,9 +249,9 @@ export default function LandingPage() {
           <Link href="/ai-assistant" className="block">
             <Card className="card-hover h-full cursor-pointer transition-all hover:border-secondary-300 dark:hover:border-secondary-700">
               <CardHeader>
-                <Brain className="h-12 w-12 text-secondary-500 mb-4" />
-                <CardTitle>AI Assistant</CardTitle>
-                <CardDescription>
+                <Brain className="h-10 w-10 sm:h-12 sm:w-12 text-secondary-500 mb-3 sm:mb-4" />
+                <CardTitle className="text-lg sm:text-xl">AI Assistant</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
                   GPT-4 powered assistant for instant insights, analysis, and data exploration
                 </CardDescription>
               </CardHeader>
@@ -241,9 +261,9 @@ export default function LandingPage() {
           <Link href="/insights" className="block">
             <Card className="card-hover h-full cursor-pointer transition-all hover:border-accent-300 dark:hover:border-accent-700">
               <CardHeader>
-                <TrendingUp className="h-12 w-12 text-accent-500 mb-4" />
-                <CardTitle>Real-Time Insights</CardTitle>
-                <CardDescription>
+                <TrendingUp className="h-10 w-10 sm:h-12 sm:w-12 text-accent-500 mb-3 sm:mb-4" />
+                <CardTitle className="text-lg sm:text-xl">Real-Time Insights</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
                   Stay ahead with live updates on M&A activity, funding, and market trends
                 </CardDescription>
               </CardHeader>
@@ -253,9 +273,9 @@ export default function LandingPage() {
           <Link href="/mapping" className="block">
             <Card className="card-hover h-full cursor-pointer transition-all hover:border-primary-300 dark:hover:border-primary-700">
               <CardHeader>
-                <Globe className="h-12 w-12 text-primary-500 mb-4" />
-                <CardTitle>Geographic Mapping</CardTitle>
-                <CardDescription>
+                <Globe className="h-10 w-10 sm:h-12 sm:w-12 text-primary-500 mb-3 sm:mb-4" />
+                <CardTitle className="text-lg sm:text-xl">Geographic Mapping</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
                   Interactive maps with facility locations, demographics, and market analysis
                 </CardDescription>
               </CardHeader>
@@ -265,9 +285,9 @@ export default function LandingPage() {
           <Link href="/analytics" className="block">
             <Card className="card-hover h-full cursor-pointer transition-all hover:border-secondary-300 dark:hover:border-secondary-700">
               <CardHeader>
-                <BarChart3 className="h-12 w-12 text-secondary-500 mb-4" />
-                <CardTitle>Advanced Analytics</CardTitle>
-                <CardDescription>
+                <BarChart3 className="h-10 w-10 sm:h-12 sm:w-12 text-secondary-500 mb-3 sm:mb-4" />
+                <CardTitle className="text-lg sm:text-xl">Advanced Analytics</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
                   Interactive charts and visualizations for deep data analysis
                 </CardDescription>
               </CardHeader>
@@ -277,9 +297,9 @@ export default function LandingPage() {
           <Link href="/verified-data" className="block">
             <Card className="card-hover h-full cursor-pointer transition-all hover:border-accent-300 dark:hover:border-accent-700">
               <CardHeader>
-                <Shield className="h-12 w-12 text-accent-500 mb-4" />
-                <CardTitle>Verified Data</CardTitle>
-                <CardDescription>
+                <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-accent-500 mb-3 sm:mb-4" />
+                <CardTitle className="text-lg sm:text-xl">Verified Data</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
                   Comprehensive verification process ensuring data quality and accuracy
                 </CardDescription>
               </CardHeader>
