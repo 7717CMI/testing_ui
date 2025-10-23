@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Insight } from "@/types"
-import { Eye, Bookmark, Share2, Clock, ExternalLink } from "lucide-react"
+import { Eye, Bookmark, Share2, Clock, ExternalLink, Newspaper } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { useState } from "react"
 
@@ -11,9 +11,10 @@ interface InsightCardProps {
   insight: Insight
   onBookmark?: () => void
   onShare?: () => void
+  onViewArticle?: (insight: Insight) => void // NEW: callback for opening article viewer
 }
 
-export function InsightCard({ insight, onBookmark, onShare }: InsightCardProps) {
+export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: InsightCardProps) {
   const [showFullArticle, setShowFullArticle] = useState(false)
 
   const categoryColors: Record<string, string> = {
@@ -134,20 +135,22 @@ export function InsightCard({ insight, onBookmark, onShare }: InsightCardProps) 
               {insight.sourceUrl && (
                 <Button
                   onClick={() => {
-                    // Open in embedded article viewer (within your site)
-                    const articleUrl = `/article-viewer?url=${encodeURIComponent(insight.sourceUrl)}&title=${encodeURIComponent(insight.title)}`
-                    window.open(articleUrl, '_blank')
+                    // Trigger the parent component's article viewer modal
+                    if (onViewArticle) {
+                      setShowFullArticle(false) // Close summary modal
+                      onViewArticle(insight) // Open article viewer modal
+                    }
                   }}
                   className="w-full gap-2"
                   variant="default"
                 >
-                  <ExternalLink className="h-4 w-4" />
-                  Read Full Article on Source Website
+                  <Newspaper className="h-4 w-4" />
+                  View Full Article in Reader
                 </Button>
               )}
               {insight.sourceUrl && (
                 <p className="text-xs text-center text-muted-foreground">
-                  Opens in a new tab within HealthData AI wrapper
+                  Opens article within HealthData AI reader (stays in app)
                 </p>
               )}
             </div>

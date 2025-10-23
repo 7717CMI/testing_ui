@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Navbar } from "@/components/shared/navbar"
 import { InsightCard } from "@/components/shared/insight-card"
+import { ArticleViewerModal, ArticleData } from "@/components/ArticleViewerModal"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -60,6 +61,33 @@ export default function InsightsPage() {
   const [isFallback, setIsFallback] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
   const { intents, trendingTopics: intentTopics, fetchIntentData, exportIntentData } = useIntentStore()
+
+  // Article Viewer Modal State
+  const [articleViewerOpen, setArticleViewerOpen] = useState(false)
+  const [selectedArticle, setSelectedArticle] = useState<ArticleData | null>(null)
+
+  // Handle opening article in viewer modal
+  const handleViewArticle = (insight: Insight) => {
+    if (insight.sourceUrl) {
+      setSelectedArticle({
+        title: insight.title,
+        url: insight.sourceUrl,
+        source: insight.author,
+        publishedDate: insight.date,
+        description: insight.summary
+      })
+      setArticleViewerOpen(true)
+    } else {
+      toast.error("Article URL not available")
+    }
+  }
+
+  // Handle closing article viewer
+  const handleCloseArticleViewer = () => {
+    setArticleViewerOpen(false)
+    // Clear after animation completes
+    setTimeout(() => setSelectedArticle(null), 300)
+  }
 
   useEffect(() => {
     async function fetchRealInsights() {
@@ -343,6 +371,7 @@ export default function InsightsPage() {
                         insight={insight}
                         onBookmark={() => handleBookmark(insight)}
                         onShare={() => handleShare(insight)}
+                        onViewArticle={handleViewArticle}
                       />
                     ))}
                   </div>
@@ -419,6 +448,13 @@ export default function InsightsPage() {
           </aside>
         </div>
       </div>
+
+      {/* Article Viewer Modal */}
+      <ArticleViewerModal
+        isOpen={articleViewerOpen}
+        onClose={handleCloseArticleViewer}
+        article={selectedArticle}
+      />
     </div>
   )
 }
