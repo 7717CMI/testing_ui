@@ -3,9 +3,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Insight } from "@/types"
-import { Eye, Bookmark, Share2, Clock, ExternalLink, Newspaper } from "lucide-react"
+import { Eye, Bookmark, Share2, Clock, ExternalLink, Newspaper, BookmarkCheck } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { canUseIframe } from "@/lib/iframe-whitelist"
+import { useSavedInsightsStore } from "@/stores/saved-insights-store"
 
 interface InsightCardProps {
   insight: Insight
@@ -16,6 +19,9 @@ interface InsightCardProps {
 
 export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: InsightCardProps) {
   const [showFullArticle, setShowFullArticle] = useState(false)
+  const router = useRouter()
+  const { isSaved } = useSavedInsightsStore()
+  const isBookmarked = isSaved(insight.id)
 
   const categoryColors: Record<string, string> = {
     Expansion: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
@@ -25,6 +31,38 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
     Regulation: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
     Policy: "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300",
     "Market Trend": "bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300",
+  }
+
+  // Hybrid approach: Check if site allows iframe or use reader mode
+  const handleReadFullArticle = () => {
+    if (!insight.sourceUrl) {
+      console.warn('No source URL available for article')
+      return
+    }
+
+    // Check if this site is iframe-friendly
+    const useIframe = canUseIframe(insight.sourceUrl)
+    
+    console.log('📰 Opening article:', {
+      title: insight.title,
+      url: insight.sourceUrl,
+      useIframe,
+    })
+
+    if (useIframe) {
+      // Site allows iframe - open in article viewer with header
+      console.log('✅ Site is iframe-friendly, opening in article viewer')
+      router.push(
+        `/article-viewer?url=${encodeURIComponent(insight.sourceUrl)}&title=${encodeURIComponent(insight.title)}&source=${encodeURIComponent(insight.author)}`
+      )
+    } else {
+      // Site blocks iframe - use reader mode extraction
+      console.log('⚠️ Site not iframe-friendly, using reader mode')
+      if (onViewArticle) {
+        setShowFullArticle(false) // Close summary modal first
+        onViewArticle(insight) // Open reader mode modal
+      }
+    }
   }
 
   return (
@@ -67,10 +105,20 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
           </div>
 
           <div className="flex items-center gap-2 pt-2 border-t">
-            <Button size="sm" variant="ghost" onClick={onBookmark}>
-              <Bookmark className="h-4 w-4" />
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={onBookmark}
+              className={isBookmarked ? "text-blue-600 hover:text-blue-700" : ""}
+              title={isBookmarked ? "Remove from saved" : "Save for later"}
+            >
+              {isBookmarked ? (
+                <BookmarkCheck className="h-4 w-4 fill-current" />
+              ) : (
+                <Bookmark className="h-4 w-4" />
+              )}
             </Button>
-            <Button size="sm" variant="ghost" onClick={onShare}>
+            <Button size="sm" variant="ghost" onClick={onShare} title="Share article">
               <Share2 className="h-4 w-4" />
             </Button>
             <Button 
@@ -131,26 +179,22 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
                 </div>
               </div>
 
-              {/* Read Full Article Button - Opens in embedded viewer */}
+              {/* Read Full Article Button - Opens in hybrid viewer */}
               {insight.sourceUrl && (
                 <Button
-                  onClick={() => {
-                    // Trigger the parent component's article viewer modal
-                    if (onViewArticle) {
-                      setShowFullArticle(false) // Close summary modal
-                      onViewArticle(insight) // Open article viewer modal
-                    }
-                  }}
+                  onClick={handleReadFullArticle}
                   className="w-full gap-2"
                   variant="default"
                 >
                   <Newspaper className="h-4 w-4" />
-                  View Full Article in Reader
+                  View Full Article
                 </Button>
               )}
               {insight.sourceUrl && (
                 <p className="text-xs text-center text-muted-foreground">
-                  Opens article within HealthData AI reader (stays in app)
+                  {canUseIframe(insight.sourceUrl)
+                    ? 'Opens article within HealthData AI wrapper'
+                    : 'Opens article in reader mode (extraction)'}
                 </p>
               )}
             </div>
@@ -169,12 +213,16 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
             <div className="flex items-center gap-2 pt-4">
               <Button 
                 size="sm" 
-                variant="outline" 
+                variant={isBookmarked ? "default" : "outline"}
                 onClick={onBookmark}
-                className="gap-2"
+                className={isBookmarked ? "gap-2 bg-blue-600 hover:bg-blue-700" : "gap-2"}
               >
-                <Bookmark className="h-4 w-4" />
-                Bookmark
+                {isBookmarked ? (
+                  <BookmarkCheck className="h-4 w-4 fill-current" />
+                ) : (
+                  <Bookmark className="h-4 w-4" />
+                )}
+                {isBookmarked ? "Saved" : "Bookmark"}
               </Button>
               <Button 
                 size="sm" 

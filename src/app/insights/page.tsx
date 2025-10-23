@@ -12,10 +12,11 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Insight } from "@/types"
 import { toast } from "sonner"
-import { TrendingUp, Bookmark, Target, ArrowUp, ArrowDown, ExternalLink, Download, Loader2, Info, RefreshCw } from "lucide-react"
+import { TrendingUp, Bookmark, Target, ArrowUp, ArrowDown, ExternalLink, Download, Loader2, Info, RefreshCw, Trash2, Eye } from "lucide-react"
 import { useIntentStore } from "@/lib/store/intent-store"
 import { ParticleBackground } from "@/components/three"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useSavedInsightsStore } from "@/stores/saved-insights-store"
 
 interface Article {
   id?: number
@@ -61,10 +62,52 @@ export default function InsightsPage() {
   const [isFallback, setIsFallback] = useState(false)
   const [activeTab, setActiveTab] = useState("all")
   const { intents, trendingTopics: intentTopics, fetchIntentData, exportIntentData } = useIntentStore()
+  
+  // Saved Insights Store
+  const { savedInsights, addSavedInsight, removeSavedInsight, isSaved } = useSavedInsightsStore()
 
   // Article Viewer Modal State
   const [articleViewerOpen, setArticleViewerOpen] = useState(false)
   const [selectedArticle, setSelectedArticle] = useState<ArticleData | null>(null)
+
+  // Handle bookmarking/saving an article
+  const handleBookmark = (insight: Insight) => {
+    if (isSaved(insight.id)) {
+      removeSavedInsight(insight.id)
+      toast.success('Article removed from saved', {
+        description: insight.title,
+      })
+    } else {
+      addSavedInsight(insight)
+      toast.success('Article saved!', {
+        description: 'You can find it in the Saved Articles section',
+      })
+    }
+  }
+
+  // Handle sharing an article
+  const handleShare = (insight: Insight) => {
+    if (navigator.share && insight.sourceUrl) {
+      navigator.share({
+        title: insight.title,
+        text: insight.summary,
+        url: insight.sourceUrl,
+      })
+      .then(() => toast.success('Shared successfully'))
+      .catch(() => {
+        // Fallback: Copy to clipboard
+        copyToClipboard(insight)
+      })
+    } else {
+      copyToClipboard(insight)
+    }
+  }
+
+  const copyToClipboard = (insight: Insight) => {
+    const text = `${insight.title}\n\n${insight.summary}\n\n${insight.sourceUrl || ''}`
+    navigator.clipboard.writeText(text)
+    toast.success('Link copied to clipboard')
+  }
 
   // Handle opening article in viewer modal
   const handleViewArticle = (insight: Insight) => {
@@ -148,14 +191,6 @@ export default function InsightsPage() {
     if (activeTab === "all") return true
     return insight.type.toLowerCase() === activeTab.toLowerCase()
   })
-
-  function handleBookmark(insight: Insight) {
-    toast.success(`"${insight.title}" bookmarked!`)
-  }
-
-  function handleShare(insight: Insight) {
-    toast.success("Link copied to clipboard!")
-  }
 
   function handleRefresh() {
     window.location.reload()
@@ -433,15 +468,72 @@ export default function InsightsPage() {
               {/* Saved Articles */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
+                  <CardTitle className="flex items-center justify-between text-lg">
+                    <div className="flex items-center gap-2">
                     <Bookmark className="h-5 w-5 text-primary-500" />
                     Saved Articles
+                    </div>
+                    {savedInsights.length > 0 && (
+                      <Badge variant="secondary">{savedInsights.length}</Badge>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {savedInsights.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-8">
                     No saved articles yet. Bookmark articles to read them later.
                   </p>
+                  ) : (
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {savedInsights.map((saved) => (
+                        <div
+                          key={saved.id}
+                          className="group p-3 rounded-lg border border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-all cursor-pointer"
+                        >
+                          <div className="flex items-start gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-medium line-clamp-2 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                                {saved.title}
+                              </h4>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Badge variant="secondary" className="text-xs">
+                                  {saved.category}
+                                </Badge>
+                                <span>•</span>
+                                <span>{new Date(saved.savedAt).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleViewArticle(saved)
+                                }}
+                                title="View article"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleBookmark(saved)
+                                }}
+                                title="Remove from saved"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

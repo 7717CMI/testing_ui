@@ -4,6 +4,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { useSavedSearchesStore } from '@/stores/saved-searches-store'
+import { useSavedInsightsStore } from '@/stores/saved-insights-store'
+import { ArticleViewerModal, ArticleData } from '@/components/ArticleViewerModal'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,8 +33,13 @@ import {
   Clock,
   Bell,
   BellOff,
+  Newspaper,
+  Eye,
+  ExternalLink,
+  TrendingUp,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { toast } from 'sonner'
 
 export default function SavedSearchesPage() {
   const {
@@ -45,8 +52,12 @@ export default function SavedSearchesPage() {
     exportList,
   } = useSavedSearchesStore()
 
+  const { savedInsights, removeSavedInsight } = useSavedInsightsStore()
+
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedColor, setSelectedColor] = useState('#3B82F6')
+  const [articleViewerOpen, setArticleViewerOpen] = useState(false)
+  const [selectedArticle, setSelectedArticle] = useState<ArticleData | null>(null)
 
   const colors = [
     '#3B82F6', // blue
@@ -65,6 +76,45 @@ export default function SavedSearchesPage() {
   const filteredLists = facilityLists.filter((list) =>
     list.name.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const filteredArticles = savedInsights.filter((article) =>
+    article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    article.summary.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      'Expansion': 'bg-blue-500',
+      'Technology': 'bg-purple-500',
+      'Funding': 'bg-green-500',
+      'M&A': 'bg-orange-500',
+      'Regulation': 'bg-red-500',
+      'Policy': 'bg-yellow-500',
+      'Market Trend': 'bg-teal-500',
+    }
+    return colors[category] || 'bg-gray-500'
+  }
+
+  const handleReadArticle = (article: any) => {
+    if (!article.sourceUrl) {
+      toast.error("Article URL not available")
+      return
+    }
+
+    setSelectedArticle({
+      title: article.title,
+      url: article.sourceUrl,
+      source: article.author,
+      publishedDate: article.date,
+      description: article.summary
+    })
+    setArticleViewerOpen(true)
+  }
+
+  const handleCloseArticleViewer = () => {
+    setArticleViewerOpen(false)
+    setTimeout(() => setSelectedArticle(null), 300)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
@@ -138,7 +188,7 @@ export default function SavedSearchesPage() {
           transition={{ delay: 0.2 }}
         >
           <Tabs defaultValue="searches" className="space-y-6">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsList className="grid w-full max-w-2xl grid-cols-3">
               <TabsTrigger value="searches" className="gap-2">
                 <Search className="h-4 w-4" />
                 Saved Searches ({savedSearches.length})
@@ -146,6 +196,27 @@ export default function SavedSearchesPage() {
               <TabsTrigger value="lists" className="gap-2">
                 <List className="h-4 w-4" />
                 Facility Lists ({facilityLists.length})
+              </TabsTrigger>
+              <TabsTrigger value="articles" className="gap-2 relative">
+                <Newspaper className="h-4 w-4" />
+                <span className="hidden sm:inline">Saved Articles</span>
+                <span className="sm:hidden">Articles</span>
+                {savedInsights.length > 10 && (
+                  <Badge 
+                    variant="secondary" 
+                    className="ml-1 h-5 px-1.5 bg-green-500 text-white text-xs"
+                  >
+                    10+
+                  </Badge>
+                )}
+                {savedInsights.length <= 10 && savedInsights.length > 0 && (
+                  <Badge 
+                    variant="secondary" 
+                    className="ml-1 h-5 px-1.5 bg-green-500 text-white text-xs"
+                  >
+                    {savedInsights.length}
+                  </Badge>
+                )}
               </TabsTrigger>
             </TabsList>
 
@@ -387,6 +458,120 @@ export default function SavedSearchesPage() {
                 </div>
               )}
             </TabsContent>
+
+            {/* Saved Articles Tab */}
+            <TabsContent value="articles" className="space-y-4">
+              {filteredArticles.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <Newspaper className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                    <h3 className="text-lg font-semibold mb-2">No saved articles yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      Save interesting articles from the Insights page to read later
+                    </p>
+                    <Link href="/insights">
+                      <Button>
+                        <TrendingUp className="h-4 w-4 mr-2" />
+                        Go to Insights
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {filteredArticles.map((article) => (
+                    <Card key={article.id} className="card-hover group">
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className={`${getCategoryColor(article.category)} text-white text-xs`}>
+                                {article.category}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {article.date}
+                              </span>
+                            </div>
+                            <CardTitle className="text-lg mb-2">{article.title}</CardTitle>
+                            <CardDescription className="line-clamp-2">
+                              {article.summary}
+                            </CardDescription>
+                          </div>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                              onClick={() => removeSavedInsight(article.id)}
+                              title="Remove from saved"
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {/* Stats */}
+                        <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Eye className="h-4 w-4" />
+                            {article.views?.toLocaleString() || 0} views
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-4 w-4" />
+                            {article.readTime || 5} min read
+                          </span>
+                          <span className="text-xs">
+                            By {article.author}
+                          </span>
+                        </div>
+
+                        {/* Tags */}
+                        {article.tags && article.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {article.tags.slice(0, 3).map((tag, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Saved Info */}
+                        <div className="pt-3 border-t flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Bookmark className="h-3 w-3 text-green-500" />
+                            Saved {formatDistanceToNow((article as any).savedAt || Date.now(), { addSuffix: true })}
+                          </span>
+                          
+                          {/* Actions */}
+                          <div className="flex gap-2">
+                            {article.sourceUrl && (
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="gap-2"
+                                onClick={() => handleReadArticle(article)}
+                              >
+                                <Newspaper className="h-3 w-3" />
+                                Read Article
+                              </Button>
+                            )}
+                            <Link href="/insights">
+                              <Button size="sm" className="gap-2">
+                                <TrendingUp className="h-3 w-3" />
+                                View Insights
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
           </Tabs>
         </motion.div>
 
@@ -398,7 +583,7 @@ export default function SavedSearchesPage() {
         >
           <Card className="bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-950 dark:to-secondary-950">
             <CardContent className="pt-6">
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-3 gap-6">
                 <div>
                   <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
                     <Search className="h-5 w-5 text-primary-500" />
@@ -445,11 +630,41 @@ export default function SavedSearchesPage() {
                     </li>
                   </ul>
                 </div>
+                <div>
+                  <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                    <Newspaper className="h-5 w-5 text-green-500" />
+                    Saved Articles
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Save interesting healthcare news articles to read later or reference.
+                  </p>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-500">•</span>
+                      <span>Read articles offline anytime</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-500">•</span>
+                      <span>Organize by category and tags</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-green-500">•</span>
+                      <span>Track reading history and progress</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </CardContent>
           </Card>
         </motion.div>
       </div>
+
+      {/* Article Viewer Modal */}
+      <ArticleViewerModal
+        isOpen={articleViewerOpen}
+        onClose={handleCloseArticleViewer}
+        article={selectedArticle}
+      />
     </div>
   )
 }
