@@ -40,8 +40,11 @@ import {
   X,
   Bookmark,
   BookmarkCheck,
+  TrendingUp,
 } from 'lucide-react'
 import { useBookmarksStore } from '@/stores/bookmarks-store'
+import { SmartSearchComponent } from '@/components/smart-search'
+import { motion } from 'framer-motion'
 
 interface ProviderInfo {
   id: number
@@ -516,11 +519,15 @@ export default function FacilityTypePage() {
             
             <div className="flex items-center justify-center gap-4">
               {isLoading ? (
-                <Skeleton className="w-16 h-16 rounded-lg" />
+                <Skeleton className="w-20 h-20 rounded-2xl" />
               ) : (
-                <div className="w-16 h-16 rounded-lg bg-[#006AFF]/10 flex items-center justify-center text-4xl">
+                <motion.div 
+                  whileHover={{ rotate: 360 }}
+                  transition={{ duration: 0.6 }}
+                  className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg text-4xl"
+                >
                   {categoryInfo ? getCategoryIcon(categoryInfo.display_name) : '🏥'}
-                </div>
+                </motion.div>
               )}
             </div>
 
@@ -551,9 +558,19 @@ export default function FacilityTypePage() {
                 {isLoading ? (
                   <Skeleton className="h-8 w-20 mx-auto mb-2" />
                 ) : (
-                  <div className="text-3xl font-bold text-[#006AFF]">
+                  <motion.div 
+                    className="text-3xl font-bold"
+                    style={{
+                      background: 'linear-gradient(90deg, #006AFF, #8A2BE2, #006AFF)',
+                      backgroundSize: '200% 200%',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                    }}
+                    animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                  >
                     {facilityTypeInfo?.provider_count.toLocaleString() || '0'}
-                  </div>
+                  </motion.div>
                 )}
                 <div className="text-sm text-gray-600 mt-1">Total Facilities</div>
               </div>
@@ -561,18 +578,52 @@ export default function FacilityTypePage() {
                 {isLoading ? (
                   <Skeleton className="h-8 w-16 mx-auto mb-2" />
                 ) : (
-                  <div className="text-3xl font-bold text-[#006AFF]">
+                  <motion.div 
+                    className="text-3xl font-bold"
+                    style={{
+                      background: 'linear-gradient(90deg, #006AFF, #8A2BE2, #006AFF)',
+                      backgroundSize: '200% 200%',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                    }}
+                    animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                  >
                     {providersData?.total_count.toLocaleString() || '0'}
-                  </div>
+                  </motion.div>
                 )}
                 <div className="text-sm text-gray-600 mt-1">Showing</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-[#006AFF]">{pageSize}</div>
+                <motion.div 
+                  className="text-3xl font-bold"
+                  style={{
+                    background: 'linear-gradient(90deg, #006AFF, #8A2BE2, #006AFF)',
+                    backgroundSize: '200% 200%',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                  animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                >
+                  {pageSize}
+                </motion.div>
                 <div className="text-sm text-gray-600 mt-1">Per Page</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-[#006AFF]">100%</div>
+                <motion.div 
+                  className="text-3xl font-bold"
+                  style={{
+                    background: 'linear-gradient(90deg, #006AFF, #8A2BE2, #006AFF)',
+                    backgroundSize: '200% 200%',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                  animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                >
+                  100%
+                </motion.div>
                 <div className="text-sm text-gray-600 mt-1">Live Data</div>
               </div>
             </div>
@@ -580,20 +631,53 @@ export default function FacilityTypePage() {
         </div>
       </section>
 
-      {/* Filter Bar */}
+      {/* Smart Search Section */}
+      <section className="bg-gradient-to-br from-purple-50 via-white to-blue-50 border-b py-8">
+        <div className="container max-w-6xl">
+          <SmartSearchComponent
+            facilityType={facilityTypeInfo?.display_name}
+            category={categoryInfo?.display_name}
+            currentFilters={filters}
+            currentResults={filteredProviders.length}
+            onFiltersApplied={(extractedFilters) => {
+              setFilters(prev => ({
+                ...prev,
+                state: extractedFilters.state || prev.state,
+                city: extractedFilters.city || prev.city,
+                zipcode: extractedFilters.zipcode || prev.zipcode,
+                hasPhone: extractedFilters.hasPhone || prev.hasPhone,
+              }))
+            }}
+          />
+        </div>
+      </section>
+
+      {/* Traditional Filter Bar */}
       <section className="bg-white border-b py-6">
         <div className="container">
           <div className="flex flex-col md:flex-row gap-4 items-center">
             <div className="relative flex-1 max-w-2xl">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search facilities by name, city, or state..."
+                placeholder="Or use traditional search by name, city, or state..."
                 className="pl-10 bg-gray-50 border-gray-200"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <div className="flex gap-2">
+              <Link 
+                href={`/insights?facilityType=${encodeURIComponent(facilityTypeInfo?.display_name || '')}&category=${encodeURIComponent(categoryInfo?.display_name || '')}`}
+              >
+                <Button 
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 border-purple-500 text-purple-600 hover:bg-purple-500 hover:text-white"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  View Insights
+                </Button>
+              </Link>
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -811,100 +895,120 @@ export default function FacilityTypePage() {
               ))}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-6">
               {filteredProviders.map((provider) => {
                 const bookmarked = isBookmarked(provider.npi_number || '')
                 
                 return (
-                <Card 
-                  key={provider.id} 
-                  className="bg-white border-gray-200 hover:shadow-lg hover:border-[#006AFF]/30 transition-all cursor-pointer relative group"
+                <motion.div
+                  key={provider.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="group"
                 >
-                  {/* Bookmark Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (bookmarked) {
-                        removeBookmark(provider.npi_number || '')
-                      } else {
-                        addBookmark({
-                          id: provider.id.toString(),
-                          npi: provider.npi_number || '',
-                          name: provider.provider_name,
-                          city: provider.business_city || '',
-                          state: provider.business_state || '',
-                          phone: provider.business_phone || undefined,
-                          facilityType: facilityTypeInfo?.name || '',
-                          category: categoryInfo?.name || '',
-                        })
-                      }
-                    }}
-                    className={`absolute top-4 right-4 p-2 rounded-full transition-all z-10 ${
-                      bookmarked 
-                        ? 'bg-[#006AFF] text-white shadow-lg' 
-                        : 'bg-white text-gray-400 hover:text-[#006AFF] hover:bg-[#006AFF]/10 opacity-0 group-hover:opacity-100'
-                    }`}
-                    title={bookmarked ? 'Remove bookmark' : 'Bookmark facility'}
+                  <Card 
+                    className="bg-white border-gray-200 hover:shadow-2xl hover:border-blue-300 transition-all duration-300 ease-in-out cursor-pointer relative hover:translate-y-[-4px]"
                   >
-                    {bookmarked ? (
-                      <BookmarkCheck className="h-5 w-5" />
-                    ) : (
-                      <Bookmark className="h-5 w-5" />
-                    )}
-                  </button>
+                    {/* Bookmark Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (bookmarked) {
+                          removeBookmark(provider.npi_number || '')
+                        } else {
+                          addBookmark({
+                            id: provider.id.toString(),
+                            npi: provider.npi_number || '',
+                            name: provider.provider_name,
+                            city: provider.business_city || '',
+                            state: provider.business_state || '',
+                            phone: provider.business_phone || undefined,
+                            facilityType: facilityTypeInfo?.name || '',
+                            category: categoryInfo?.name || '',
+                          })
+                        }
+                      }}
+                      className={`absolute top-6 right-6 p-2.5 rounded-full transition-all z-10 ${
+                        bookmarked 
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg scale-100' 
+                          : 'bg-gray-100 text-gray-400 hover:text-blue-600 hover:bg-blue-50 opacity-0 group-hover:opacity-100 scale-90 hover:scale-100'
+                      }`}
+                      title={bookmarked ? 'Remove bookmark' : 'Bookmark facility'}
+                    >
+                      {bookmarked ? (
+                        <BookmarkCheck className="h-5 w-5" />
+                      ) : (
+                        <Bookmark className="h-5 w-5" />
+                      )}
+                    </button>
 
-                  <CardContent className="p-6" onClick={() => setSelectedProvider(provider)}>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-[#006AFF]/10 flex items-center justify-center text-2xl">
-                          {getCategoryIcon(provider.facility_category_name)}
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg text-gray-900">
-                            {provider.provider_name}
-                          </h3>
-                          <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                            {provider.provider_credentials && (
-                              <span className="flex items-center gap-1">
-                                <Users className="h-3 w-3" />
-                                {provider.provider_credentials}
-                              </span>
-                            )}
-                            {provider.business_city && provider.business_state && (
-                              <span className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {provider.business_city}, {provider.business_state}
-                              </span>
-                            )}
-                            {provider.business_phone && (
-                              <span className="flex items-center gap-1">
-                                <Phone className="h-3 w-3" />
-                                {provider.business_phone}
-                              </span>
-                            )}
+                    <CardContent className="p-8" onClick={() => setSelectedProvider(provider)}>
+                      <div className="flex items-center justify-between gap-6">
+                        <div className="flex items-center gap-6 flex-1 min-w-0">
+                          <motion.div 
+                            whileHover={{ rotate: 360 }}
+                            transition={{ duration: 0.6 }}
+                            className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-3xl shadow-lg flex-shrink-0"
+                          >
+                            {getCategoryIcon(provider.facility_category_name)}
+                          </motion.div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-bold text-xl text-gray-900 mb-2 group-hover:text-blue-600 transition-colors truncate">
+                              {provider.provider_name}
+                            </h3>
+                            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                              {provider.provider_credentials && (
+                                <span className="flex items-center gap-1.5 bg-blue-50 px-3 py-1 rounded-full">
+                                  <Users className="h-4 w-4 text-blue-600" />
+                                  <span className="font-medium text-blue-900">{provider.provider_credentials}</span>
+                                </span>
+                              )}
+                              {provider.business_city && provider.business_state && (
+                                <span className="flex items-center gap-1.5">
+                                  <MapPin className="h-4 w-4 text-gray-400" />
+                                  <span>{provider.business_city}, {provider.business_state}</span>
+                                </span>
+                              )}
+                              {provider.business_phone && (
+                                <span className="flex items-center gap-1.5">
+                                  <Phone className="h-4 w-4 text-gray-400" />
+                                  <span className="font-mono">{provider.business_phone}</span>
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
+                        <div className="flex flex-col items-end gap-3 flex-shrink-0">
+                          <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 px-3 py-1">
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                            Active
+                          </Badge>
+                          {provider.npi_number && (
+                            <div className="text-xs text-gray-500 font-mono">
+                              NPI: {provider.npi_number}
+                            </div>
+                          )}
+                          {provider.enumeration_date && (
+                            <div className="text-xs text-gray-500 flex items-center gap-1.5">
+                              <Calendar className="h-3.5 w-3.5" />
+                              {new Date(provider.enumeration_date).toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-right space-y-2">
-                        <Badge variant="secondary" className="text-xs bg-green-50 text-green-700 border-green-200">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Active
-                        </Badge>
-                        {provider.npi_number && (
-                          <div className="text-xs text-gray-500">
-                            NPI: {provider.npi_number}
-                          </div>
-                        )}
-                        {provider.enumeration_date && (
-                          <div className="text-xs text-gray-500 flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {new Date(provider.enumeration_date).toLocaleDateString()}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      
+                      {/* Floating Action Icon */}
+                      <motion.div
+                        className="absolute bottom-6 right-6 w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        <ArrowRight className="h-5 w-5 text-white" />
+                      </motion.div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
                 )
               })}
             </div>
@@ -912,20 +1016,22 @@ export default function FacilityTypePage() {
 
           {/* Pagination */}
           {!isLoading && totalPages > 1 && (
-            <div className="flex items-center justify-between mt-8">
-              <div className="text-sm text-gray-600">
-                Showing {currentPage * pageSize + 1} to {Math.min((currentPage + 1) * pageSize, providersData?.total_count || 0)} of {providersData?.total_count || 0} facilities
+            <div className="flex flex-col md:flex-row items-center justify-between mt-12 gap-6 bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="text-sm font-medium text-gray-700">
+                Showing <span className="text-blue-600 font-bold">{currentPage * pageSize + 1}</span> to <span className="text-blue-600 font-bold">{Math.min((currentPage + 1) * pageSize, providersData?.total_count || 0)}</span> of <span className="text-blue-600 font-bold">{providersData?.total_count || 0}</span> facilities
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
                   disabled={currentPage === 0}
+                  className="border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
+                  <ArrowLeft className="h-4 w-4 mr-2" />
                   Previous
                 </Button>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     const page = i + Math.max(0, currentPage - 2)
                     if (page >= totalPages) return null
@@ -935,6 +1041,10 @@ export default function FacilityTypePage() {
                         variant={page === currentPage ? "default" : "outline"}
                         size="sm"
                         onClick={() => setCurrentPage(page)}
+                        className={page === currentPage 
+                          ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg min-w-[40px]" 
+                          : "border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 min-w-[40px]"
+                        }
                       >
                         {page + 1}
                       </Button>
@@ -946,8 +1056,10 @@ export default function FacilityTypePage() {
                   size="sm"
                   onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
                   disabled={currentPage === totalPages - 1}
+                  className="border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
+                  <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
             </div>

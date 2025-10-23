@@ -14,8 +14,6 @@ import {
   ExternalLink,
   Bot,
   User,
-  MessageSquare,
-  Zap,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -30,7 +28,7 @@ export function AIAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "👋 Hi! I'm your HealthData AI assistant. I can help you:\n\n• Navigate our 658,859+ verified healthcare provider database\n• Find specific facility types (hospitals, clinics, etc.)\n• Search by location (state, city, ZIP)\n• Build and export custom datasets\n• Explain how to use our platform features\n\nWhat would you like to know? Try asking about military hospitals, pharmacies in California, or how to export data!",
+      content: "👋 Hi! I'm your HealthData AI assistant. I can help you:\n\n• Navigate our 6M+ healthcare provider database\n• Find specific facility types (hospitals, clinics, etc.)\n• Search by location (state, city, ZIP)\n• Explain how to use our platform\n• Build custom datasets\n\nWhat would you like to know?",
     },
   ])
   const [input, setInput] = useState('')
@@ -97,23 +95,15 @@ export function AIAssistant() {
         <Button
           onClick={() => setIsOpen(true)}
           size="lg"
-          className="h-14 w-14 rounded-full bg-gradient-to-r from-[#006AFF] to-[#0052CC] hover:from-[#0052CC] hover:to-[#003D99] shadow-lg hover:shadow-xl transition-all relative group"
+          className="h-14 w-14 rounded-full bg-gradient-to-r from-[#006AFF] to-[#0052CC] hover:from-[#0052CC] hover:to-[#003D99] shadow-lg hover:shadow-xl transition-all"
         >
-          <MessageSquare className="h-6 w-6 transition-transform group-hover:scale-110" />
-          <Sparkles className="h-3 w-3 absolute top-2 right-2 text-yellow-300 animate-pulse" />
+          <MessageCircle className="h-6 w-6" />
         </Button>
         <div className="absolute -top-2 -right-2 flex h-6 w-6">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#006AFF] opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-6 w-6 bg-[#006AFF] items-center justify-center">
-            <Zap className="h-3 w-3 text-white" />
+          <span className="relative inline-flex rounded-full h-6 w-6 bg-[#006AFF]">
+            <Sparkles className="h-3 w-3 text-white m-auto" />
           </span>
-        </div>
-        {/* Tooltip */}
-        <div className="absolute bottom-full right-0 mb-2 hidden group-hover:block">
-          <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg shadow-lg whitespace-nowrap">
-            💬 Ask me anything about healthcare data
-            <div className="absolute bottom-0 right-4 transform translate-y-1/2 rotate-45 w-2 h-2 bg-gray-900"></div>
-          </div>
         </div>
       </div>
     )
@@ -126,20 +116,12 @@ export function AIAssistant() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <div className="h-10 w-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                  <MessageSquare className="h-5 w-5" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-white animate-pulse"></div>
+                <Bot className="h-6 w-6" />
+                <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-white"></div>
               </div>
               <div>
-                <CardTitle className="text-lg font-bold flex items-center gap-2">
-                  HealthData AI
-                  <Sparkles className="h-4 w-4 text-yellow-300 animate-pulse" />
-                </CardTitle>
-                <p className="text-xs text-blue-100 flex items-center gap-1">
-                  <Zap className="h-3 w-3" />
-                  Powered by GPT-4o Mini • Real-time Data
-                </p>
+                <CardTitle className="text-lg font-bold">HealthData AI</CardTitle>
+                <p className="text-xs text-blue-100">Powered by GPT-4o Mini</p>
               </div>
             </div>
             <Button
@@ -164,16 +146,16 @@ export function AIAssistant() {
                 }`}
               >
                 <div
-                  className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center shadow-md ${
+                  className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${
                     message.role === 'user'
                       ? 'bg-[#006AFF]'
-                      : 'bg-gradient-to-br from-purple-500 to-pink-500 animate-pulse'
+                      : 'bg-gradient-to-br from-purple-500 to-pink-500'
                   }`}
                 >
                   {message.role === 'user' ? (
                     <User className="h-4 w-4 text-white" />
                   ) : (
-                    <MessageSquare className="h-4 w-4 text-white" />
+                    <Bot className="h-4 w-4 text-white" />
                   )}
                 </div>
                 <div
@@ -191,17 +173,16 @@ export function AIAssistant() {
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                   </div>
                   {message.links && message.links.length > 0 && (
-                    <div className="space-y-2 mt-3">
-                      <div className="text-xs text-gray-500 font-medium mb-1">Quick Links:</div>
+                    <div className="space-y-2 pl-3">
                       {message.links.map((link, linkIndex) => (
                         <Link
                           key={linkIndex}
                           href={link.url}
-                          className="flex items-center gap-2 text-sm text-[#006AFF] hover:text-white bg-blue-50 hover:bg-[#006AFF] px-3 py-2 rounded-lg transition-all border border-blue-200 hover:border-[#006AFF] group"
+                          className="flex items-center gap-2 text-sm text-[#006AFF] hover:text-[#0052CC] hover:underline"
                           onClick={() => setIsOpen(false)}
                         >
-                          <ExternalLink className="h-3 w-3 group-hover:animate-bounce" />
-                          <span className="font-medium">{link.text}</span>
+                          <ExternalLink className="h-3 w-3" />
+                          {link.text}
                         </Link>
                       ))}
                     </div>
@@ -211,12 +192,11 @@ export function AIAssistant() {
             ))}
             {isLoading && (
               <div className="flex gap-3">
-                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center animate-pulse shadow-md">
-                  <MessageSquare className="h-4 w-4 text-white" />
+                <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                  <Bot className="h-4 w-4 text-white" />
                 </div>
-                <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 flex items-center gap-2">
+                <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3">
                   <Loader2 className="h-4 w-4 animate-spin text-[#006AFF]" />
-                  <span className="text-xs text-gray-500">Thinking...</span>
                 </div>
               </div>
             )}
@@ -247,9 +227,8 @@ export function AIAssistant() {
                 )}
               </Button>
             </div>
-            <p className="text-xs text-gray-500 mt-2 text-center flex items-center justify-center gap-1">
-              <Sparkles className="h-3 w-3" />
-              AI-powered • Real-time healthcare data • 658,859+ providers
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              AI-powered • Real-time healthcare data insights
             </p>
           </div>
         </CardContent>

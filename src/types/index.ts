@@ -22,14 +22,17 @@ export interface Facility {
 export interface Insight {
   id: string
   title: string
-  category: "Expansion" | "Technology" | "Funding" | "M&A" | "Regulation"
-  type: "Hospitals" | "Clinics" | "Mental Health" | "Urgent Care" | "Policy"
+  category: "Expansion" | "Technology" | "Funding" | "M&A" | "Regulation" | "Policy" | "Market Trend"
+  type: string
   summary: string
   content: string
   views: number
   date: string
   author: string
+  sourceUrl?: string // URL to the original article
   tags: string[]
+  excerpt?: string
+  readTime?: number
 }
 
 export interface User {
