@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { motion } from "framer-motion"
 import { Navbar } from "@/components/shared/navbar"
 import { InsightCard } from "@/components/shared/insight-card"
@@ -12,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Insight } from "@/types"
 import { toast } from "sonner"
-import { TrendingUp, Bookmark, Target, ArrowUp, ArrowDown, ExternalLink, Download, Loader2, Info, RefreshCw, Trash2, Eye } from "lucide-react"
+import { TrendingUp, Bookmark, Target, ArrowUp, ArrowDown, ExternalLink, Download, Loader2, Info, RefreshCw, Trash2, Eye, Newspaper } from "lucide-react"
 import { useIntentStore } from "@/lib/store/intent-store"
 import { ParticleBackground } from "@/components/three"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -433,7 +434,7 @@ export default function InsightsPage() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <TabsList className="w-full max-w-4xl justify-start">
                 <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="expansion">Expansion</TabsTrigger>
@@ -442,16 +443,36 @@ export default function InsightsPage() {
                   <TabsTrigger value="market trend">Market Trends</TabsTrigger>
                   <TabsTrigger value="funding">Funding</TabsTrigger>
               </TabsList>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleRefresh}
-                  disabled={loading}
-                  className="gap-2"
-                >
-                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
+                
+                <div className="flex items-center gap-2">
+                  {/* All Insights (1 Year) Button */}
+                  <Link 
+                    href={`/entity-news?name=${encodeURIComponent(facilityType || 'Healthcare Facilities')}&type=${encodeURIComponent(category || 'Healthcare')}&location=United States`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                      title="View comprehensive 1-year news timeline for this facility type"
+                    >
+                      <Newspaper className="h-4 w-4" />
+                      All Insights (1 Year)
+                    </Button>
+                  </Link>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleRefresh}
+                    disabled={loading}
+                    className="gap-2"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
+                </div>
               </div>
 
               <TabsContent value={activeTab} className="mt-6">
