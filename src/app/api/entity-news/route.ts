@@ -57,39 +57,84 @@ export async function POST(request: NextRequest) {
 
     const dateRangeText = `from ${startDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} to ${endDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
 
-    // Construct precise query to avoid hallucination
-    const locationText = location ? ` in ${location}` : ''
-    const query = `Find verified news articles and press releases specifically about "${entityName}"${locationText}, a ${entityType}. Include only real, sourced articles ${dateRangeText}. For each article provide: exact title, publication date, source name, source URL, and a brief summary. Focus on expansions, acquisitions, partnerships, regulatory changes, service additions, leadership changes, awards, or controversies.`
+    // Construct query with fallback strategy
+    // Make query broader if entity name seems generic
+    const isGenericName = entityName.toLowerCase().includes('facilities') || 
+                         entityName.toLowerCase().includes('healthcare') ||
+                         entityName.length > 50
+    
+    let searchTerm = entityName
+    let queryContext = ''
+    
+    if (isGenericName) {
+      // For generic names, focus on the facility type instead
+      const typeKeywords = entityType.toLowerCase()
+        .replace(/-/g, ' ')
+        .replace(/clinic center/gi, 'clinic')
+        .replace(/hospital center/gi, 'hospital')
+      
+      searchTerm = typeKeywords
+      queryContext = ` Search for news about ${typeKeywords} facilities, including specific facility names, industry trends, and developments.`
+    } else {
+      queryContext = ` Focus on this specific facility: "${entityName}".`
+    }
+    
+    const locationText = location && location !== 'United States' ? ` in ${location}` : ' across the United States'
+    
+    const query = `Find verified news articles and press releases about ${searchTerm}${locationText}, related to ${entityType} healthcare facilities. ${dateRangeText}.${queryContext}
+
+Search for articles about:
+- Facility expansions and new locations
+- Acquisitions, mergers, and partnerships  
+- Technology adoptions and digital health
+- Policy changes and regulatory updates
+- Service additions and care model changes
+- Leadership appointments and changes
+- Awards, recognition, and certifications
+- Funding rounds and financial news
+- Market trends and industry analysis
+
+For EACH article found, provide: exact article title, publication date (YYYY-MM-DD), source publication name, full article URL, 2-3 sentence summary, and appropriate category.
+
+Return 10-15 diverse articles if available.`
 
     console.log('🔍 Fetching entity news:', entityName)
     console.log('📅 Date range:', dateRangeText)
-    console.log('🎯 Query:', query.substring(0, 150) + '...')
+    console.log('🎯 Search term:', searchTerm)
+    console.log('🎯 Is generic?:', isGenericName)
+    console.log('🎯 Query:', query.substring(0, 200) + '...')
 
-    const systemPrompt = `You are a precise healthcare news researcher. Your task is to find ONLY real, verifiable news articles about the specific healthcare facility mentioned.
+    const systemPrompt = `You are a healthcare news researcher specializing in finding real, verified news articles.
 
 CRITICAL RULES:
-1. Return ONLY real news articles with actual URLs and sources
-2. If you cannot find real news, return an empty array
+1. Return ONLY real news articles with actual URLs from credible sources
+2. If you cannot find specific facility news, return industry/sector news instead
 3. NEVER fabricate or hallucinate news stories
-4. Verify each article exists and is relevant to the EXACT facility name provided
-5. Include publication dates in ISO format (YYYY-MM-DD)
-6. Only include articles from the specified date range
-7. Prioritize major news sources, industry publications, and official press releases
+4. Include publication dates in ISO format (YYYY-MM-DD)
+5. Only include articles from the specified date range
+6. Prioritize: Healthcare Business News, Becker's Healthcare, Modern Healthcare, Healthcare Dive, Fierce Healthcare, McKnight's, local news outlets
+
+IMPORTANT: If no specific facility news exists, search for:
+- Industry trends affecting this facility type
+- Regional healthcare news in the same sector
+- Policy changes impacting this type of care
+- Market analysis reports for this facility category
 
 Return your response as a valid JSON array with this exact structure:
 [
   {
     "title": "Exact article title",
-    "summary": "Brief 2-3 sentence summary",
+    "summary": "Brief 2-3 sentence summary focusing on key developments",
     "source": "Publication name",
     "sourceUrl": "Full article URL",
     "date": "YYYY-MM-DD",
-    "category": "expansion|acquisition|partnership|regulatory|service|leadership|award|controversy|other",
+    "category": "expansion|acquisition|partnership|regulatory|service|leadership|award|controversy|technology|policy|funding|market trend",
     "relevanceScore": 0.0-1.0
   }
 ]
 
-If no real articles are found, return: []`
+Aim for 10-15 diverse articles across different categories. If fewer specific articles exist, include relevant industry news.
+If absolutely no relevant news exists after thorough search, return: []`
 
     // Call Perplexity API
     const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
