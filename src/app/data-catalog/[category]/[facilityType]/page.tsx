@@ -41,6 +41,7 @@ import {
   Bookmark,
   BookmarkCheck,
   TrendingUp,
+  Newspaper,
 } from 'lucide-react'
 import { useBookmarksStore } from '@/stores/bookmarks-store'
 import { SmartSearchComponent } from '@/components/smart-search'
@@ -1091,6 +1092,23 @@ export default function FacilityTypePage() {
                 {selectedProvider.facility_type_name}
               </p>
             )}
+            
+            {/* View News Timeline Button */}
+            <Link 
+              href={`/entity-news?name=${encodeURIComponent(selectedProvider?.provider_name || '')}&type=${encodeURIComponent(selectedProvider?.facility_type_name || categoryInfo?.display_name || '')}&location=${encodeURIComponent(`${selectedProvider?.business_city || ''}, ${selectedProvider?.business_state || ''}`.trim())}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-4 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-all"
+              >
+                <Newspaper className="h-4 w-4 mr-2" />
+                View News Timeline (Past Year)
+              </Button>
+            </Link>
           </DialogHeader>
 
           {selectedProvider && (
