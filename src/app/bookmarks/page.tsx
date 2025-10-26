@@ -375,6 +375,25 @@ export default function BookmarksPage() {
                               <Calendar className="h-3 w-3" />
                               Bookmarked {new Date(bookmark.bookmarkedAt).toLocaleDateString()}
                             </div>
+                            
+                            {/* View News Timeline Button */}
+                            <div className="mt-3">
+                              <Link 
+                                href={`/entity-news?name=${encodeURIComponent(bookmark.name)}&type=${encodeURIComponent(bookmark.facilityType)}&location=${encodeURIComponent(`${bookmark.city}, ${bookmark.state}`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                                >
+                                  <TrendingUp className="h-4 w-4" />
+                                  View News Timeline (Past Year)
+                                </Button>
+                              </Link>
+                            </div>
                           </div>
                         </div>
                         <Button

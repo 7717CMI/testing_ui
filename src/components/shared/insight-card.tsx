@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Insight } from "@/types"
-import { Eye, Bookmark, Share2, Clock, ExternalLink, Newspaper, BookmarkCheck } from "lucide-react"
+import { Eye, Bookmark, Share2, Clock, ExternalLink, Newspaper, BookmarkCheck, TrendingUp } from "lucide-react"
 import { formatDate } from "@/lib/utils"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { canUseIframe } from "@/lib/iframe-whitelist"
 import { useSavedInsightsStore } from "@/stores/saved-insights-store"
 
@@ -104,7 +105,7 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
             ))}
           </div>
 
-          <div className="flex items-center gap-2 pt-2 border-t">
+          <div className="flex items-center gap-2 pt-2 border-t flex-wrap">
             <Button 
               size="sm" 
               variant="ghost" 
@@ -121,9 +122,28 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
             <Button size="sm" variant="ghost" onClick={onShare} title="Share article">
               <Share2 className="h-4 w-4" />
             </Button>
+            
+            {/* View News Timeline Button */}
+            <Link 
+              href={`/entity-news?name=${encodeURIComponent(insight.title.split(' - ')[0] || insight.title.split(':')[0] || insight.title)}&type=${encodeURIComponent(insight.category.toLowerCase())}&location=United States`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="ml-auto"
+            >
+              <Button 
+                size="sm" 
+                variant="outline"
+                className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                title="View 1-year news timeline for this facility"
+              >
+                <TrendingUp className="h-3 w-3" />
+                News Timeline
+              </Button>
+            </Link>
+            
             <Button 
               size="sm" 
-              className="ml-auto"
               onClick={() => setShowFullArticle(true)}
             >
               Read More
