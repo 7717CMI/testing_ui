@@ -145,6 +145,21 @@ export default function InsightsPage() {
           })
         })
 
+        // Check if response is OK
+        if (!response.ok) {
+          console.error('❌ API response not OK:', response.status, response.statusText)
+          throw new Error(`API returned ${response.status}: ${response.statusText}`)
+        }
+
+        // Check content type before parsing
+        const contentType = response.headers.get('content-type')
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('❌ Response is not JSON, got:', contentType)
+          const text = await response.text()
+          console.error('❌ Response text:', text.substring(0, 500))
+          throw new Error('API did not return JSON')
+        }
+
         const data = await response.json()
         
         if (data.success) {
@@ -175,9 +190,14 @@ export default function InsightsPage() {
             setInsights([])
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to fetch insights:', error)
-        toast.error('Failed to load insights')
+        toast.error('Failed to load insights', {
+          description: error.message || 'Please try again'
+        })
+        // Set empty state on error
+        setInsights([])
+        setIsFallback(true)
       } finally {
         setLoading(false)
       }
@@ -194,6 +214,91 @@ export default function InsightsPage() {
 
   function handleRefresh() {
     window.location.reload()
+  }
+
+  // Handle clicking on a trending topic
+  async function handleTrendingTopicClick(topicName: string, category: string) {
+    setLoading(true)
+    setActiveTab("all") // Reset to all tab
+    
+    try {
+      // Fetch articles specifically about this topic
+      const response = await fetch('/api/insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          facilityType: topicName, // Use topic name as search term
+          category: category
+        })
+      })
+
+      // Check if response is OK
+      if (!response.ok) {
+        console.error('❌ API response not OK:', response.status, response.statusText)
+        throw new Error(`API returned ${response.status}: ${response.statusText}`)
+      }
+
+      // Check content type before parsing
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('❌ Response is not JSON, got:', contentType)
+        const text = await response.text()
+        console.error('❌ Response text:', text.substring(0, 500))
+        throw new Error('API did not return JSON')
+      }
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setRealInsights(data.data)
+        setIsFallback(data.fallback || false)
+        
+        // Convert articles to Insight format
+        const convertedInsights: Insight[] = data.data.articles.map((article: Article, index: number) => ({
+          id: (article.id || index + 1).toString(),
+          title: article.title,
+          category: article.category as "Expansion" | "Technology" | "Funding" | "M&A" | "Regulation",
+          type: article.category,
+          summary: article.summary,
+          content: article.fullContent || article.summary,
+          views: article.views,
+          date: article.date,
+          author: article.source,
+          sourceUrl: article.sourceUrl,
+          tags: [article.category, article.source],
+          excerpt: article.summary,
+          readTime: Math.ceil((article.fullContent || article.summary).length / 200) + 2,
+        }))
+        
+        setInsights(convertedInsights)
+        
+        // Show success message
+        if (convertedInsights.length > 0) {
+          toast.success(`Loaded articles about "${topicName}"`, {
+            description: `Found ${convertedInsights.length} related articles`
+          })
+        } else {
+          toast.info(`No articles found for "${topicName}"`, {
+            description: 'Try another trending topic or refresh to see general insights'
+          })
+        }
+        
+        // If no articles and it's fallback, show as empty
+        if (data.fallback && convertedInsights.length === 0) {
+          setInsights([])
+        }
+      }
+    } catch (error: any) {
+      console.error('Failed to fetch topic insights:', error)
+      toast.error(`Failed to load articles about "${topicName}"`, {
+        description: error.message || 'Please try again'
+      })
+      // Set empty state on error
+      setInsights([])
+      setIsFallback(true)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -434,25 +539,31 @@ export default function InsightsPage() {
                         <Skeleton className="h-5 w-12" />
                       </div>
                     ))
-                  ) : realInsights?.trending ? (
+                  ) : realInsights?.trending && realInsights.trending.length > 0 ? (
                     realInsights.trending.map((topic, index) => (
                     <div
                       key={topic.name}
-                      className="flex items-center justify-between p-2 rounded-lg hover:bg-muted cursor-pointer transition-colors"
+                      onClick={() => handleTrendingTopicClick(topic.name, topic.category)}
+                      className="flex items-center justify-between p-3 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/20 cursor-pointer transition-all border border-transparent hover:border-primary-200 dark:hover:border-primary-800 group"
+                      title={`Click to view articles about ${topic.name}`}
                     >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 text-xs font-semibold flex-shrink-0">
+                          <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 text-xs font-bold flex-shrink-0 group-hover:scale-110 transition-transform">
                           {index + 1}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className="text-sm font-medium truncate block">{topic.name}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold truncate block group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                                {topic.name}
+                              </span>
+                            </div>
                             <span className="text-xs text-muted-foreground">{topic.category}</span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <Badge 
                             variant={topic.trend === 'up' ? 'default' : topic.trend === 'down' ? 'destructive' : 'secondary'}
-                            className="text-xs gap-1"
+                            className="text-xs gap-1 font-semibold"
                           >
                             {topic.trend === 'up' && <ArrowUp className="h-3 w-3" />}
                             {topic.trend === 'down' && <ArrowDown className="h-3 w-3" />}
@@ -461,7 +572,11 @@ export default function InsightsPage() {
                         </div>
                       </div>
                     ))
-                  ) : null}
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No trending topics available
+                    </p>
+                  )}
                 </CardContent>
               </Card>
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { analyzeQuery, requiresWebSearch } from '@/lib/hybrid-search-checker'
 
 interface SmartSearchRequest {
   query: string
@@ -13,8 +14,57 @@ interface SmartSearchRequest {
 }
 
 export async function POST(request: NextRequest) {
+  let query = ''
+  let mode: 'search' | 'question' | 'autocomplete' | 'insights' | 'recommendations' = 'search'
+  let context: any = {}
+  
   try {
-    const { query, mode, context }: SmartSearchRequest = await request.json()
+    const requestData: SmartSearchRequest = await request.json()
+    query = requestData.query
+    mode = requestData.mode
+    context = requestData.context
+    
+    // 🔍 CHECK IF HYBRID SEARCH IS NEEDED
+    // If query mentions fields not in database (bed_count, ratings, etc), use hybrid search
+    if (mode === 'search' && requiresWebSearch(query)) {
+      console.log('🔄 Delegating to hybrid search (query requires web data)')
+      
+      try {
+        // Call hybrid search API internally
+        const hybridResponse = await fetch(new URL('/api/hybrid-search', request.url).toString(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, context })
+        })
+        
+        if (hybridResponse.ok) {
+          const hybridData = await hybridResponse.json()
+          
+          // Return in smart-search format
+          return NextResponse.json({
+            success: true,
+            mode: 'search',
+            answer: `Found ${hybridData.resultCount} facilities matching your criteria. ${hybridData.analysis.dataSourceExplanation}`,
+            extractedFilters: {}, // Filters handled by hybrid search
+            appliedFilters: hybridData.analysis.webSearchFields || [],
+            suggestions: [
+              `Try narrowing by specific location`,
+              `Filter by additional criteria`,
+              `View detailed facility information`
+            ],
+            results: hybridData.results,
+            resultCount: hybridData.resultCount,
+            hybridSearch: true,
+            cost: hybridData.cost,
+            performance: hybridData.performance,
+            timestamp: new Date().toISOString()
+          })
+        }
+      } catch (hybridError) {
+        console.error('❌ Hybrid search failed, falling back to standard search:', hybridError)
+        // Continue with standard search as fallback
+      }
+    }
     
     // Build system prompt based on mode
     let systemPrompt = ''
@@ -143,7 +193,7 @@ Be personalized and contextual. Focus on user needs.`
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
+        model: 'sonar',
         messages: [
           {
             role: 'system',

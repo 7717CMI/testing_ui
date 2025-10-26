@@ -46,6 +46,7 @@ export function SmartSearchComponent({
   const [autocompleteResults, setAutocompleteResults] = useState<string[]>([])
   const [showAutocomplete, setShowAutocomplete] = useState(false)
   const [searchHistory, setSearchHistory] = useState<string[]>([])
+  const [hasSearched, setHasSearched] = useState(false) // NEW: Track if search was performed
   const inputRef = useRef<HTMLInputElement>(null)
   const autocompleteTimeoutRef = useRef<NodeJS.Timeout>()
 
@@ -59,6 +60,11 @@ export function SmartSearchComponent({
 
   // Auto-complete as user types
   useEffect(() => {
+    // Don't show autocomplete if search was already performed
+    if (hasSearched) {
+      return
+    }
+
     if (query.length >= 3) {
       // Clear previous timeout
       if (autocompleteTimeoutRef.current) {
@@ -95,13 +101,14 @@ export function SmartSearchComponent({
         clearTimeout(autocompleteTimeoutRef.current)
       }
     }
-  }, [query, facilityType, category])
+  }, [query, facilityType, category, hasSearched])
 
   async function handleSearch() {
     if (!query.trim()) return
 
     setLoading(true)
     setShowAutocomplete(false)
+    setHasSearched(true) // Mark that search was performed
 
     try {
       const response = await fetch('/api/smart-search', {
@@ -145,12 +152,14 @@ export function SmartSearchComponent({
   function selectAutocomplete(suggestion: string) {
     setQuery(suggestion)
     setShowAutocomplete(false)
+    setHasSearched(false) // Reset so user can type again
     inputRef.current?.focus()
   }
 
   function clearResults() {
     setResults(null)
     setQuery('')
+    setHasSearched(false) // Reset so autocomplete works again
   }
 
   const modes = [
@@ -205,9 +214,11 @@ export function SmartSearchComponent({
               }
               className="pl-12 h-14 bg-white border-2 border-gray-200 focus:border-purple-500 text-base pr-12"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                setHasSearched(false) // Reset when user starts typing again
+              }}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              onFocus={() => query.length >= 3 && setShowAutocomplete(true)}
             />
             <AnimatePresence>
               {query && (
