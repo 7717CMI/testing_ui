@@ -31,24 +31,14 @@ interface NewsArticle {
   summary: string
   source: string
   sourceUrl: string
-  date: string
+  publishedAt: string // Changed from 'date'
   category: string
-  relevanceScore: number
+  tags: string[] // Added tags
 }
 
 interface EntityNewsResponse {
   success: boolean
-  entityName: string
-  entityType: string
-  location?: string
-  timeRange: string
-  articles: NewsArticle[]
-  totalArticles: number
-  dateRange: {
-    start: string
-    end: string
-  }
-  timestamp: string
+  data: NewsArticle[] // Changed from 'articles' to 'data'
 }
 
 export default function EntityNewsTimelinePage() {
@@ -89,13 +79,13 @@ export default function EntityNewsTimelinePage() {
       const data: EntityNewsResponse = await response.json()
       setNewsData(data)
 
-      if (data.totalArticles === 0) {
+      if (!data.data || data.data.length === 0) {
         toast.info('No news articles found', {
           description: `No verified news found for ${entityName} in the selected time range.`
         })
       } else {
         toast.success('News loaded successfully', {
-          description: `Found ${data.totalArticles} verified article${data.totalArticles > 1 ? 's' : ''}`
+          description: `Found ${data.data.length} verified article${data.data.length > 1 ? 's' : ''}`
         })
       }
     } catch (error) {
@@ -135,10 +125,10 @@ export default function EntityNewsTimelinePage() {
   }
 
   const filteredArticles = selectedCategory === 'all' 
-    ? newsData?.articles || []
-    : newsData?.articles.filter(article => article.category === selectedCategory) || []
+    ? newsData?.data || []
+    : newsData?.data.filter(article => article.category === selectedCategory) || []
 
-  const categories = Array.from(new Set(newsData?.articles.map(a => a.category) || [])).filter(Boolean)
+  const categories = Array.from(new Set(newsData?.data?.map(a => a.category) || [])).filter(Boolean)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
