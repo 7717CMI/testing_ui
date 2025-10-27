@@ -201,7 +201,7 @@ export default function EntityNewsTimelinePage() {
         </Card>
 
         {/* Category Filters */}
-        {!loading && newsData && newsData.articles.length > 0 && (
+        {!loading && newsData && newsData.data && newsData.data.length > 0 && (
           <Card className="mb-6">
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 flex-wrap">
@@ -212,10 +212,10 @@ export default function EntityNewsTimelinePage() {
                   variant={selectedCategory === 'all' ? 'default' : 'outline'}
                   onClick={() => setSelectedCategory('all')}
                 >
-                  All ({newsData.articles.length})
+                  All ({newsData.data.length})
                 </Button>
                 {categories.map((category) => {
-                  const count = newsData.articles.filter(a => a.category === category).length
+                  const count = newsData.data.filter(a => a.category === category).length
                   return (
                     <Button
                       key={category}
@@ -251,7 +251,7 @@ export default function EntityNewsTimelinePage() {
         )}
 
         {/* Empty State */}
-        {!loading && newsData && newsData.articles.length === 0 && (
+        {!loading && newsData && newsData.data && newsData.data.length === 0 && (
           <Card className="text-center py-12">
             <CardContent>
               <Newspaper className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -297,11 +297,7 @@ export default function EntityNewsTimelinePage() {
                             </Badge>
                             <span className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
                               <Calendar className="h-3 w-3" />
-                              {new Date(article.date).toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                              })}
+                              {article.publishedAt}
                             </span>
                           </div>
                           <CardTitle className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
@@ -318,22 +314,15 @@ export default function EntityNewsTimelinePage() {
                       <p className="text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
                         {article.summary}
                       </p>
-                      <div className="flex items-center justify-between">
-                        <a
-                          href={article.sourceUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm transition-colors"
-                        >
-                          Read Full Article
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                        {article.relevanceScore > 0 && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            Relevance: {(article.relevanceScore * 100).toFixed(0)}%
-                          </span>
-                        )}
-                      </div>
+                      <a
+                        href={article.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm transition-colors"
+                      >
+                        Read Full Article
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -343,24 +332,21 @@ export default function EntityNewsTimelinePage() {
         )}
 
         {/* Summary Footer */}
-        {!loading && newsData && newsData.articles.length > 0 && (
+        {!loading && newsData && newsData.data && newsData.data.length > 0 && (
           <Card className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 border-blue-200 dark:border-blue-800">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Showing {filteredArticles.length} of {newsData.totalArticles} article{newsData.totalArticles > 1 ? 's' : ''}
+                    Showing {filteredArticles.length} of {newsData.data.length} article{newsData.data.length > 1 ? 's' : ''}
                   </p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    Data retrieved: {new Date(newsData.timestamp).toLocaleString()}
+                    Last updated: {new Date().toLocaleString()}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-gray-600 dark:text-gray-400">
                     All articles are verified and sourced
-                  </p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    Powered by Perplexity AI
                   </p>
                 </div>
               </div>
