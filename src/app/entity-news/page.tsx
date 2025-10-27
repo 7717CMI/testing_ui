@@ -48,18 +48,26 @@ export default function EntityNewsTimelinePage() {
   const location = searchParams.get('location') || ''
 
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [newsData, setNewsData] = useState<EntityNewsResponse | null>(null)
+  const [allArticles, setAllArticles] = useState<NewsArticle[]>([]) // Store all fetched articles
   const [timeRange, setTimeRange] = useState<'1year' | '6months' | '3months'>('1year')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
 
   useEffect(() => {
     if (entityName && entityType) {
-      fetchEntityNews()
+      fetchEntityNews(true) // Reset on first load
     }
   }, [entityName, entityType, timeRange])
 
-  async function fetchEntityNews() {
-    setLoading(true)
+  async function fetchEntityNews(reset = false) {
+    if (reset) {
+      setLoading(true)
+      setAllArticles([]) // Clear existing articles on reset
+    } else {
+      setLoadingMore(true)
+    }
+    
     try {
       const response = await fetch('/api/entity-news', {
         method: 'POST',
@@ -77,13 +85,31 @@ export default function EntityNewsTimelinePage() {
       }
 
       const data: EntityNewsResponse = await response.json()
-      setNewsData(data)
+      
+      if (reset) {
+        setNewsData(data)
+        setAllArticles(data.data || [])
+      } else {
+        // Append new articles, avoiding duplicates
+        const existingUrls = new Set(allArticles.map(a => a.sourceUrl))
+        const newArticles = (data.data || []).filter(a => !existingUrls.has(a.sourceUrl))
+        
+        if (newArticles.length === 0) {
+          toast.info('No more articles found', {
+            description: 'All available articles have been loaded.'
+          })
+        } else {
+          setAllArticles(prev => [...prev, ...newArticles])
+          setNewsData({ success: true, data: [...allArticles, ...newArticles] })
+          toast.success(`Loaded ${newArticles.length} more article${newArticles.length > 1 ? 's' : ''}`)
+        }
+      }
 
-      if (!data.data || data.data.length === 0) {
+      if (reset && (!data.data || data.data.length === 0)) {
         toast.info('No news articles found', {
           description: `No verified news found for ${entityName} in the selected time range.`
         })
-      } else {
+      } else if (reset) {
         toast.success('News loaded successfully', {
           description: `Found ${data.data.length} verified article${data.data.length > 1 ? 's' : ''}`
         })
@@ -95,7 +121,12 @@ export default function EntityNewsTimelinePage() {
       })
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
+  }
+
+  async function loadMoreArticles() {
+    await fetchEntityNews(false)
   }
 
   function getCategoryIcon(category: string) {
@@ -190,8 +221,8 @@ export default function EntityNewsTimelinePage() {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={fetchEntityNews}
-                disabled={loading}
+                onClick={() => fetchEntityNews(true)}
+                disabled={loading || loadingMore}
               >
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Refresh
@@ -265,7 +296,7 @@ export default function EntityNewsTimelinePage() {
                 <Button onClick={() => setTimeRange('1year')} disabled={timeRange === '1year'}>
                   Try 1 Year Range
                 </Button>
-                <Button variant="outline" onClick={fetchEntityNews}>
+                <Button variant="outline" onClick={() => fetchEntityNews(true)}>
                   <RefreshCw className="h-4 w-4 mr-2" />
                   Retry
                 </Button>
@@ -328,6 +359,30 @@ export default function EntityNewsTimelinePage() {
                 </motion.div>
               ))}
             </AnimatePresence>
+          </div>
+        )}
+
+        {/* Load More Articles Button */}
+        {!loading && newsData && newsData.data && newsData.data.length > 0 && (
+          <div className="mt-8 flex justify-center">
+            <Button
+              size="lg"
+              onClick={loadMoreArticles}
+              disabled={loadingMore}
+              className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all"
+            >
+              {loadingMore ? (
+                <>
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                  Loading More Articles...
+                </>
+              ) : (
+                <>
+                  <TrendingUp className="h-5 w-5" />
+                  Load More Articles
+                </>
+              )}
+            </Button>
           </div>
         )}
 
