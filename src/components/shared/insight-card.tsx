@@ -256,11 +256,11 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-lg p-5 border border-blue-200 dark:border-blue-800">
                 <div className="flex items-center gap-2 mb-3">
                   <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  <h3 className="font-semibold text-lg text-blue-900 dark:text-blue-100">Executive Summary</h3>
+                  <h3 className="font-semibold text-lg text-blue-900 dark:text-blue-100">Detailed Summary</h3>
                 </div>
-                <p className="text-base leading-relaxed text-gray-700 dark:text-gray-300">
+                <div className="text-base leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-line">
                   {analysis.summary}
-                </p>
+                </div>
               </div>
 
               {/* Detailed Analysis Section */}
@@ -268,6 +268,7 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
                 <div className="flex items-center gap-2 mb-4">
                   <BarChart3 className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100">Detailed Analysis</h3>
+                  <Badge variant="secondary" className="ml-2 text-xs">Sales Intelligence</Badge>
                 </div>
                 <div className="prose prose-sm max-w-none dark:prose-invert">
                   <div className="text-base leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-line">
@@ -280,7 +281,8 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 rounded-lg p-5 border border-green-200 dark:border-green-800">
                 <div className="flex items-center gap-2 mb-4">
                   <Lightbulb className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  <h3 className="font-semibold text-lg text-green-900 dark:text-green-100">Strategic Recommendations</h3>
+                  <h3 className="font-semibold text-lg text-green-900 dark:text-green-100">Sales Action Plan</h3>
+                  <Badge variant="secondary" className="ml-2 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Actionable Steps</Badge>
                 </div>
                 <ul className="space-y-3">
                   {analysis.recommendations.map((recommendation, index) => (

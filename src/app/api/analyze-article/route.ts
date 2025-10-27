@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     console.log('🔍 Analyzing article:', title)
 
     // Construct analysis prompt
-    const analysisPrompt = `You are a healthcare industry analyst. Analyze the following healthcare article and provide structured insights.
+    const analysisPrompt = `You are a healthcare industry analyst specializing in actionable intelligence for sales professionals. Analyze the following healthcare article and provide structured insights that help sales teams identify opportunities and take action.
 
 Article Title: "${title}"
 Category: ${category}
@@ -48,41 +48,79 @@ ${content}
 
 Provide a comprehensive analysis in the following format:
 
-1. SUMMARY (2-3 sentences):
-Provide a concise summary of the main points and key takeaways from this article.
+1. DETAILED SUMMARY (4-6 paragraphs):
+Provide a thorough summary covering:
+- What happened (key events, announcements, or developments)
+- Who is involved (organizations, key decision-makers, stakeholders)
+- When and where (timeline, locations, scope)
+- Why it matters (significance, context, background)
+- What changed (before/after, new developments, shifts)
+- Key statistics, numbers, or metrics mentioned
 
-2. ANALYSIS (4-6 paragraphs):
-Analyze the significance of this development in the healthcare industry. Consider:
-- Impact on healthcare delivery and patient care
-- Market implications and competitive dynamics
-- Regulatory and policy considerations
-- Technology and innovation aspects (if applicable)
-- Financial and business model implications
-- Long-term trends and industry direction
+2. DETAILED ANALYSIS (6-8 paragraphs):
+Analyze the business and market implications:
+- Market opportunity analysis: New markets, expansion opportunities, gaps
+- Competitive landscape: Who benefits, who's affected, competitive positioning
+- Decision-maker insights: Who makes purchasing decisions, budget holders
+- Pain points and needs: What problems exist, what solutions are needed
+- Timing and urgency: Why now, time-sensitive factors, windows of opportunity
+- Financial implications: Budgets, funding, ROI considerations
+- Technology and innovation impact: New tools, systems, modernization needs
+- Regulatory and compliance factors: Requirements, constraints, obligations
 
-3. RECOMMENDATIONS (5-7 specific action items):
-Provide actionable recommendations for different stakeholders:
-- Healthcare providers and facilities
-- Healthcare administrators and executives
-- Policy makers and regulators
-- Investors and business leaders
-- Patients and consumers
+3. SALES-FOCUSED RECOMMENDATIONS (8-12 specific action items):
+Provide actionable steps for sales professionals:
+
+A. IMMEDIATE ACTIONS (What to do now):
+- Specific prospects to target (types of organizations, roles, departments)
+- Key talking points and value propositions
+- Urgency drivers (why they should act now)
+
+B. OUTREACH STRATEGY (How to engage):
+- Best channels and timing for outreach
+- Stakeholders to contact (specific roles/titles)
+- Questions to ask prospects
+- How to position your solution
+
+C. OPPORTUNITY QUALIFICATION (How to prioritize):
+- Signals that indicate a qualified lead
+- Red flags or disqualifiers
+- Budget and timeline indicators
+
+D. COMPETITIVE POSITIONING (How to win):
+- Your competitive advantages to emphasize
+- Common objections and how to address them
+- Differentiation points
 
 Format your response EXACTLY as follows:
-SUMMARY:
-[Your summary here]
 
-ANALYSIS:
-[Your detailed analysis here]
+DETAILED SUMMARY:
+[Your comprehensive 4-6 paragraph summary here - be thorough and specific]
 
-RECOMMENDATIONS:
-- [Recommendation 1]
-- [Recommendation 2]
-- [Recommendation 3]
-- [Recommendation 4]
-- [Recommendation 5]
-- [Recommendation 6]
-- [Recommendation 7]`
+DETAILED ANALYSIS:
+[Your in-depth 6-8 paragraph analysis here - focus on business implications and opportunities]
+
+SALES-FOCUSED RECOMMENDATIONS:
+
+IMMEDIATE ACTIONS:
+- [Specific action 1 with clear next steps]
+- [Specific action 2 with clear next steps]
+- [Specific action 3 with clear next steps]
+
+OUTREACH STRATEGY:
+- [Specific outreach tactic 1]
+- [Specific outreach tactic 2]
+- [Specific outreach tactic 3]
+
+OPPORTUNITY QUALIFICATION:
+- [Qualification criterion 1]
+- [Qualification criterion 2]
+- [Qualification criterion 3]
+
+COMPETITIVE POSITIONING:
+- [Positioning strategy 1]
+- [Positioning strategy 2]
+- [Positioning strategy 3]`
 
     // Call Perplexity API for analysis
     const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -96,7 +134,7 @@ RECOMMENDATIONS:
         messages: [
           {
             role: 'system',
-            content: 'You are an expert healthcare industry analyst with deep knowledge of healthcare policy, market trends, technology adoption, and business strategy. Provide insightful, actionable analysis based on current industry dynamics and best practices. Be specific, data-driven, and practical in your recommendations.'
+            content: 'You are an expert healthcare industry analyst and sales intelligence specialist. You help B2B sales professionals identify opportunities, understand market dynamics, and close deals. Your analysis is data-driven, actionable, and focused on revenue generation. You understand buyer psychology, organizational decision-making, and competitive positioning in healthcare markets. Provide detailed, specific insights that sales teams can immediately use in their outreach and qualification processes.'
           },
           {
             role: 'user',
@@ -141,34 +179,54 @@ RECOMMENDATIONS:
 
 function parseAnalysisResponse(text: string): ArticleAnalysis {
   // Extract sections using markers
-  const summaryMatch = text.match(/SUMMARY:?\s*([\s\S]*?)(?=\n\s*ANALYSIS:)/i)
-  const analysisMatch = text.match(/ANALYSIS:?\s*([\s\S]*?)(?=\n\s*RECOMMENDATIONS:)/i)
-  const recommendationsMatch = text.match(/RECOMMENDATIONS:?\s*([\s\S]*?)$/i)
+  const summaryMatch = text.match(/DETAILED SUMMARY:?\s*([\s\S]*?)(?=\n\s*DETAILED ANALYSIS:)/i)
+  const analysisMatch = text.match(/DETAILED ANALYSIS:?\s*([\s\S]*?)(?=\n\s*SALES-FOCUSED RECOMMENDATIONS:)/i)
+  const recommendationsMatch = text.match(/SALES-FOCUSED RECOMMENDATIONS:?\s*([\s\S]*?)$/i)
 
   const summary = summaryMatch?.[1]?.trim() || 'Summary not available'
   const analysis = analysisMatch?.[1]?.trim() || 'Analysis not available'
   const recommendationsText = recommendationsMatch?.[1]?.trim() || ''
 
-  // Parse recommendations (bullet points)
+  // Parse recommendations from all subsections
   const recommendations: string[] = []
   const lines = recommendationsText.split('\n')
   
+  let currentSection = ''
   for (const line of lines) {
     const trimmed = line.trim()
-    // Match bullet points (-, *, •, or numbered)
-    const match = trimmed.match(/^[-*•]\s*(.+)/) || trimmed.match(/^\d+\.\s*(.+)/)
+    
+    // Check if it's a section header
+    if (trimmed.match(/^(IMMEDIATE ACTIONS|OUTREACH STRATEGY|OPPORTUNITY QUALIFICATION|COMPETITIVE POSITIONING):/i)) {
+      currentSection = trimmed.replace(':', '')
+      continue
+    }
+    
+    // Match bullet points (-, *, •, or numbered) or lettered items
+    const match = trimmed.match(/^[-*•]\s*(.+)/) || 
+                  trimmed.match(/^\d+\.\s*(.+)/) ||
+                  trimmed.match(/^[A-D]\.\s*(.+)/i)
+    
     if (match && match[1]) {
-      recommendations.push(match[1].trim())
+      const recommendation = match[1].trim()
+      // Add section context to recommendation for clarity
+      if (currentSection) {
+        recommendations.push(`${recommendation}`)
+      } else {
+        recommendations.push(recommendation)
+      }
     }
   }
 
-  // Fallback: if no recommendations parsed, create generic ones
+  // If no recommendations parsed, create sales-focused fallbacks
   if (recommendations.length === 0) {
-    recommendations.push('Monitor this development closely for potential impact on operations')
-    recommendations.push('Assess relevance to your organization\'s strategic goals')
-    recommendations.push('Consider implications for compliance and regulatory requirements')
-    recommendations.push('Evaluate opportunities for competitive advantage')
-    recommendations.push('Stay informed of related industry trends and updates')
+    recommendations.push('Target decision-makers at organizations mentioned in this article')
+    recommendations.push('Use this development as a conversation starter in outreach')
+    recommendations.push('Identify prospects facing similar challenges or opportunities')
+    recommendations.push('Position your solution in context of these industry trends')
+    recommendations.push('Follow up with existing prospects to discuss relevance')
+    recommendations.push('Qualify leads based on alignment with these market dynamics')
+    recommendations.push('Prepare objection handling for common concerns raised')
+    recommendations.push('Update sales materials to reference this development')
   }
 
   return {
