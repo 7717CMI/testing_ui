@@ -452,7 +452,6 @@ export default function InsightsPage() {
                     rel="noopener noreferrer"
                   >
                     <Button 
-                      variant="default" 
                       size="sm" 
                       className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
                       title="View comprehensive 1-year news timeline for this facility type"

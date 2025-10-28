@@ -24,6 +24,10 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  Pill,
+  FlaskConical,
+  Briefcase,
+  Package,
 } from 'lucide-react'
 
 interface NewsItem {
@@ -182,72 +186,35 @@ export default function BookmarksPage() {
   )
 
   const getCategoryIcon = (category: string) => {
-    if (!category) return '🏥'
+    if (!category) return <Building2 className="h-10 w-10 text-primary-700" />
     const lower = category.toLowerCase()
-    if (lower.includes('hospital')) return '🏥'
-    if (lower.includes('clinic')) return '🏥'
-    if (lower.includes('pharmacy')) return '💊'
-    if (lower.includes('laboratory')) return '🔬'
-    if (lower.includes('agency')) return '👥'
-    if (lower.includes('supplier')) return '📦'
-    return '🏥'
+    if (lower.includes('hospital')) return <Building2 className="h-10 w-10 text-primary-700" />
+    if (lower.includes('clinic')) return <Building2 className="h-10 w-10 text-primary-700" />
+    if (lower.includes('pharmacy')) return <Pill className="h-10 w-10 text-primary-700" />
+    if (lower.includes('laboratory')) return <FlaskConical className="h-10 w-10 text-primary-700" />
+    if (lower.includes('agency')) return <Briefcase className="h-10 w-10 text-primary-700" />
+    if (lower.includes('supplier')) return <Package className="h-10 w-10 text-primary-700" />
+    return <Building2 className="h-10 w-10 text-primary-700" />
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-sm">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-                <Activity className="h-6 w-6 text-[#006AFF]" />
-                <span className="text-xl font-bold text-gray-900">HealthData AI</span>
-              </Link>
-              <div className="hidden md:flex items-center gap-6">
-                <Link href="/" className="text-sm font-medium text-gray-600 hover:text-[#006AFF] transition-colors">
-                  Home
-                </Link>
-                <Link href="/data-catalog" className="text-sm font-medium text-gray-600 hover:text-[#006AFF] transition-colors">
-                  Data Catalog
-                </Link>
-                <Link href="/search" className="text-sm font-medium text-gray-600 hover:text-[#006AFF] transition-colors">
-                  Search
-                </Link>
-                <Link href="/bookmarks" className="text-sm font-medium text-[#006AFF]">
-                  Bookmarks
-                </Link>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <Link href="/login">
-                <Button variant="outline" size="sm" className="border-gray-300">Login</Button>
-              </Link>
-              <Link href="/signup">
-                <Button size="sm" className="bg-[#006AFF] hover:bg-[#0052CC]">Sign Up</Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Header */}
-      <div className="bg-gradient-to-r from-[#006AFF] to-[#0052CC] text-white py-16">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
+      {/* Page Header */}
+      <div className="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <BookmarkCheck className="h-12 w-12" />
-                <h1 className="text-5xl font-bold">My Bookmarks</h1>
-              </div>
-              <p className="text-xl text-blue-100 max-w-2xl">
-                Click on any facility to view latest news (last 30 days) or perform custom searches
+              <h1 className="text-3xl font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight mb-2">
+                My Bookmarks
+              </h1>
+              <p className="text-base text-neutral-600 dark:text-neutral-400">
+                Access your saved facilities to view recent updates and perform targeted searches
               </p>
             </div>
             {bookmarks.length > 0 && (
-              <div className="text-right">
-                <div className="text-4xl font-bold">{bookmarks.length}</div>
-                <div className="text-blue-100">Saved {bookmarks.length === 1 ? 'Facility' : 'Facilities'}</div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-neutral-100 dark:bg-neutral-700 rounded-lg">
+                <span className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 tabular-nums">{bookmarks.length}</span>
+                <span className="text-sm text-neutral-500 dark:text-neutral-400 font-medium">Saved Facilities</span>
               </div>
             )}
           </div>
@@ -258,16 +225,18 @@ export default function BookmarksPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {bookmarks.length === 0 ? (
           /* Empty State */
-          <Card className="text-center py-16">
+          <Card className="text-center py-16 bg-white dark:bg-neutral-800 border-neutral-200 dark:border-neutral-700">
             <CardContent>
-              <BookmarkCheck className="h-20 w-20 text-gray-300 mx-auto mb-6" />
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">No Bookmarks Yet</h2>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              <div className="w-16 h-16 bg-neutral-100 dark:bg-neutral-700 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <BookmarkCheck className="h-8 w-8 text-neutral-400 dark:text-neutral-500" />
+              </div>
+              <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100 mb-4">No Bookmarks Yet</h2>
+              <p className="text-neutral-600 dark:text-neutral-400 mb-8 max-w-md mx-auto">
                 Start bookmarking healthcare facilities to track them and get news updates. 
                 Look for the bookmark icon on facility cards!
               </p>
               <Link href="/data-catalog">
-                <Button className="bg-[#006AFF] hover:bg-[#0052CC]">
+                <Button className="bg-primary-700 hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700">
                   Browse Data Catalog
                 </Button>
               </Link>
@@ -345,7 +314,7 @@ export default function BookmarksPage() {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-4 flex-1">
-                          <div className="text-4xl">{getCategoryIcon(bookmark.category)}</div>
+                          <div>{getCategoryIcon(bookmark.category)}</div>
                           <div className="flex-1">
                             <div className="flex items-center gap-3">
                               <CardTitle className="text-2xl font-bold">{bookmark.name}</CardTitle>

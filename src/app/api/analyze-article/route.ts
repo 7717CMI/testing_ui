@@ -48,79 +48,54 @@ ${content}
 
 Provide a comprehensive analysis in the following format:
 
-1. DETAILED SUMMARY (4-6 paragraphs):
-Provide a thorough summary covering:
-- What happened (key events, announcements, or developments)
-- Who is involved (organizations, key decision-makers, stakeholders)
-- When and where (timeline, locations, scope)
-- Why it matters (significance, context, background)
-- What changed (before/after, new developments, shifts)
-- Key statistics, numbers, or metrics mentioned
+1. DETAILED SUMMARY (2-3 crisp paragraphs MAXIMUM):
+Provide a CONCISE but complete summary covering ONLY:
+- What happened (key event/announcement in 2-3 sentences)
+- Who is involved (organizations and key decision-makers)
+- Key statistics or numbers (if mentioned)
+- Why it matters (business impact in 1-2 sentences)
 
-2. DETAILED ANALYSIS (6-8 paragraphs):
-Analyze the business and market implications:
-- Market opportunity analysis: New markets, expansion opportunities, gaps
-- Competitive landscape: Who benefits, who's affected, competitive positioning
-- Decision-maker insights: Who makes purchasing decisions, budget holders
-- Pain points and needs: What problems exist, what solutions are needed
-- Timing and urgency: Why now, time-sensitive factors, windows of opportunity
-- Financial implications: Budgets, funding, ROI considerations
-- Technology and innovation impact: New tools, systems, modernization needs
-- Regulatory and compliance factors: Requirements, constraints, obligations
+Keep it SHORT and CRISP. Do NOT write 4-6 paragraphs. MAXIMUM 3 paragraphs.
 
-3. SALES-FOCUSED RECOMMENDATIONS (8-12 specific action items):
-Provide actionable steps for sales professionals:
+2. DETAILED ANALYSIS (4-5 paragraphs):
+Analyze the business and market implications focusing on:
+- Market opportunity: What new opportunities this creates
+- Who benefits: Which organizations and why
+- Decision-maker insights: Who holds the budget and makes decisions
+- Pain points: What problems exist that can be solved
+- Timing: Why this matters NOW and time-sensitive opportunities
 
-A. IMMEDIATE ACTIONS (What to do now):
-- Specific prospects to target (types of organizations, roles, departments)
-- Key talking points and value propositions
-- Urgency drivers (why they should act now)
+3. SALES-FOCUSED RECOMMENDATIONS (EXACTLY 5-6 action items):
+Provide SPECIFIC, ACTIONABLE steps with REAL outreach suggestions.
 
-B. OUTREACH STRATEGY (How to engage):
-- Best channels and timing for outreach
-- Stakeholders to contact (specific roles/titles)
-- Questions to ask prospects
-- How to position your solution
+IMPORTANT: Include specific recommendations like:
+- "Reach out to [Specific Role/Title like CEO Sam Thompson] at [Organization Type]"
+- "Contact the VP of Operations at facilities implementing [specific technology]"
+- "Schedule calls with CFOs at hospitals facing [specific challenge]"
 
-C. OPPORTUNITY QUALIFICATION (How to prioritize):
-- Signals that indicate a qualified lead
-- Red flags or disqualifiers
-- Budget and timeline indicators
-
-D. COMPETITIVE POSITIONING (How to win):
-- Your competitive advantages to emphasize
-- Common objections and how to address them
-- Differentiation points
+Each recommendation should be:
+✓ One clear action item
+✓ Include specific titles/roles to contact (CEO, CFO, COO, VP, Director, etc.)
+✓ Include the reason/value proposition
+✓ Be immediately actionable
 
 Format your response EXACTLY as follows:
 
 DETAILED SUMMARY:
-[Your comprehensive 4-6 paragraph summary here - be thorough and specific]
+[Your SHORT 2-3 paragraph summary - keep it crisp and concise]
 
 DETAILED ANALYSIS:
-[Your in-depth 6-8 paragraph analysis here - focus on business implications and opportunities]
+[Your 4-5 paragraph analysis - focus on actionable business insights]
 
 SALES-FOCUSED RECOMMENDATIONS:
+- Reach out to [Specific Role like CEO/CFO] at [Organization Type] about [Specific Value Proposition]. [Why now/urgency]
+- Contact [Specific Title] at [Organization] to discuss [Specific Solution]. [Key benefit]
+- Schedule meetings with [Decision Maker Role] at facilities [Specific Context]. [Opportunity]
+- Connect with [Executive Title] at organizations [Specific Situation]. [Action item]
+- Target [Specific Role] at [Organization Type] regarding [Specific Need]. [Value]
+- Follow up with [Decision Maker] at [Context] to position [Solution]. [Benefit]
 
-IMMEDIATE ACTIONS:
-- [Specific action 1 with clear next steps]
-- [Specific action 2 with clear next steps]
-- [Specific action 3 with clear next steps]
-
-OUTREACH STRATEGY:
-- [Specific outreach tactic 1]
-- [Specific outreach tactic 2]
-- [Specific outreach tactic 3]
-
-OPPORTUNITY QUALIFICATION:
-- [Qualification criterion 1]
-- [Qualification criterion 2]
-- [Qualification criterion 3]
-
-COMPETITIVE POSITIONING:
-- [Positioning strategy 1]
-- [Positioning strategy 2]
-- [Positioning strategy 3]`
+CRITICAL: Keep summary SHORT (2-3 paragraphs max). Make recommendations SPECIFIC with real titles and roles.`
 
     // Call Perplexity API for analysis
     const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -187,46 +162,41 @@ function parseAnalysisResponse(text: string): ArticleAnalysis {
   const analysis = analysisMatch?.[1]?.trim() || 'Analysis not available'
   const recommendationsText = recommendationsMatch?.[1]?.trim() || ''
 
-  // Parse recommendations from all subsections
+  // Parse recommendations - simpler format now
   const recommendations: string[] = []
   const lines = recommendationsText.split('\n')
   
-  let currentSection = ''
   for (const line of lines) {
     const trimmed = line.trim()
     
-    // Check if it's a section header
-    if (trimmed.match(/^(IMMEDIATE ACTIONS|OUTREACH STRATEGY|OPPORTUNITY QUALIFICATION|COMPETITIVE POSITIONING):/i)) {
-      currentSection = trimmed.replace(':', '')
+    // Skip empty lines and section headers
+    if (!trimmed || trimmed.match(/^(IMMEDIATE ACTIONS|OUTREACH STRATEGY|OPPORTUNITY QUALIFICATION|COMPETITIVE POSITIONING):/i)) {
       continue
     }
     
-    // Match bullet points (-, *, •, or numbered) or lettered items
+    // Match bullet points (-, *, •, or numbered)
     const match = trimmed.match(/^[-*•]\s*(.+)/) || 
-                  trimmed.match(/^\d+\.\s*(.+)/) ||
-                  trimmed.match(/^[A-D]\.\s*(.+)/i)
+                  trimmed.match(/^\d+\.\s*(.+)/)
     
     if (match && match[1]) {
       const recommendation = match[1].trim()
-      // Add section context to recommendation for clarity
-      if (currentSection) {
-        recommendations.push(`${recommendation}`)
-      } else {
-        recommendations.push(recommendation)
-      }
+      recommendations.push(recommendation)
     }
   }
 
-  // If no recommendations parsed, create sales-focused fallbacks
+  // If no recommendations parsed, create actionable fallbacks with specific roles
   if (recommendations.length === 0) {
-    recommendations.push('Target decision-makers at organizations mentioned in this article')
-    recommendations.push('Use this development as a conversation starter in outreach')
-    recommendations.push('Identify prospects facing similar challenges or opportunities')
-    recommendations.push('Position your solution in context of these industry trends')
-    recommendations.push('Follow up with existing prospects to discuss relevance')
-    recommendations.push('Qualify leads based on alignment with these market dynamics')
-    recommendations.push('Prepare objection handling for common concerns raised')
-    recommendations.push('Update sales materials to reference this development')
+    recommendations.push('Reach out to the CEO or VP of Operations at organizations mentioned in this article to discuss how these developments impact their strategy')
+    recommendations.push('Contact CFOs at similar healthcare facilities to discuss budget planning for initiatives related to this trend')
+    recommendations.push('Schedule meetings with Chief Medical Officers or Clinical Directors to understand their technology adoption plans')
+    recommendations.push('Connect with procurement teams at hospital systems to position solutions aligned with these market shifts')
+    recommendations.push('Target Healthcare IT Directors at facilities facing similar operational challenges mentioned in the article')
+    recommendations.push('Follow up with existing prospects who fit this profile to share this relevant industry insight and reopen conversations')
+  }
+
+  // Limit to 6 recommendations maximum
+  if (recommendations.length > 6) {
+    recommendations.splice(6)
   }
 
   return {

@@ -5,6 +5,7 @@ import { Providers } from "@/components/providers"
 import { Toaster } from "sonner"
 import { CallModal } from "@/components/call-modal"
 import { AIAssistant } from "@/components/ai-assistant-chat"
+import { OnboardingTour } from "@/components/onboarding-tour"
 
 const inter = Inter({
   variable: "--font-inter",
@@ -39,6 +40,7 @@ export default function RootLayout({
           <Toaster position="top-right" richColors />
           <CallModal />
           <AIAssistant />
+          <OnboardingTour />
         </Providers>
       </body>
     </html>

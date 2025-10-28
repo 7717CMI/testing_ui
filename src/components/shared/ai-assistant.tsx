@@ -80,13 +80,27 @@ export function AIAssistant() {
 
   if (!isOpen) {
     return (
-      <Button
-        onClick={toggleDrawer}
-        size="lg"
-        className="fixed bottom-6 right-6 rounded-full shadow-lg h-14 w-14 z-50 no-print"
-      >
-        <Sparkles className="h-6 w-6" />
-      </Button>
+      <div className="fixed bottom-8 right-8 z-50 no-print">
+        <Button
+          onClick={toggleDrawer}
+          className="relative w-[60px] h-[60px] rounded-2xl bg-gradient-to-br from-primary-800 to-primary-600 dark:from-primary-700 dark:to-primary-500 border border-white/10 shadow-xl hover:shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-105 hover:-translate-y-1 overflow-hidden group"
+        >
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+          
+          {/* Icon */}
+          <Sparkles className="w-[26px] h-[26px] text-white stroke-[2] relative z-10" />
+          
+          {/* Glow effect on hover */}
+          <div className="absolute inset-0 bg-primary-400 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300"></div>
+        </Button>
+        
+        {/* Tooltip */}
+        <div className="absolute right-full top-1/2 -translate-y-1/2 mr-4 px-4 py-2.5 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-sm font-medium rounded-lg shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+          AI Research Assistant
+          <div className="absolute right-[-6px] top-1/2 -translate-y-1/2 w-0 h-0 border-l-[6px] border-l-neutral-900 dark:border-l-neutral-100 border-y-[6px] border-y-transparent"></div>
+        </div>
+      </div>
     )
   }
 
@@ -99,15 +113,15 @@ export function AIAssistant() {
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 w-[450px] bg-background border-l shadow-2xl z-50 flex flex-col animate-slide-in-right no-print">
+      <div className="fixed right-0 top-0 bottom-0 w-[450px] bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 shadow-2xl z-50 flex flex-col animate-slide-in-right no-print">
         {/* Header */}
-        <div className="p-4 border-b flex items-center justify-between">
+        <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-neutral-900">
           <div>
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary-500" />
-              AI Assistant
+            <h2 className="text-lg font-semibold flex items-center gap-2 text-neutral-900 dark:text-neutral-100">
+              <Sparkles className="h-5 w-5 text-primary-700 dark:text-primary-500" />
+              AI Research Assistant
             </h2>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
               Powered by GPT-4 + Perplexity Hybrid Search
             </p>
           </div>
@@ -119,6 +133,7 @@ export function AIAssistant() {
                   size="icon"
                   onClick={handleExportChat}
                   title="Export chat"
+                  className="text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800"
                 >
                   <Download className="h-4 w-4" />
                 </Button>
@@ -127,12 +142,18 @@ export function AIAssistant() {
                   size="icon"
                   onClick={clearMessages}
                   title="Clear chat (Ctrl+K)"
+                  className="text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800"
                 >
                   <RotateCcw className="h-4 w-4" />
                 </Button>
               </>
             )}
-            <Button variant="ghost" size="icon" onClick={toggleDrawer}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleDrawer}
+              className="text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800"
+            >
               <X className="h-4 w-4" />
             </Button>
           </div>

@@ -1,7 +1,8 @@
 'use client'
 
+import { useRef } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
+import { motion, useInView } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,12 +17,18 @@ import {
   Brain,
   Check,
   Filter,
-  Database
+  Database,
+  ArrowRight,
+  Sparkles
 } from "lucide-react"
 import { ParticleBackground } from "@/components/three/particle-background"
 import { NeuralNetwork } from "@/components/three/neural-network"
 import { FloatingSphere } from "@/components/three/floating-sphere"
 import { DNAHelix } from "@/components/three/dna-helix"
+import { ScrollRevealText } from "@/components/animations/scroll-reveal-text"
+import { AnimatedCounter } from "@/components/animations/animated-counter"
+import { FadeInWhenVisible } from "@/components/animations/fade-in-when-visible"
+import { ConversationDemo } from "@/components/conversation-demo"
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -159,23 +166,156 @@ export default function LandingPage() {
               <FloatingSphere size={150} color="#8B5CF6" />
             </div>
             <motion.div className="space-y-1 sm:space-y-2" variants={fadeInUp}>
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-500 counter-animate">6M+</div>
+              <AnimatedCounter 
+                end={6000000} 
+                duration={2.5}
+                suffix="+"
+                className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-500"
+              />
               <div className="text-xs sm:text-sm text-muted-foreground">Facilities Tracked</div>
             </motion.div>
             <motion.div className="space-y-1 sm:space-y-2" variants={fadeInUp}>
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-secondary-500 counter-animate">99.9%</div>
+              <AnimatedCounter 
+                end={99.9} 
+                duration={2}
+                suffix="%"
+                className="text-2xl sm:text-3xl md:text-4xl font-bold text-secondary-500"
+              />
               <div className="text-xs sm:text-sm text-muted-foreground">Data Accuracy</div>
             </motion.div>
             <motion.div className="space-y-1 sm:space-y-2" variants={fadeInUp}>
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-accent-500 counter-animate">50K+</div>
+              <AnimatedCounter 
+                end={50000} 
+                duration={2.5}
+                suffix="+"
+                className="text-2xl sm:text-3xl md:text-4xl font-bold text-accent-500"
+              />
               <div className="text-xs sm:text-sm text-muted-foreground">Daily Updates</div>
             </motion.div>
             <motion.div className="space-y-1 sm:space-y-2" variants={fadeInUp}>
-              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-500 counter-animate">24/7</div>
+              <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-500">
+                <AnimatedCounter 
+                  end={24} 
+                  duration={1.5}
+                  suffix="/7"
+                  className=""
+                />
+              </div>
               <div className="text-xs sm:text-sm text-muted-foreground">AI Support</div>
             </motion.div>
           </motion.div>
+
+          {/* Animated Scroll Indicator */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 2 }}
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden sm:flex flex-col items-center gap-2 text-muted-foreground"
+          >
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              className="text-sm font-medium"
+            >
+              Scroll to explore
+            </motion.div>
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              className="w-6 h-10 border-2 border-muted-foreground/30 rounded-full flex justify-center pt-2"
+            >
+              <motion.div
+                animate={{ y: [0, 12, 0], opacity: [1, 0.3, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                className="w-1.5 h-2 bg-muted-foreground/60 rounded-full"
+              />
+            </motion.div>
+          </motion.div>
         </motion.div>
+      </section>
+
+      {/* AI Conversation Demo Section - Enhanced with Consistent Colors */}
+      <section className="w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-24 relative overflow-hidden bg-background dark:bg-background">
+        <div className="max-w-7xl mx-auto">
+          <FadeInWhenVisible direction="up" delay={0} className="text-center mb-12 sm:mb-16">
+            <Badge variant="secondary" className="mb-4 px-4 py-2 glass">
+              <Sparkles className="w-4 h-4 mr-2 inline text-primary-500" />
+              AI-Powered Intelligence
+            </Badge>
+            <ScrollRevealText
+              text="Experience the Future of Healthcare Data Search"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 px-4"
+              once={false}
+            />
+            <motion.p 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, amount: 0.3 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+              className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto px-4"
+            >
+              Natural language queries. Instant results. Intelligent recommendations.
+              <br />
+              <span className="text-primary-500 font-semibold">See how our AI assistant transforms your workflow.</span>
+            </motion.p>
+          </FadeInWhenVisible>
+
+          <FadeInWhenVisible direction="up" delay={0.3}>
+            <ConversationDemo />
+          </FadeInWhenVisible>
+
+          {/* Feature Highlights */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12 sm:mt-16 px-4">
+            {[
+              {
+                icon: Brain,
+                title: "Natural Language Processing",
+                desc: "Ask questions in plain English, get instant answers",
+                color: "text-secondary-500"
+              },
+              {
+                icon: Zap,
+                title: "Lightning Fast Results",
+                desc: "Search 6M+ facilities in milliseconds",
+                color: "text-accent-500"
+              },
+              {
+                icon: Shield,
+                title: "Verified & Accurate",
+                desc: "99.9% data accuracy with real-time updates",
+                color: "text-primary-500"
+              }
+            ].map((feature, i) => (
+              <FadeInWhenVisible key={i} direction="up" delay={i * 0.1 + 0.5}>
+                <motion.div
+                  whileHover={{ scale: 1.05, y: -5 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className="p-6 rounded-2xl bg-card border border-border shadow-lg hover:shadow-xl transition-all card-hover"
+                >
+                  <feature.icon className={`w-12 h-12 ${feature.color} mb-4`} />
+                  <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.desc}</p>
+                </motion.div>
+              </FadeInWhenVisible>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <FadeInWhenVisible direction="up" delay={0.8} className="text-center mt-12">
+            <Link href="/search">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-block"
+              >
+                <Button size="lg" className="gradient-primary text-lg px-8 py-6 shadow-xl">
+                  Try Smart Search Now
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </motion.div>
+            </Link>
+          </FadeInWhenVisible>
+        </div>
       </section>
 
       {/* Features Grid */}
@@ -198,89 +338,117 @@ export default function LandingPage() {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 relative z-10 max-w-7xl mx-auto">
-          <Link href="/intent" className="block">
-            <Card className="card-hover h-full cursor-pointer transition-all hover:border-accent-300 dark:hover:border-accent-700">
-              <CardHeader>
-                <Zap className="h-10 w-10 sm:h-12 sm:w-12 text-accent-500 mb-3 sm:mb-4" />
-                <CardTitle className="text-lg sm:text-xl">Intent Signals</CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  Identify in-market companies showing active research behavior across healthcare topics
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
+          <FadeInWhenVisible direction="up" delay={0}>
+            <Link href="/intent" className="block h-full">
+              <motion.div whileHover={{ scale: 1.03, y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
+                <Card className="card-hover h-full cursor-pointer transition-all hover:border-accent-300 dark:hover:border-accent-700 hover:shadow-2xl">
+                  <CardHeader>
+                    <Zap className="h-10 w-10 sm:h-12 sm:w-12 text-accent-500 mb-3 sm:mb-4" />
+                    <CardTitle className="text-lg sm:text-xl">Intent Signals</CardTitle>
+                    <CardDescription className="text-sm sm:text-base">
+                      Identify in-market companies showing active research behavior across healthcare topics
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            </Link>
+          </FadeInWhenVisible>
 
-          <Link href="/search" className="block">
-            <Card className="card-hover h-full cursor-pointer transition-all hover:border-primary-300 dark:hover:border-primary-700">
-              <CardHeader>
-                <Search className="h-10 w-10 sm:h-12 sm:w-12 text-primary-500 mb-3 sm:mb-4" />
-                <CardTitle className="text-lg sm:text-xl">Advanced Search</CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  Lightning-fast search across millions of healthcare facilities with intelligent filtering
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
+          <FadeInWhenVisible direction="up" delay={0.1}>
+            <Link href="/search" className="block h-full">
+              <motion.div whileHover={{ scale: 1.03, y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
+                <Card className="card-hover h-full cursor-pointer transition-all hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-2xl">
+                  <CardHeader>
+                    <Search className="h-10 w-10 sm:h-12 sm:w-12 text-primary-500 mb-3 sm:mb-4" />
+                    <CardTitle className="text-lg sm:text-xl">Advanced Search</CardTitle>
+                    <CardDescription className="text-sm sm:text-base">
+                      Lightning-fast search across millions of healthcare facilities with intelligent filtering
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            </Link>
+          </FadeInWhenVisible>
 
-          <Link href="/filtering" className="block">
-            <Card className="card-hover h-full cursor-pointer transition-all hover:border-orange-300 dark:hover:border-orange-700">
-              <CardHeader>
-                <Filter className="h-10 w-10 sm:h-12 sm:w-12 text-orange-500 mb-3 sm:mb-4" />
-                <CardTitle className="text-lg sm:text-xl">Advanced Filtering</CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  Filter by 50+ attributes including location, bed count, ownership, and specialties
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
+          <FadeInWhenVisible direction="up" delay={0.2}>
+            <Link href="/filtering" className="block h-full">
+              <motion.div whileHover={{ scale: 1.03, y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
+                <Card className="card-hover h-full cursor-pointer transition-all hover:border-orange-300 dark:hover:border-orange-700 hover:shadow-2xl">
+                  <CardHeader>
+                    <Filter className="h-10 w-10 sm:h-12 sm:w-12 text-orange-500 mb-3 sm:mb-4" />
+                    <CardTitle className="text-lg sm:text-xl">Advanced Filtering</CardTitle>
+                    <CardDescription className="text-sm sm:text-base">
+                      Filter by 50+ attributes including location, bed count, ownership, and specialties
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            </Link>
+          </FadeInWhenVisible>
 
-          <Link href="/data-catalog" className="block">
-            <Card className="card-hover h-full cursor-pointer transition-all hover:border-blue-300 dark:hover:border-blue-700">
-              <CardHeader>
-                <Database className="h-10 w-10 sm:h-12 sm:w-12 text-blue-500 mb-3 sm:mb-4" />
-                <CardTitle className="text-lg sm:text-xl">Data Catalog</CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  Browse 6M+ verified healthcare records across 12 facility categories with detailed breakdowns
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
+          <FadeInWhenVisible direction="up" delay={0.3}>
+            <Link href="/data-catalog" className="block h-full">
+              <motion.div whileHover={{ scale: 1.03, y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
+                <Card className="card-hover h-full cursor-pointer transition-all hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-2xl">
+                  <CardHeader>
+                    <Database className="h-10 w-10 sm:h-12 sm:w-12 text-blue-500 mb-3 sm:mb-4" />
+                    <CardTitle className="text-lg sm:text-xl">Data Catalog</CardTitle>
+                    <CardDescription className="text-sm sm:text-base">
+                      Browse 6M+ verified healthcare records across 12 facility categories with detailed breakdowns
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            </Link>
+          </FadeInWhenVisible>
 
-          <Link href="/ai-assistant" className="block">
-            <Card className="card-hover h-full cursor-pointer transition-all hover:border-secondary-300 dark:hover:border-secondary-700">
-              <CardHeader>
-                <Brain className="h-10 w-10 sm:h-12 sm:w-12 text-secondary-500 mb-3 sm:mb-4" />
-                <CardTitle className="text-lg sm:text-xl">AI Assistant</CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  GPT-4 powered assistant for instant insights, analysis, and data exploration
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
+          <FadeInWhenVisible direction="up" delay={0.4}>
+            <Link href="/ai-assistant" className="block h-full">
+              <motion.div whileHover={{ scale: 1.03, y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
+                <Card className="card-hover h-full cursor-pointer transition-all hover:border-secondary-300 dark:hover:border-secondary-700 hover:shadow-2xl">
+                  <CardHeader>
+                    <Brain className="h-10 w-10 sm:h-12 sm:w-12 text-secondary-500 mb-3 sm:mb-4" />
+                    <CardTitle className="text-lg sm:text-xl">AI Assistant</CardTitle>
+                    <CardDescription className="text-sm sm:text-base">
+                      GPT-4 powered assistant for instant insights, analysis, and data exploration
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            </Link>
+          </FadeInWhenVisible>
 
-          <Link href="/insights" className="block">
-            <Card className="card-hover h-full cursor-pointer transition-all hover:border-accent-300 dark:hover:border-accent-700">
-              <CardHeader>
-                <TrendingUp className="h-10 w-10 sm:h-12 sm:w-12 text-accent-500 mb-3 sm:mb-4" />
-                <CardTitle className="text-lg sm:text-xl">Real-Time Insights</CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  Stay ahead with live updates on M&A activity, funding, and market trends
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
+          <FadeInWhenVisible direction="up" delay={0.5}>
+            <Link href="/insights" className="block h-full">
+              <motion.div whileHover={{ scale: 1.03, y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
+                <Card className="card-hover h-full cursor-pointer transition-all hover:border-accent-300 dark:hover:border-accent-700 hover:shadow-2xl">
+                  <CardHeader>
+                    <TrendingUp className="h-10 w-10 sm:h-12 sm:w-12 text-accent-500 mb-3 sm:mb-4" />
+                    <CardTitle className="text-lg sm:text-xl">Real-Time Insights</CardTitle>
+                    <CardDescription className="text-sm sm:text-base">
+                      Stay ahead with live updates on M&A activity, funding, and market trends
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            </Link>
+          </FadeInWhenVisible>
 
-          <Link href="/mapping" className="block">
-            <Card className="card-hover h-full cursor-pointer transition-all hover:border-primary-300 dark:hover:border-primary-700">
-              <CardHeader>
-                <Globe className="h-10 w-10 sm:h-12 sm:w-12 text-primary-500 mb-3 sm:mb-4" />
-                <CardTitle className="text-lg sm:text-xl">Geographic Mapping</CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  Interactive maps with facility locations, demographics, and market analysis
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
+          <FadeInWhenVisible direction="up" delay={0.6}>
+            <Link href="/mapping" className="block h-full">
+              <motion.div whileHover={{ scale: 1.03, y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
+                <Card className="card-hover h-full cursor-pointer transition-all hover:border-primary-300 dark:hover:border-primary-700 hover:shadow-2xl">
+                  <CardHeader>
+                    <Globe className="h-10 w-10 sm:h-12 sm:w-12 text-primary-500 mb-3 sm:mb-4" />
+                    <CardTitle className="text-lg sm:text-xl">Geographic Mapping</CardTitle>
+                    <CardDescription className="text-sm sm:text-base">
+                      Interactive maps with facility locations, demographics, and market analysis
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            </Link>
+          </FadeInWhenVisible>
 
           <Link href="/analytics" className="block">
             <Card className="card-hover h-full cursor-pointer transition-all hover:border-secondary-300 dark:hover:border-secondary-700">
