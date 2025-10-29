@@ -346,3 +346,5 @@ const handleReadArticle = (insight) => {
 **Implementation completed successfully! The reader mode is now live and working.** ✨
 
 
+
+

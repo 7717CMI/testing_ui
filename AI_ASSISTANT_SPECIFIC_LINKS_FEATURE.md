@@ -316,3 +316,5 @@ When users ask for specific facility types like "community health clinic", they 
 
 **Test Now**: Open your AI Assistant and type "give me link of community health clinic" 🎉
 
+
+

@@ -270,3 +270,5 @@ const data = await response.json()
 The error is now properly caught and handled. Users will see friendly error messages instead of crashes! 🎊
 
 
+
+

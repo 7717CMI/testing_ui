@@ -45,3 +45,5 @@ export function TypewriterText({
   return <span className={className}>{displayText}</span>
 }
 
+
+

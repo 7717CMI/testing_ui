@@ -51,6 +51,7 @@ export interface SearchFilters {
   accreditation: string[]
   bedCountRange: [number, number]
   ratingRange: [number, number]
+  revenueRange?: [number, number] // Annual revenue in millions
   states: string[]
   cities: string[]
 }

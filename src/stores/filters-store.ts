@@ -13,6 +13,7 @@ const defaultFilters: SearchFilters = {
   accreditation: [],
   bedCountRange: [0, 1000],
   ratingRange: [0, 5],
+  revenueRange: [0, 500], // 0 to 500 million
   states: [],
   cities: [],
 }

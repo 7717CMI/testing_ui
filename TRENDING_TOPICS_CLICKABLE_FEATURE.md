@@ -281,3 +281,5 @@ async function handleTrendingTopicClick(topicName: string, category: string) {
 No assumptions made. Everything working with real data! 🎊
 
 
+
+

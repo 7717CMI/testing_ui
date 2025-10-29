@@ -238,3 +238,5 @@ npm run dev
 All the hybrid search features are properly implemented with zero errors, and the UI behavior for suggested searches is now fixed to only show while typing, not after performing a search.
 
 
+
+
