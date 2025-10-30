@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { v4 as uuidv4 } from 'uuid'
 import { AnalysisModal } from '@/components/analysis-modal'
-import { useSavedArticlesStore, type SavedArticle } from '@/stores/saved-articles-store'
+import { useSavedInsightsStore, type SavedInsight } from '@/stores/saved-insights-store'
 
 interface Message {
   id: string
@@ -55,7 +55,7 @@ I can handle typos and understand natural language!
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [selectedArticles, setSelectedArticles] = useState<string[]>([])
   const [articlesPopoverOpen, setArticlesPopoverOpen] = useState(false)
-  const savedArticles = useSavedArticlesStore((state) => state.savedArticles)
+  const savedArticles = useSavedInsightsStore((state) => state.savedInsights)
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -554,7 +554,7 @@ I can handle typos and understand natural language!
                     </Badge>
                   ))}
                   {selectedArticles.map((articleId) => {
-                    const article = savedArticles.find((a: SavedArticle) => a.id === articleId)
+                    const article = savedArticles.find((a: SavedInsight) => a.id === articleId)
                     return article ? (
                       <Badge key={articleId} variant="secondary" className="gap-2 bg-purple-100 dark:bg-purple-900">
                         <Bookmark className="h-3 w-3" />
@@ -636,7 +636,7 @@ I can handle typos and understand natural language!
                               </div>
                             ) : (
                               <div className="max-h-96 overflow-y-auto space-y-3 pr-2">
-                                {savedArticles.map((article: SavedArticle) => (
+                                {savedArticles.map((article: SavedInsight) => (
                                   <motion.div
                                     key={article.id}
                                     whileHover={{ scale: 1.02 }}
@@ -687,10 +687,10 @@ I can handle typos and understand natural language!
                                             {article.category}
                                           </Badge>
                                           <span className="text-xs text-muted-foreground">
-                                            {article.source}
+                                            {article.author}
                                           </span>
                                           <span className="text-xs text-muted-foreground">
-                                            {new Date(article.savedAt).toLocaleDateString()}
+                                            {article.date}
                                           </span>
                                         </div>
                                       </div>

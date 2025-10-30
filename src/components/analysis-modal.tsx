@@ -8,7 +8,7 @@ import { Send, Sparkles, Loader2, MapPin, Phone, Building2, X, Upload, FileText,
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { v4 as uuidv4 } from 'uuid'
-import { useSavedArticlesStore } from '@/stores/saved-articles-store'
+import { useSavedInsightsStore } from '@/stores/saved-insights-store'
 
 interface Message {
   id: string
@@ -38,7 +38,7 @@ export function AnalysisModal({ isOpen, onClose }: AnalysisModalProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { savedArticles } = useSavedArticlesStore()
+  const { savedInsights } = useSavedInsightsStore()
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -147,7 +147,7 @@ Click "Upload Files" to add:
 - Market research files
 
 **2. Use Saved Articles** 📰
-Select from your ${savedArticles.length} saved articles from the Insights page
+Select from your ${savedInsights.length} saved articles from the Insights page
 
 **3. Skip to Analysis** ⚡
 Start immediately with our 658K+ facility database
