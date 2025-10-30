@@ -292,19 +292,17 @@ What would you like to do?`,
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
+        className="fixed inset-0 z-50 bg-background"
       >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
+          initial={{ scale: 0.98, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.95, opacity: 0 }}
+          exit={{ scale: 0.98, opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-4 z-50 bg-background rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-border"
-          onClick={(e) => e.stopPropagation()}
+          className="h-screen w-screen flex flex-col overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b bg-gradient-to-r from-purple-600 to-purple-800 text-white">
+          <div className="flex items-center justify-between px-6 py-4 border-b bg-gradient-to-r from-purple-600 to-purple-800 text-white flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
                 <Sparkles className="h-6 w-6" />
@@ -331,7 +329,7 @@ What would you like to do?`,
           {/* Main Content */}
           <div className="flex-1 flex overflow-hidden">
             {/* Chat Area */}
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col bg-background">
               {/* Messages */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 <AnimatePresence>
