@@ -4,11 +4,13 @@ import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Send, Sparkles, Loader2, MapPin, Phone, Building2, X, Upload, FileText, Bookmark, User } from 'lucide-react'
+import { Card } from '@/components/ui/card'
+import { Send, Sparkles, Loader2, MapPin, Phone, Building2, X, Upload, FileText, Bookmark, User, BarChart3 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { v4 as uuidv4 } from 'uuid'
 import { useSavedInsightsStore } from '@/stores/saved-insights-store'
+import { useAnalysisPoolStore, type AnalysisPoolItem } from '@/stores/analysis-pool-store'
 
 interface Message {
   id: string
@@ -39,6 +41,7 @@ export function AnalysisModal({ isOpen, onClose }: AnalysisModalProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { savedInsights } = useSavedInsightsStore()
+  const { items: analysisPoolItems } = useAnalysisPoolStore()
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -53,10 +56,14 @@ export function AnalysisModal({ isOpen, onClose }: AnalysisModalProps) {
   }, [isOpen])
 
   async function startUserProfiling() {
+    const poolContext = analysisPoolItems.length > 0 
+      ? `\n\n**📊 Analysis Pool Context:**\nI have ${analysisPoolItems.length} search ${analysisPoolItems.length === 1 ? 'result' : 'results'} ready for analysis:\n${analysisPoolItems.map((item, i) => `${i + 1}. ${item.query} (${item.resultCount} results)`).join('\n')}`
+      : ''
+
     const welcomeMessage: Message = {
       id: uuidv4(),
       role: 'assistant',
-      content: `Welcome to Advanced Analysis! 🎯
+      content: `Welcome to Advanced Analysis! 🎯${poolContext}
 
 Before we begin, I'd like to learn a bit about you to provide the most relevant insights.
 
@@ -138,21 +145,24 @@ This will help me tailor the analysis to your needs!`,
         role: 'assistant',
         content: `Perfect! Thanks for sharing, ${data.profile.role || 'there'}! 👍
 
-Now, let's gather your data sources. You can:
+Now, let's gather your data sources. You can choose any combination:
 
-**1. Upload Files** 📄
-Click "Upload Files" to add:
+**1. Analysis Pool** 📊 ${analysisPoolItems.length > 0 ? `✓ (${analysisPoolItems.length} saved searches)` : ''}
+${analysisPoolItems.length > 0 ? 'Your saved search results are ready for analysis!' : 'Add searches from Smart Search to include them here.'}
+
+**2. Upload Files** 📄
+Click "Upload Files" in the sidebar to add:
 - Excel/CSV files with facility data
-- PDF reports or documents
+- PDF reports or documents  
 - Market research files
 
-**2. Use Saved Articles** 📰
-Select from your ${savedInsights.length} saved articles from the Insights page
+**3. Use Saved Articles** 📰
+Select from your ${savedInsights.length} saved article${savedInsights.length !== 1 ? 's' : ''} from the Insights page
 
-**3. Skip to Analysis** ⚡
+**4. Skip to Analysis** ⚡
 Start immediately with our 658K+ facility database
 
-What would you like to do?`,
+What would you like to analyze?`,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, nextMessage])
@@ -184,8 +194,9 @@ What would you like to do?`,
 
 **Data Sources:**
 • Database: 658,859 facilities ✓
-• Uploaded Files: ${uploadedFiles.length} files ${uploadedFiles.length > 0 ? '✓' : ''}
-• Saved Articles: ${selectedArticles.length} articles ${selectedArticles.length > 0 ? '✓' : ''}
+• Analysis Pool: ${analysisPoolItems.length} search${analysisPoolItems.length !== 1 ? 'es' : ''} ${analysisPoolItems.length > 0 ? '✓' : ''}
+• Uploaded Files: ${uploadedFiles.length} file${uploadedFiles.length !== 1 ? 's' : ''} ${uploadedFiles.length > 0 ? '✓' : ''}
+• Saved Articles: ${selectedArticles.length} article${selectedArticles.length !== 1 ? 's' : ''} ${selectedArticles.length > 0 ? '✓' : ''}
 
 **Processing...**`,
       timestamp: new Date()
@@ -201,6 +212,12 @@ What would you like to do?`,
           sessionId: analysisSessionId,
           action: 'analyze',
           userProfile,
+          analysisPool: analysisPoolItems.map(item => ({
+            query: item.query,
+            summary: item.summary,
+            resultCount: item.resultCount,
+            facilities: item.facilities.slice(0, 5) // Top 5 from each search
+          })),
           uploadedFiles: uploadedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })),
           selectedArticles,
           userRequest,
@@ -467,16 +484,60 @@ What would you like to do?`,
               </form>
             </div>
 
-            {/* Sidebar - Files & Articles */}
+            {/* Sidebar - Files, Articles & Analysis Pool */}
             {currentStage === 'file_upload' && (
               <div className="w-80 border-l bg-muted/30 overflow-y-auto p-4">
-                <h3 className="font-semibold mb-4">Data Sources</h3>
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-purple-600" />
+                  Data Sources
+                </h3>
                 
+                {/* Analysis Pool Items */}
+                {analysisPoolItems.length > 0 && (
+                  <div className="mb-6">
+                    <div className="text-sm font-medium mb-2 flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4 text-purple-600" />
+                      Analysis Pool ({analysisPoolItems.length})
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {analysisPoolItems.map((item) => (
+                        <Card key={item.id} className="p-2 bg-background">
+                          <div className="text-xs font-medium truncate">{item.query}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {item.resultCount} facilities • {new Date(item.timestamp).toLocaleDateString()}
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Uploaded Files */}
                 <div className="mb-6">
                   <div className="text-sm font-medium mb-2 flex items-center gap-2">
                     <FileText className="h-4 w-4" />
                     Uploaded Files ({uploadedFiles.length})
+                  </div>
+                  <div className="mb-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full gap-2 text-xs h-8"
+                      disabled={isLoading}
+                    >
+                      <Upload className="h-3 w-3" />
+                      Upload Files
+                    </Button>
                   </div>
                   {uploadedFiles.length === 0 ? (
                     <p className="text-xs text-muted-foreground">No files uploaded yet</p>
@@ -503,13 +564,13 @@ What would you like to do?`,
                 <div>
                   <div className="text-sm font-medium mb-2 flex items-center gap-2">
                     <Bookmark className="h-4 w-4" />
-                    Saved Articles ({savedArticles.length})
+                    Saved Articles ({savedInsights.length})
                   </div>
-                  {savedArticles.length === 0 ? (
+                  {savedInsights.length === 0 ? (
                     <p className="text-xs text-muted-foreground">No saved articles</p>
                   ) : (
                     <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {savedArticles.slice(0, 10).map((article: any) => (
+                      {savedInsights.slice(0, 10).map((article: any) => (
                         <div 
                           key={article.id}
                           className={`p-2 bg-background rounded border text-xs cursor-pointer transition-colors ${

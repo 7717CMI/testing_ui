@@ -6,12 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import * as Popover from '@radix-ui/react-popover'
-import { Send, Sparkles, Loader2, Download, MapPin, Phone, Building2, BarChart3, Bookmark, X, FileText, Paperclip } from 'lucide-react'
+import { Send, Sparkles, Loader2, Download, MapPin, Phone, Building2, BarChart3, Bookmark, X, FileText, Paperclip, Plus, Check } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { v4 as uuidv4 } from 'uuid'
 import { AnalysisModal } from '@/components/analysis-modal'
 import { useSavedInsightsStore, type SavedInsight } from '@/stores/saved-insights-store'
+import { useAnalysisPoolStore } from '@/stores/analysis-pool-store'
 
 interface Message {
   id: string
@@ -47,6 +48,7 @@ I can handle typos and understand natural language!
   const [sessionId] = useState(() => uuidv4())
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
+  const [showAnalysisPanel, setShowAnalysisPanel] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -56,6 +58,9 @@ I can handle typos and understand natural language!
   const [selectedArticles, setSelectedArticles] = useState<string[]>([])
   const [articlesPopoverOpen, setArticlesPopoverOpen] = useState(false)
   const savedArticles = useSavedInsightsStore((state) => state.savedInsights)
+
+  // Analysis pool state
+  const { items: analysisPool, addToPool, removeFromPool, clearPool, isInPool } = useAnalysisPoolStore()
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -189,6 +194,29 @@ I can handle typos and understand natural language!
     "Tell me about Cleveland Clinic",
     "Find urgent care in Manhattan"
   ]
+
+  // Handle adding search result to analysis pool
+  function handleAddToAnalysis(message: Message, userQuery: string) {
+    if (!message.facilities || message.facilities.length === 0) {
+      toast.error("No data to add to analysis")
+      return
+    }
+    
+    if (isInPool(userQuery)) {
+      toast.info("Already in analysis pool")
+      return
+    }
+    
+    addToPool({
+      query: userQuery,
+      summary: `Found ${message.facilities.length} facilities`,
+      facilities: message.facilities.slice(0, 10), // Top 10 only to keep it lightweight
+      resultCount: message.metadata?.resultsCount || message.facilities.length,
+      timestamp: message.timestamp
+    })
+    
+    toast.success("✓ Added to Analysis Pool")
+  }
 
   return (
     <>
@@ -368,6 +396,16 @@ I can handle typos and understand natural language!
 
             <div className="flex items-center gap-2">
               <Button
+                variant={showAnalysisPanel ? "primary" : "outline"}
+                size="sm"
+                onClick={() => setShowAnalysisPanel(!showAnalysisPanel)}
+                className="gap-2 h-9 text-sm"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Analysis Pool ({analysisPool.length})
+              </Button>
+
+              <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleOpenAnalysis}
@@ -391,7 +429,9 @@ I can handle typos and understand natural language!
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex overflow-hidden">
+          {/* Main Chat Container */}
+          <div className="flex-1 flex flex-col overflow-hidden">
           <Card className="flex-1 flex flex-col m-0 rounded-none border-0 shadow-none overflow-hidden">
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <AnimatePresence>
@@ -485,6 +525,41 @@ I can handle typos and understand natural language!
                           {message.metadata.gapsFilled > 0 && (
                             <span>Enhanced with {message.metadata.gapsFilled} web searches</span>
                           )}
+                        </div>
+                      )}
+
+                      {message.role === 'assistant' && message.facilities && message.facilities.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-border/50 flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              const userMessage = messages[messages.indexOf(message) - 1]
+                              if (userMessage && userMessage.role === 'user') {
+                                handleAddToAnalysis(message, userMessage.content)
+                              }
+                            }}
+                            disabled={(() => {
+                              const userMessage = messages[messages.indexOf(message) - 1]
+                              return userMessage ? isInPool(userMessage.content) : false
+                            })()}
+                            className="gap-2 text-xs"
+                          >
+                            {(() => {
+                              const userMessage = messages[messages.indexOf(message) - 1]
+                              return userMessage && isInPool(userMessage.content) ? (
+                                <>
+                                  <Check className="h-3 w-3" />
+                                  In Analysis Pool
+                                </>
+                              ) : (
+                                <>
+                                  <Plus className="h-3 w-3" />
+                                  Add to Analysis
+                                </>
+                              )
+                            })()}
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -756,6 +831,94 @@ I can handle typos and understand natural language!
               </p>
             </form>
           </Card>
+        </div>
+
+          {/* Analysis Pool Sidebar */}
+          <AnimatePresence>
+            {showAnalysisPanel && (
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 320, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="border-l bg-muted/30 overflow-y-auto"
+              >
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-lg flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-primary" />
+                      Analysis Pool
+                    </h3>
+                    {analysisPool.length > 0 && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          if (confirm('Clear all items from analysis pool?')) {
+                            clearPool()
+                            toast.success('Analysis pool cleared')
+                          }
+                        }}
+                        className="text-xs h-7"
+                      >
+                        Clear All
+                      </Button>
+                    )}
+                  </div>
+
+                  {analysisPool.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                      <p className="text-sm font-medium">No items yet</p>
+                      <p className="text-xs mt-1 px-4">
+                        Add search results to analyze them together
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2 mb-4">
+                        {analysisPool.map((item) => (
+                          <Card key={item.id} className="p-3 hover:shadow-md transition-shadow">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{item.query}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {item.resultCount} results • {new Date(item.addedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  removeFromPool(item.id)
+                                  toast.success('Removed from pool')
+                                }}
+                                className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+
+                      <Button
+                        onClick={() => {
+                          setAnalysisModalOpen(true)
+                          setShowAnalysisPanel(false)
+                        }}
+                        className="w-full gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+                        disabled={analysisPool.length === 0}
+                      >
+                        <BarChart3 className="h-4 w-4" />
+                        Analyze {analysisPool.length} Item{analysisPool.length !== 1 ? 's' : ''}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </>

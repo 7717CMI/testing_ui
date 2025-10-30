@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
     console.log(`[Smart Search] Session: ${sessionId}`)
     console.log(`[Smart Search] Query: "${query}"`)
 
-    // STEP 1: Parse user query (with spell correction)
-    console.log('[Smart Search] Step 1: Parsing query...')
-    const parsedQuery = await parseQuery(query)
+    // STEP 1: Parse user query (with spell correction and context)
+    console.log('[Smart Search] Step 1: Parsing query with conversation context...')
+    const parsedQuery = await parseQuery(query, conversationHistory)
     console.log(`[Smart Search] Parsed intent: ${parsedQuery.intent}`)
     console.log(`[Smart Search] Corrected query: "${parsedQuery.correctedQuery}"`)
     console.log(`[Smart Search] Requested fields: ${parsedQuery.requestedFields.join(', ')}`)
