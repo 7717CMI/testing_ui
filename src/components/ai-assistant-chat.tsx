@@ -35,11 +35,6 @@ export function AIAssistant() {
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  
-  // Hide AI Assistant on Smart Search page
-  if (pathname === '/search') {
-    return null
-  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -54,6 +49,11 @@ export function AIAssistant() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+  
+  // Hide AI Assistant on Smart Search page - AFTER all hooks
+  if (pathname === '/search') {
+    return null
+  }
 
   const handleClearChat = () => {
     setMessages([
