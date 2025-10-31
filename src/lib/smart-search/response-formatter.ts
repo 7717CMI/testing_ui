@@ -2,12 +2,44 @@ import OpenAI from 'openai'
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
+// Assess complexity to select appropriate model
+function assessResponseComplexity(
+  mergedData: any[],
+  conversationHistory: any[]
+): 'simple' | 'complex' {
+  let complexityScore = 0
+  
+  // More than 5 facilities = complex
+  if (mergedData.length > 5) complexityScore += 2
+  
+  // Multiple data sources enriched = complex
+  const enrichedCount = mergedData.filter(f => f.beds || f.specialties?.length > 0).length
+  if (enrichedCount > 3) complexityScore += 2
+  
+  // Long conversation = complex
+  if (conversationHistory.length > 6) complexityScore += 1
+  
+  // Check for comparison/analysis keywords in recent messages
+  const recentContent = conversationHistory.slice(-2).map(m => m.content).join(' ').toLowerCase()
+  if (recentContent.match(/compar|analyz|differ|versus|vs|which is better/)) {
+    complexityScore += 3
+  }
+  
+  return complexityScore >= 4 ? 'complex' : 'simple'
+}
+
 export async function formatResponse(
   userQuery: string,
   mergedData: any[],
   conversationHistory: any[] = []
 ): Promise<string> {
   try {
+    // Detect complexity and select appropriate model
+    const complexity = assessResponseComplexity(mergedData, conversationHistory)
+    const selectedModel = complexity === 'complex' ? 'gpt-5' : 'gpt-5-mini'
+    
+    console.log(`[Response Formatter] Complexity: ${complexity}, Using: ${selectedModel}`)
+
     const systemPrompt = `You are an expert healthcare data assistant.
 
 CRITICAL RULES:
@@ -61,13 +93,13 @@ When listing multiple facilities, use this format:
     const dataContext = JSON.stringify(cleanData, null, 2).substring(0, 8000) // Limit size
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: selectedModel,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `User query: "${userQuery}"${historyContext}\n\nData:\n${dataContext}\n\nGenerate helpful response:` }
       ],
       temperature: 0.7,
-      max_tokens: 1000
+      max_tokens: complexity === 'complex' ? 1500 : 1000
     })
 
     return response.choices[0].message.content || 'I found the information but had trouble formatting it. Please try rephrasing your question.'

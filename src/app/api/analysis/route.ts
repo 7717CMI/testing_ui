@@ -453,8 +453,63 @@ Would you like me to:
   })
 }
 
+// Assess analysis complexity to select appropriate model
+function assessAnalysisComplexity(
+  state: AnalysisState,
+  uploadedFiles: any[] = [],
+  selectedArticles: any[] = []
+): 'simple' | 'medium' | 'complex' {
+  let complexityScore = 0
+  
+  // Check uploaded files
+  if (uploadedFiles.length > 3) complexityScore += 3
+  else if (uploadedFiles.length > 0) complexityScore += 1
+  
+  // Check saved articles
+  if (selectedArticles.length > 5) complexityScore += 3
+  else if (selectedArticles.length > 0) complexityScore += 1
+  
+  // Check analysis pool (if exists in state)
+  const analysisPoolSize = (state as any).analysisPool?.length || 0
+  if (analysisPoolSize > 3) complexityScore += 3
+  else if (analysisPoolSize > 0) complexityScore += 1
+  
+  // Check analysis type
+  const complexTypes = ['comparison', 'competitive', 'multi_region', 'predictive', 'strategic']
+  if (state.userInputs?.analysisType && complexTypes.some(t => 
+    state.userInputs.analysisType.toLowerCase().includes(t)
+  )) {
+    complexityScore += 3
+  }
+  
+  // Check conversation length
+  if (state.conversationHistory.length > 10) complexityScore += 2
+  
+  // Check for multi-step reasoning keywords
+  const allInputs = JSON.stringify(state.userInputs || {}).toLowerCase()
+  const complexKeywords = ['compare', 'predict', 'forecast', 'strategy', 'recommend', 'optimize', 'versus']
+  if (complexKeywords.some(kw => allInputs.includes(kw))) {
+    complexityScore += 2
+  }
+  
+  // Scoring thresholds
+  if (complexityScore >= 7) return 'complex'
+  if (complexityScore >= 3) return 'medium'
+  return 'simple'
+}
+
 async function generateAnalysis(state: AnalysisState, context: string, userProfile: any): Promise<any> {
   console.log('[Analysis] Generating analysis')
+
+  // Detect complexity and select appropriate model
+  const uploadedFiles = (state as any).uploadedFiles || []
+  const selectedArticles = (state as any).selectedArticles || []
+  const complexity = assessAnalysisComplexity(state, uploadedFiles, selectedArticles)
+  
+  // Use GPT-5 for complex analysis, GPT-5-mini for simple/medium
+  const selectedModel = complexity === 'complex' ? 'gpt-5' : 'gpt-5-mini'
+  
+  console.log(`[Analysis] Complexity: ${complexity}, Using model: ${selectedModel}`)
 
   // Fetch real-time data
   const webSearchQuery = `Healthcare ${state.userInputs.analysisType || 'market'} analysis. Include trends, statistics, growth rates, competitive landscape.`
@@ -517,22 +572,24 @@ Return JSON:
 }`
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o',
+    model: selectedModel,
     messages: [
       { role: 'system', content: analysisPrompt },
       { role: 'user', content: `Generate personalized analysis now.` }
     ],
     response_format: { type: 'json_object' },
     temperature: 0.3,
-    max_tokens: 2000
+    max_tokens: complexity === 'complex' ? 2500 : 2000
   })
 
   const analysis = JSON.parse(response.choices[0].message.content || '{}')
 
   return {
     ...analysis,
+    model: selectedModel,
+    complexity: complexity,
     timestamp: new Date().toISOString(),
-    sources: ['Database (658K+ facilities)', 'Real-time web data', 'GPT-4 analysis']
+    sources: ['Database (658K+ facilities)', 'Real-time web data', `${selectedModel} analysis`]
   }
 }
 
