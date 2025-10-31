@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
@@ -13,6 +13,82 @@ import { v4 as uuidv4 } from 'uuid'
 import { AnalysisModal } from '@/components/analysis-modal'
 import { useSavedInsightsStore, type SavedInsight } from '@/stores/saved-insights-store'
 import { useAnalysisPoolStore } from '@/stores/analysis-pool-store'
+
+// Helper function to convert emails, phone numbers, and URLs to clickable links
+function renderContentWithClickableLinks(content: string) {
+  // Combined regex to match emails, phone numbers, and URLs
+  const pattern = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)|((?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z0-9.-]+(?:\/[^\s]*)?)|(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/g
+  
+  const parts: (string | React.ReactElement)[] = []
+  let lastIndex = 0
+  let match
+  let keyIndex = 0
+
+  while ((match = pattern.exec(content)) !== null) {
+    // Add text before the match
+    if (match.index > lastIndex) {
+      parts.push(content.substring(lastIndex, match.index))
+    }
+
+    const matchedText = match[0]
+
+    // Email match
+    if (match[1]) {
+      parts.push(
+        <a
+          key={`email-${keyIndex++}`}
+          href={`mailto:${matchedText}`}
+          className="text-blue-600 hover:text-blue-800 underline hover:no-underline font-medium transition-colors"
+          onClick={(e) => e.stopPropagation()}
+          title="Click to send email"
+        >
+          {matchedText}
+        </a>
+      )
+    }
+    // URL match
+    else if (match[2]) {
+      const url = matchedText.startsWith('http') ? matchedText : `https://${matchedText}`
+      parts.push(
+        <a
+          key={`url-${keyIndex++}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:text-blue-800 underline hover:no-underline font-medium transition-colors"
+          onClick={(e) => e.stopPropagation()}
+          title="Click to open website"
+        >
+          {matchedText}
+        </a>
+      )
+    }
+    // Phone number match
+    else if (match[3]) {
+      const cleanPhone = matchedText.replace(/[^0-9]/g, '')
+      parts.push(
+        <a
+          key={`phone-${keyIndex++}`}
+          href={`tel:${cleanPhone}`}
+          className="text-blue-600 hover:text-blue-800 underline hover:no-underline font-medium transition-colors"
+          onClick={(e) => e.stopPropagation()}
+          title="Click to call"
+        >
+          {matchedText}
+        </a>
+      )
+    }
+
+    lastIndex = match.index + matchedText.length
+  }
+
+  // Add remaining text
+  if (lastIndex < content.length) {
+    parts.push(content.substring(lastIndex))
+  }
+
+  return <>{parts}</>
+}
 
 interface Message {
   id: string
@@ -451,7 +527,9 @@ I can handle typos and understand natural language!
                           : 'bg-muted border border-border'
                       }`}
                     >
-                      <div className="whitespace-pre-wrap leading-relaxed">{message.content}</div>
+                      <div className="whitespace-pre-wrap leading-relaxed">
+                        {renderContentWithClickableLinks(message.content)}
+                      </div>
                       
                       {message.facilities && message.facilities.length > 0 && (
                         <div className="mt-4 space-y-3">

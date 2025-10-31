@@ -703,14 +703,14 @@ export default function FacilityTypePage() {
                 <Download className="h-4 w-4 mr-2" />
                 Export CSV
               </Button>
-              <Link href="/bookmarks">
+              <Link href="/saved-searches">
                 <Button 
                   variant="outline" 
                   size="sm" 
                   className="border-[#006AFF] text-[#006AFF] hover:bg-[#006AFF] hover:text-white"
                 >
                   <BookmarkCheck className="h-4 w-4 mr-2" />
-                  View Bookmarks
+                  View Saved
                   {bookmarks.length > 0 && (
                     <span className="ml-2 px-1.5 py-0.5 text-xs bg-[#006AFF] text-white rounded">
                       {bookmarks.length}

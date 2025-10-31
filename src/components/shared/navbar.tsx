@@ -30,7 +30,6 @@ export function Navbar() {
     { name: "Search", href: "/search", icon: Search },
     { name: "Filtering", href: "/filtering", icon: Filter },
     { name: "Data Catalog", href: "/data-catalog", icon: Database },
-    { name: "Bookmarks", href: "/bookmarks", icon: BookmarkCheck },
     { name: "Saved", href: "/saved-searches", icon: Bookmark },
     { name: "Insights", href: "/insights", icon: TrendingUp },
     { name: "Entity Graph", href: "/graph-linkage", icon: Network },

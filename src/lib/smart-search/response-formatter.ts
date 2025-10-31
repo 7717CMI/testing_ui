@@ -36,7 +36,7 @@ export async function formatResponse(
   try {
     // Detect complexity and select appropriate model
     const complexity = assessResponseComplexity(mergedData, conversationHistory)
-    const selectedModel = complexity === 'complex' ? 'gpt-5' : 'gpt-5-mini'
+    const selectedModel = complexity === 'complex' ? 'gpt-4o' : 'gpt-4o-mini'
     
     console.log(`[Response Formatter] Complexity: ${complexity}, Using: ${selectedModel}`)
 
@@ -97,9 +97,7 @@ When listing multiple facilities, use this format:
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: `User query: "${userQuery}"${historyContext}\n\nData:\n${dataContext}\n\nGenerate helpful response:` }
-      ],
-      temperature: 0.7,
-      max_tokens: complexity === 'complex' ? 1500 : 1000
+      ]
     })
 
     return response.choices[0].message.content || 'I found the information but had trouble formatting it. Please try rephrasing your question.'

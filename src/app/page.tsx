@@ -80,6 +80,9 @@ export default function LandingPage() {
                 <Link href="/insights" className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
                   Insights
                 </Link>
+                <Link href="/saved-searches" className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
+                  Saved
+                </Link>
               </div>
             </div>
             {/* Right side: Auth buttons */}
