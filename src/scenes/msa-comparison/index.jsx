@@ -12,7 +12,7 @@ import BarChart from "../../components/BarChart";
 import PieChart from "../../components/PieChart";
 import LineChart from "../../components/LineChart";
 import DemoNotice from "../../components/DemoNotice";
-import { getData, filterDataframe, formatNumber } from "../../utils/dataGenerator";
+import { getData, filterDataframe, formatNumber, formatWithCommas } from "../../utils/dataGenerator";
 
 function MSAComparison() {
   const theme = useTheme();
@@ -78,7 +78,7 @@ function MSAComparison() {
     const avgYoY = filteredData.reduce((sum, d) => sum + (d.yoy || d.yoyGrowth || 0), 0) / filteredData.length;
 
     return {
-      marketSize: `${(marketSize / 1000).toFixed(1)}M`, // In millions
+      marketSize: `${formatWithCommas(marketSize / 1000)}M`, // In millions
       totalValue: formatNumber(totalValue),
       totalVolume: formatNumber(totalVolume),
       avgShare: `${avgShare.toFixed(1)}%`,

@@ -12,7 +12,7 @@ import PieChart from "../../components/PieChart";
 import LineChart from "../../components/LineChart";
 import DemoNotice from "../../components/DemoNotice";
 import LocalHospitalOutlinedIcon from "@mui/icons-material/LocalHospitalOutlined";
-import { getData, filterDataframe, formatNumber } from "../../utils/dataGenerator";
+import { getData, filterDataframe, formatWithCommas } from "../../utils/dataGenerator";
 
 function Epidemiology() {
   const theme = useTheme();
@@ -72,9 +72,9 @@ function Epidemiology() {
     const topDisease = Object.entries(diseaseGroups).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
 
     return {
-      marketSize: `${marketSize.toFixed(1)}M`,
-      totalPrevalence: `${(totalPrevalence / 1000).toFixed(1)}K`, // In thousands
-      totalIncidence: `${(totalIncidence / 1000).toFixed(1)}K`, // In thousands
+      marketSize: `${formatWithCommas(marketSize)}M`,
+      totalPrevalence: `${formatWithCommas(totalPrevalence / 1000)}K`, // In thousands
+      totalIncidence: `${formatWithCommas(totalIncidence / 1000)}K`, // In thousands
       topDisease,
     };
   }, [filteredData]);

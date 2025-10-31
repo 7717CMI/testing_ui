@@ -11,7 +11,7 @@ import BarChart from "../../components/BarChart";
 import PieChart from "../../components/PieChart";
 import LineChart from "../../components/LineChart";
 import DemoNotice from "../../components/DemoNotice";
-import { getData, filterDataframe } from "../../utils/dataGenerator";
+import { getData, filterDataframe, formatWithCommas } from "../../utils/dataGenerator";
 
 function VaccinationRate() {
   const theme = useTheme();
@@ -79,8 +79,8 @@ function VaccinationRate() {
     const numCountries = uniqueCountries.length;
 
     return {
-      marketSize: `${(marketSize / 1000).toFixed(1)}M`, // In millions
-      patientsVaccinated: `${(totalPatients / 1000).toFixed(1)}K`,
+      marketSize: `${formatWithCommas(marketSize / 1000)}M`, // In millions
+      patientsVaccinated: `${formatWithCommas(totalPatients / 1000)}K`,
       avgVaxRate: `${avgVaxRate.toFixed(1)}%`,
       topRegion,
       numCountries: numCountries.toString(),

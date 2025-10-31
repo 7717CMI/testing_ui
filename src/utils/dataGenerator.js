@@ -174,11 +174,30 @@ export const filterDataframe = (data, filters) => {
 };
 
 export const formatNumber = (num) => {
-  if (num >= 1_000_000) {
-    return `${(num / 1_000_000).toFixed(1)}M`;
+  if (num >= 1_000_000_000) {
+    const formatted = (num / 1_000_000_000).toFixed(1);
+    return `${parseFloat(formatted).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}B`;
+  } else if (num >= 1_000_000) {
+    const formatted = (num / 1_000_000).toFixed(1);
+    return `${parseFloat(formatted).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}M`;
   } else if (num >= 1_000) {
-    return `${(num / 1_000).toFixed(1)}K`;
+    const formatted = (num / 1_000).toFixed(1);
+    return `${parseFloat(formatted).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}K`;
   }
-  return Math.round(num).toString();
+  return Math.round(num).toLocaleString('en-US');
+};
+
+// Function to format with suffix and commas (for KPIs)
+export const formatWithCommas = (num, decimals = 1) => {
+  const value = parseFloat(num.toFixed(decimals));
+  return value.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+};
+
+// Function to add comma separators to any number
+export const addCommas = (num) => {
+  if (num === null || num === undefined || isNaN(num)) {
+    return num;
+  }
+  return Number(num).toLocaleString('en-US', { maximumFractionDigits: 2 });
 };
 
