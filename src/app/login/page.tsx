@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Building2, Mail, Lock, Chrome, Github } from "lucide-react"
-import { useAuthStore } from "@/stores/auth-store"
+import { useAuth } from "@/contexts/auth-context"
 import { toast } from "sonner"
 
 export default function LoginPage() {
@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
   
   const router = useRouter()
-  const { login } = useAuthStore()
+  const { signIn, signInWithGoogle } = useAuth()
 
   function validateForm() {
     const newErrors: { email?: string; password?: string } = {}
@@ -47,11 +47,11 @@ export default function LoginPage() {
     
     setLoading(true)
     try {
-      await login(email, password)
-      toast.success("Welcome back!")
-      router.push("/search")
+      await signIn(email, password)
+      router.push("/")
     } catch (error) {
-      toast.error("Invalid credentials. Please try again.")
+      // Error is handled in auth context with toast
+      console.error(error)
     } finally {
       setLoading(false)
     }

@@ -38,11 +38,13 @@ export interface Insight {
 export interface User {
   id: string
   email: string
-  name: string
-  role: "Admin" | "Analyst" | "Viewer"
-  plan: "Free" | "Pro" | "Enterprise"
+  name: string | null
+  role?: "Admin" | "Analyst" | "Viewer"
+  plan?: "Free" | "Pro" | "Enterprise"
   avatar?: string
   jobTitle?: string
+  emailVerified?: boolean
+  uid?: string
 }
 
 export interface SearchFilters {

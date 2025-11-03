@@ -1,35 +1,38 @@
 import { create } from "zustand"
+import { persist } from "zustand/middleware"
 import { User } from "@/types"
 
 interface AuthState {
   user: User | null
   isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<void>
+  isLoading: boolean
+  
+  setUser: (user: User | null) => void
+  setLoading: (loading: boolean) => void
   logout: () => void
-  setUser: (user: User) => void
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  login: async (email: string, password: string) => {
-    // Mock login - replace with actual API call
-    const mockUser: User = {
-      id: "1",
-      email,
-      name: "John Doe",
-      role: "Analyst",
-      plan: "Pro",
-      avatar: undefined,
-      jobTitle: "Healthcare Analyst",
-    }
-    set({ user: mockUser, isAuthenticated: true })
-  },
-  logout: () => {
-    set({ user: null, isAuthenticated: false })
-  },
-  setUser: (user: User) => {
-    set({ user, isAuthenticated: true })
-  },
-}))
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      isAuthenticated: false,
+      isLoading: true,
 
+      setUser: (user) => {
+        set({ user, isAuthenticated: !!user, isLoading: false })
+      },
+
+      setLoading: (loading) => {
+        set({ isLoading: loading })
+      },
+
+      logout: () => {
+        set({ user: null, isAuthenticated: false })
+      },
+    }),
+    {
+      name: "auth-storage",
+    }
+  )
+)

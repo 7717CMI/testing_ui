@@ -442,8 +442,7 @@ What would you like to analyze?`,
                     </Button>
 
                     <Button
-                      variant="default"
-                      className="flex flex-col gap-2 h-auto py-4 bg-purple-600 hover:bg-purple-700"
+                      className="flex flex-col gap-2 h-auto py-4 bg-purple-600 hover:bg-purple-700 text-white"
                       onClick={skipToAnalysis}
                     >
                       <Sparkles className="h-5 w-5" />
