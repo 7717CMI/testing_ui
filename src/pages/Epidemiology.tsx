@@ -4,10 +4,8 @@ import { motion } from 'framer-motion'
 import { getData, filterDataframe, formatWithCommas, FilterOptions } from '../utils/dataGenerator'
 import { StatBox } from '../components/StatBox'
 import { FilterDropdown } from '../components/FilterDropdown'
-import { BarChart } from '../components/BarChart'
 import { PieChart } from '../components/PieChart'
 import { LineChart } from '../components/LineChart'
-import { RegionCountryStackedBarChart } from '../components/RegionCountryStackedBarChart'
 import { GroupedBarChart } from '../components/GroupedBarChart'
 import { CountryDiseaseStackedBarChart } from '../components/CountryDiseaseStackedBarChart'
 import { DemoNotice } from '../components/DemoNotice'
@@ -388,11 +386,6 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
     // Ensure at least one filter is always selected (minimum 1 year, 1 disease, 1 country)
     const newFilters = { ...filters, [key]: normalizedValue }
     
-    // Validation: Ensure each filter category has at least one selection
-    const hasYear = newFilters.year && Array.isArray(newFilters.year) && newFilters.year.length > 0
-    const hasDisease = newFilters.disease && Array.isArray(newFilters.disease) && newFilters.disease.length > 0
-    const hasCountry = newFilters.country && Array.isArray(newFilters.country) && newFilters.country.length > 0
-    
     // Prevent clearing the last item in each filter category
     if (key === 'year' && Array.isArray(normalizedValue) && normalizedValue.length === 0 && uniqueOptions.years.length > 0) {
       // Keep at least the last year (2025 or most recent)
@@ -496,7 +489,7 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
           />
         </div>
         {/* Active Filters Display - More Prominent */}
-        {(filters.year?.length > 0 || filters.disease?.length > 0 || filters.country?.length > 0) && (
+        {((filters.year && filters.year.length > 0) || (filters.disease && filters.disease.length > 0) || (filters.country && filters.country.length > 0)) && (
           <div className="mt-6 pt-6 border-t-2 border-gray-300 dark:border-navy-light">
             <div className={`p-4 rounded-lg ${isDark ? 'bg-navy-dark' : 'bg-blue-50'}`}>
               <p className="text-base font-semibold text-text-primary-light dark:text-text-primary-dark mb-2">

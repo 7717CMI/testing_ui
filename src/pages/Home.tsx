@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Activity, Heart, DollarSign, TrendingUp, PieChart, ShoppingCart, Pill, FlaskConical, ArrowRight, ArrowLeft, LucideIcon } from 'lucide-react'
+import { Activity, Heart, TrendingUp, FlaskConical, ArrowRight, ArrowLeft, LucideIcon } from 'lucide-react'
 import { DemoNotice } from '../components/DemoNotice'
 
 interface HomeProps {
