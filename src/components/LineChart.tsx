@@ -183,13 +183,13 @@ export function LineChart({ data, dataKeys, nameKey, colors = ['#0075FF', '#4FD1
           stroke={isDark ? '#FFFFFF' : '#2D3748'}
           style={{ fontSize: '10px' }}
           tickFormatter={(value) => formatNumber(value)}
-          width={70}
+          width={85}
           domain={domain}
           label={{
             value: yAxisLabel || 'Value',
             angle: -90,
             position: 'insideLeft',
-            offset: 15,
+            offset: -5,
             style: { 
               fontSize: '11px', 
               fill: isDark ? '#FFFFFF' : '#2D3748',

@@ -181,12 +181,12 @@ export function StackedBarChart({ data, dataKey, nameKey, diseaseKey, uniqueDise
           stroke={isDark ? '#FFFFFF' : '#2D3748'}
           style={{ fontSize: '10px' }}
           tickFormatter={(value) => formatNumber(value)}
-          width={70}
+          width={85}
           label={{
             value: yAxisLabel || 'Value',
             angle: -90,
             position: 'insideLeft',
-            offset: 15,
+            offset: -5,
             style: { 
               fontSize: '11px', 
               fill: isDark ? '#FFFFFF' : '#2D3748',

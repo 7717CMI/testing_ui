@@ -106,16 +106,16 @@ export function BarChart({ data, dataKey, nameKey, color = '#0075FF', xAxisLabel
           stroke={isDark ? '#A0AEC0' : '#4A5568'}
           style={{ fontSize: '13px', fontWeight: 500 }}
           tickFormatter={(value) => formatNumber(value)}
-          width={75}
+          width={90}
           tick={{ fill: isDark ? '#E2E8F0' : '#2D3748' }}
-          tickMargin={12}
+          tickMargin={15}
           domain={[0, 'auto']}
           allowDataOverflow={false}
           label={{
             value: yAxisLabel || 'Value',
             angle: -90,
             position: 'insideLeft',
-            offset: 20,
+            offset: -10,
             style: { 
               fontSize: '14px', 
               fontWeight: 500,

@@ -67,6 +67,16 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
     }
   }, [data])
 
+  // Always use expanded layout - graphs displayed one by one vertically
+  const gridClass = useMemo(() => {
+    return 'grid grid-cols-1 gap-10 w-full'  // Always full width, stacked vertically
+  }, [])
+
+  // Increased chart height for better visibility
+  const chartHeight = useMemo(() => {
+    return 'h-[700px]'  // Increased height for larger graphs
+  }, [])
+
   // Helper to get active filter labels for display
   const activeFiltersLabel = useMemo(() => {
     const diseases = filters.disease && filters.disease.length > 0 
@@ -570,24 +580,24 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
             <div className="flex items-center gap-3 mb-3">
               <div className={`w-1 h-10 rounded-full ${isDark ? 'bg-cyan-accent' : 'bg-electric-blue'}`}></div>
               <InfoTooltip content="• Shows prevalence (existing cases) by country for each disease\n• Grouped by year with country breakdown\n• Each year group shows bars for each country\n• Compare country-level prevalence patterns across years\n• Identify countries with highest prevalence for each disease">
-                <h2 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark cursor-help">
+                <h2 className="text-4xl font-bold text-text-primary-light dark:text-text-primary-dark cursor-help">
                   Prevalence Analysis
                 </h2>
               </InfoTooltip>
             </div>
-            <p className="text-base text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
+            <p className="text-lg text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
               Existing cases grouped by year and country
             </p>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className={gridClass}>
             {countryPrevalenceByDisease.map((chart) => (
-              <div key={chart.disease} className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-                <div className="mb-4">
-                  <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <div key={chart.disease} className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                <div className="mb-6">
+                  <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                     {chart.disease} Prevalence by Year & Country
                   </h3>
                   {selectedCountries.length > 0 && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                       Countries: {selectedCountries.join(', ')}
                     </p>
                   )}
@@ -613,24 +623,24 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
             <div className="flex items-center gap-3 mb-3">
               <div className={`w-1 h-10 rounded-full ${isDark ? 'bg-cyan-accent' : 'bg-electric-blue'}`}></div>
               <InfoTooltip content="• Shows incidence (new cases) by country for each disease\n• Grouped by year with country breakdown\n• Each year group shows bars for each country\n• Compare country-level incidence patterns across years\n• Identify countries with highest incidence for each disease">
-                <h2 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark cursor-help">
+                <h2 className="text-4xl font-bold text-text-primary-light dark:text-text-primary-dark cursor-help">
                   Incidence Analysis
                 </h2>
               </InfoTooltip>
             </div>
-            <p className="text-base text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
+            <p className="text-lg text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
               New cases grouped by year and country
             </p>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className={gridClass}>
             {countryIncidenceByDisease.map((chart) => (
-              <div key={chart.disease} className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-                <div className="mb-4">
-                  <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <div key={chart.disease} className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                <div className="mb-6">
+                  <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                     {chart.disease} Incidence by Year & Country
                   </h3>
                   {selectedCountries.length > 0 && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                       Countries: {selectedCountries.join(', ')}
                     </p>
                   )}
@@ -654,21 +664,21 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
             <div className={`w-1 h-10 rounded-full ${isDark ? 'bg-cyan-accent' : 'bg-electric-blue'}`}></div>
-            <h2 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark">
+            <h2 className="text-4xl font-bold text-text-primary-light dark:text-text-primary-dark">
               Country Overview
             </h2>
           </div>
-          <p className="text-base text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
+          <p className="text-lg text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
             Country distribution with disease breakdown
           </p>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-            <div className="mb-4">
-              <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <div className={gridClass}>
+          <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+            <div className="mb-6">
+              <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Disease Distribution by Country
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                 Prevalence Breakdown
               </p>
             </div>
@@ -681,12 +691,12 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
               />
             </div>
           </div>
-          <div className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-            <div className="mb-4">
-              <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+          <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+            <div className="mb-6">
+              <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Disease Distribution by Country
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                 Incidence Breakdown
               </p>
             </div>
@@ -708,12 +718,12 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
           <div className="flex items-center gap-3 mb-3">
             <div className={`w-1 h-10 rounded-full ${isDark ? 'bg-cyan-accent' : 'bg-electric-blue'}`}></div>
             <InfoTooltip content="• Tracks prevalence and incidence trends over time\n• Single country: Combined graph with both metrics\n• Multiple countries: Separate graphs for each metric\n• YoY (Year-over-Year) percentage shown in tooltips\n• Identify trends, seasonal patterns, and outbreaks">
-              <h2 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark cursor-help">
+              <h2 className="text-4xl font-bold text-text-primary-light dark:text-text-primary-dark cursor-help">
                 Case Burden Trends Over Time
               </h2>
             </InfoTooltip>
           </div>
-          <p className="text-base text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
+          <p className="text-lg text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
             {selectedCountries.length === 1 
               ? `Track disease burden trends for ${selectedCountries[0]} with prevalence and incidence on one graph`
               : `Track disease burden trends across ${selectedCountries.length} countries with separate graphs for prevalence and incidence`
@@ -723,18 +733,18 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
         
         {/* Single Country: Combined Graph */}
         {selectedCountries.length === 1 && combinedCaseBurdenData.length > 0 && (
-          <div className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-            <div className="mb-4">
-              <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+          <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+            <div className="mb-6">
+              <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 {selectedCountries[0]} - Prevalence & Incidence Trends
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                 Disease: {Array.isArray(activeFiltersLabel.diseases) ? activeFiltersLabel.diseases.join(', ') : activeFiltersLabel.diseases}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                 Country: {selectedCountries[0]}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+              <p className="text-base text-gray-500 dark:text-gray-500 mt-2">
                 Hover over data points to see Year-over-Year (YoY) percentage changes
               </p>
             </div>
@@ -754,19 +764,19 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
 
         {/* Multiple Countries: Separate Graphs */}
         {selectedCountries.length >= 2 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className={gridClass}>
             {/* Prevalence Graph */}
             {prevalenceCaseBurdenData.length > 0 && (
-              <div className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-                <div className="mb-4">
-                  <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                <div className="mb-6">
+                  <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                     Prevalence Trends by Country
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                     Disease: {Array.isArray(activeFiltersLabel.diseases) ? activeFiltersLabel.diseases.join(', ') : activeFiltersLabel.diseases}
                   </p>
                   {selectedCountries.length > 0 && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                       Countries: {selectedCountries.join(', ')}
                     </p>
                   )}
@@ -787,16 +797,16 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
 
             {/* Incidence Graph */}
             {incidenceCaseBurdenData.length > 0 && (
-              <div className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-                <div className="mb-4">
-                  <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                <div className="mb-6">
+                  <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                     Incidence Trends by Country
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                     Disease: {Array.isArray(activeFiltersLabel.diseases) ? activeFiltersLabel.diseases.join(', ') : activeFiltersLabel.diseases}
                   </p>
                   {selectedCountries.length > 0 && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                       Countries: {selectedCountries.join(', ')}
                     </p>
                   )}

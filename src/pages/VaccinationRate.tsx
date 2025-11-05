@@ -61,6 +61,16 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
     }
   }, [data])
 
+  // Always use expanded layout - graphs displayed one by one vertically
+  const gridClass = useMemo(() => {
+    return 'grid grid-cols-1 gap-10 w-full'  // Always full width, stacked vertically
+  }, [])
+
+  // Increased chart height for better visibility
+  const chartHeight = useMemo(() => {
+    return 'h-[700px]'  // Increased height for larger graphs
+  }, [])
+
   // Active filters label helper
   const activeFiltersLabel = useMemo(() => {
     return {
@@ -514,24 +524,24 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
             <div className="flex items-center gap-3 mb-3">
               <div className={`w-1 h-10 rounded-full ${isDark ? 'bg-cyan-accent' : 'bg-electric-blue'}`}></div>
               <InfoTooltip content="• Shows vaccination rate (percentage vaccinated) by country for each disease\n• Grouped by year with country breakdown\n• Each year group shows bars for each country\n• Compare country-level vaccination rates across years\n• Identify countries with highest vaccination rates for each disease">
-                <h2 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark cursor-help">
+                <h2 className="text-4xl font-bold text-text-primary-light dark:text-text-primary-dark cursor-help">
                   Vaccination Rate Analysis
                 </h2>
               </InfoTooltip>
             </div>
-            <p className="text-base text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
+            <p className="text-lg text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
               Vaccination rate grouped by year and country
             </p>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className={gridClass}>
             {countryVaccinationRateByDisease.map((chart) => (
-              <div key={chart.disease} className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-                <div className="mb-4">
-                  <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <div key={chart.disease} className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                <div className="mb-6">
+                  <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                     {chart.disease} Vaccination Rate by Year & Country
                   </h3>
                   {selectedCountries.length > 0 && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                       Countries: {selectedCountries.join(', ')}
                     </p>
                   )}
@@ -557,24 +567,24 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
             <div className="flex items-center gap-3 mb-3">
               <div className={`w-1 h-10 rounded-full ${isDark ? 'bg-cyan-accent' : 'bg-electric-blue'}`}></div>
               <InfoTooltip content="• Shows coverage rate (program coverage) by country for each disease\n• Grouped by year with country breakdown\n• Each year group shows bars for each country\n• Compare country-level coverage rates across years\n• Identify countries with highest coverage rates for each disease">
-                <h2 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark cursor-help">
+                <h2 className="text-4xl font-bold text-text-primary-light dark:text-text-primary-dark cursor-help">
                   Coverage Rate Analysis
                 </h2>
               </InfoTooltip>
             </div>
-            <p className="text-base text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
+            <p className="text-lg text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
               Coverage rate grouped by year and country
             </p>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className={gridClass}>
             {countryCoverageRateByDisease.map((chart) => (
-              <div key={chart.disease} className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-                <div className="mb-4">
-                  <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <div key={chart.disease} className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                <div className="mb-6">
+                  <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                     {chart.disease} Coverage Rate by Year & Country
                   </h3>
                   {selectedCountries.length > 0 && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                       Countries: {selectedCountries.join(', ')}
                     </p>
                   )}
@@ -598,21 +608,21 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
             <div className={`w-1 h-10 rounded-full ${isDark ? 'bg-cyan-accent' : 'bg-electric-blue'}`}></div>
-            <h2 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark">
+            <h2 className="text-4xl font-bold text-text-primary-light dark:text-text-primary-dark">
               Country Overview
             </h2>
           </div>
-          <p className="text-base text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
+          <p className="text-lg text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
             Country distribution with disease breakdown
           </p>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-            <div className="mb-4">
-              <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+        <div className={gridClass}>
+          <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+            <div className="mb-6">
+              <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Disease Distribution by Country
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                 Vaccination Rate Breakdown
               </p>
             </div>
@@ -625,12 +635,12 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
               />
             </div>
           </div>
-          <div className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-            <div className="mb-4">
-              <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+          <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+            <div className="mb-6">
+              <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Disease Distribution by Country
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                 Coverage Rate Breakdown
               </p>
             </div>
@@ -652,12 +662,12 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
           <div className="flex items-center gap-3 mb-3">
             <div className={`w-1 h-10 rounded-full ${isDark ? 'bg-cyan-accent' : 'bg-electric-blue'}`}></div>
             <InfoTooltip content="• Tracks vaccination rate and coverage rate trends over time\n• Single country: Combined graph with both metrics\n• Multiple countries: Separate graphs for each metric\n• YoY (Year-over-Year) percentage shown in tooltips\n• Identify trends and program effectiveness">
-              <h2 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark cursor-help">
+              <h2 className="text-4xl font-bold text-text-primary-light dark:text-text-primary-dark cursor-help">
                 Vaccination Trends Over Time
               </h2>
             </InfoTooltip>
           </div>
-          <p className="text-base text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
+          <p className="text-lg text-text-secondary-light dark:text-text-secondary-dark ml-4 mb-2">
             {selectedCountries.length === 1 
               ? `Track vaccination trends for ${selectedCountries[0]} with vaccination rate and coverage rate on one graph`
               : `Track vaccination trends across ${selectedCountries.length} countries with separate graphs for vaccination rate and coverage rate`
@@ -667,18 +677,18 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
         
         {/* Single Country: Combined Graph */}
         {selectedCountries.length === 1 && combinedVaccinationTrendsData.length > 0 && (
-          <div className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-            <div className="mb-4">
-              <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+          <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+            <div className="mb-6">
+              <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 {selectedCountries[0]} - Vaccination Rate & Coverage Rate Trends
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                 Disease: {Array.isArray(activeFiltersLabel.diseases) ? activeFiltersLabel.diseases.join(', ') : activeFiltersLabel.diseases}
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                 Country: {selectedCountries[0]}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+              <p className="text-base text-gray-500 dark:text-gray-500 mt-2">
                 Hover over data points to see Year-over-Year (YoY) percentage changes
               </p>
             </div>
@@ -698,19 +708,19 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
 
         {/* Multiple Countries: Separate Graphs */}
         {selectedCountries.length >= 2 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className={gridClass}>
             {/* Vaccination Rate Graph */}
             {vaccinationRateTrendsData.length > 0 && (
-              <div className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-                <div className="mb-4">
-                  <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                <div className="mb-6">
+                  <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                     Vaccination Rate Trends by Country
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                     Disease: {Array.isArray(activeFiltersLabel.diseases) ? activeFiltersLabel.diseases.join(', ') : activeFiltersLabel.diseases}
                   </p>
                   {selectedCountries.length > 0 && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                       Countries: {selectedCountries.join(', ')}
                     </p>
                   )}
@@ -731,16 +741,16 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
 
             {/* Coverage Rate Graph */}
             {coverageRateTrendsData.length > 0 && (
-              <div className={`p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 h-[450px] flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-                <div className="mb-4">
-                  <h3 className="text-xl font-medium text-text-primary-light dark:text-text-primary-dark mb-1" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+              <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                <div className="mb-6">
+                  <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                     Coverage Rate Trends by Country
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                     Disease: {Array.isArray(activeFiltersLabel.diseases) ? activeFiltersLabel.diseases.join(', ') : activeFiltersLabel.diseases}
                   </p>
                   {selectedCountries.length > 0 && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                       Countries: {selectedCountries.join(', ')}
                     </p>
                   )}
