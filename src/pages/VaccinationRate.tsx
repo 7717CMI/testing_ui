@@ -190,134 +190,182 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
     }))
   }, [filteredData])
 
-  // Vaccination Rate Trends Over Time - Country-wise breakdown
+  // Vaccination Rate Trends Over Time - Country-wise breakdown, separated by disease
   // Single country: Combined graph with both vaccination rate and coverage rate
   // Multiple countries: Separate graphs for vaccination rate and coverage rate
-  const vaccinationTrendsData = useMemo(() => {
+  // NOTE: Now separated by disease - each disease gets its own YoY graph
+  const vaccinationTrendsDataByDisease = useMemo(() => {
     const selectedCountriesList = filters.country && filters.country.length > 0 
       ? filters.country 
       : [...new Set(filteredData.map(d => d.country))].sort()
+    const selectedDiseases = filters.disease && filters.disease.length > 0 
+      ? filters.disease 
+      : [...new Set(filteredData.map(d => d.disease))].sort()
     
-    const grouped: Record<number, Record<string, { vaccinationRate: number; coverageRate: number }>> = {}
+    // Group by disease, year, and country
+    const grouped: Record<string, Record<number, Record<string, { vaccinationRate: number; coverageRate: number }>>> = {}
     
     filteredData.forEach((d) => {
-      if (!grouped[d.year]) {
-        grouped[d.year] = {}
+      if (!grouped[d.disease]) {
+        grouped[d.disease] = {}
       }
-      if (!grouped[d.year][d.country]) {
-        grouped[d.year][d.country] = { vaccinationRate: 0, coverageRate: 0 }
+      if (!grouped[d.disease][d.year]) {
+        grouped[d.disease][d.year] = {}
       }
-      if (selectedCountriesList.includes(d.country)) {
-        grouped[d.year][d.country].vaccinationRate += d.vaccinationRate
-        grouped[d.year][d.country].coverageRate += d.coverageRate
+      if (!grouped[d.disease][d.year][d.country]) {
+        grouped[d.disease][d.year][d.country] = { vaccinationRate: 0, coverageRate: 0 }
+      }
+      if (selectedCountriesList.includes(d.country) && selectedDiseases.includes(d.disease)) {
+        grouped[d.disease][d.year][d.country].vaccinationRate += d.vaccinationRate
+        grouped[d.disease][d.year][d.country].coverageRate += d.coverageRate
       }
     })
     
-    // Transform to array format with YoY calculations
-    const years = Object.keys(grouped).map(y => parseInt(y)).sort()
-    const result: Array<Record<string, number | string | null>> = []
+    // Transform to array format with YoY calculations, separated by disease
+    const result: Record<string, Array<Record<string, number | string | null>>> = {}
     
-    years.forEach((year, index) => {
-      const entry: Record<string, number | string | null> = { year }
+    selectedDiseases.forEach((disease) => {
+      if (!grouped[disease]) return
       
-      selectedCountriesList.forEach((country) => {
-        if (grouped[year][country]) {
-          const currentVaccinationRate = grouped[year][country].vaccinationRate
-          const currentCoverageRate = grouped[year][country].coverageRate
-          
-          entry[`${country}_vaccinationRate`] = currentVaccinationRate
-          entry[`${country}_coverageRate`] = currentCoverageRate
-          
-          // Calculate YoY if previous year exists
-          if (index > 0 && grouped[years[index - 1]][country]) {
-            const prevVaccinationRate = grouped[years[index - 1]][country].vaccinationRate
-            const prevCoverageRate = grouped[years[index - 1]][country].coverageRate
+      const years = Object.keys(grouped[disease]).map(y => parseInt(y)).sort()
+      const diseaseData: Array<Record<string, number | string | null>> = []
+      
+      years.forEach((year, index) => {
+        const entry: Record<string, number | string | null> = { year }
+        
+        selectedCountriesList.forEach((country) => {
+          if (grouped[disease][year][country]) {
+            const currentVaccinationRate = grouped[disease][year][country].vaccinationRate
+            const currentCoverageRate = grouped[disease][year][country].coverageRate
             
-            const yoyVaccinationRate = prevVaccinationRate > 0 
-              ? ((currentVaccinationRate - prevVaccinationRate) / prevVaccinationRate) * 100 
-              : 0
-            const yoyCoverageRate = prevCoverageRate > 0 
-              ? ((currentCoverageRate - prevCoverageRate) / prevCoverageRate) * 100 
-              : 0
+            entry[`${country}_vaccinationRate`] = currentVaccinationRate
+            entry[`${country}_coverageRate`] = currentCoverageRate
             
-            entry[`${country}_vaccinationRate_yoy`] = yoyVaccinationRate
-            entry[`${country}_coverageRate_yoy`] = yoyCoverageRate
+            // Calculate YoY if previous year exists
+            if (index > 0 && grouped[disease][years[index - 1]][country]) {
+              const prevVaccinationRate = grouped[disease][years[index - 1]][country].vaccinationRate
+              const prevCoverageRate = grouped[disease][years[index - 1]][country].coverageRate
+              
+              const yoyVaccinationRate = prevVaccinationRate > 0 
+                ? ((currentVaccinationRate - prevVaccinationRate) / prevVaccinationRate) * 100 
+                : 0
+              const yoyCoverageRate = prevCoverageRate > 0 
+                ? ((currentCoverageRate - prevCoverageRate) / prevCoverageRate) * 100 
+                : 0
+              
+              entry[`${country}_vaccinationRate_yoy`] = yoyVaccinationRate
+              entry[`${country}_coverageRate_yoy`] = yoyCoverageRate
+            }
           }
-        }
+        })
+        diseaseData.push(entry)
       })
-      result.push(entry)
+      
+      result[disease] = diseaseData
     })
     
     return result
-  }, [filteredData, filters.country])
+  }, [filteredData, filters.country, filters.disease])
 
-  // Single country: Combined graph data (vaccination rate + coverage rate)
-  const combinedVaccinationTrendsData = useMemo(() => {
-    if (selectedCountries.length !== 1) return []
+  // Get selected diseases
+  const selectedDiseases = useMemo(() => {
+    return filters.disease && filters.disease.length > 0 
+      ? filters.disease 
+      : [...new Set(filteredData.map(d => d.disease))].sort()
+  }, [filteredData, filters.disease])
+
+  // Single country: Combined graph data (vaccination rate + coverage rate) - separated by disease
+  const combinedVaccinationTrendsDataByDisease = useMemo(() => {
+    if (selectedCountries.length !== 1) return {}
     
     const country = selectedCountries[0]
-    return vaccinationTrendsData.map((entry) => ({
-      year: entry.year,
-      vaccinationRate: entry[`${country}_vaccinationRate`] as number || 0,
-      coverageRate: entry[`${country}_coverageRate`] as number || 0,
-      vaccinationRate_yoy: entry[`${country}_vaccinationRate_yoy`] as number || null,
-      coverageRate_yoy: entry[`${country}_coverageRate_yoy`] as number || null,
-    }))
-  }, [vaccinationTrendsData, selectedCountries])
-
-  // Multiple countries: Vaccination Rate data with YoY
-  const vaccinationRateTrendsData = useMemo(() => {
-    if (selectedCountries.length < 2) return []
+    const result: Record<string, Array<{year: number | string, vaccinationRate: number, coverageRate: number, vaccinationRate_yoy: number | null, coverageRate_yoy: number | null}>> = {}
     
-    const years = vaccinationTrendsData.map(d => d.year).filter((v, i, a) => a.indexOf(v) === i).sort()
-    return years.map((year, index) => {
-      const entry: Record<string, number | string | null> = { year }
-      selectedCountries.forEach((country) => {
-        const currentData = vaccinationTrendsData.find(d => d.year === year)
-        const value = currentData?.[`${country}_vaccinationRate`] as number || 0
-        entry[country] = value
-        
-        // Calculate YoY if previous year exists
-        if (index > 0) {
-          const prevData = vaccinationTrendsData.find(d => d.year === years[index - 1])
-          const prevValue = prevData?.[`${country}_vaccinationRate`] as number || 0
-          if (prevValue > 0) {
-            entry[`${country}_yoy`] = ((value - prevValue) / prevValue) * 100
-          } else {
-            entry[`${country}_yoy`] = null
-          }
-        }
-      })
-      return entry
+    selectedDiseases.forEach((disease) => {
+      const diseaseData = vaccinationTrendsDataByDisease[disease] || []
+      result[disease] = diseaseData.map((entry) => ({
+        year: entry.year,
+        vaccinationRate: entry[`${country}_vaccinationRate`] as number || 0,
+        coverageRate: entry[`${country}_coverageRate`] as number || 0,
+        vaccinationRate_yoy: entry[`${country}_vaccinationRate_yoy`] as number || null,
+        coverageRate_yoy: entry[`${country}_coverageRate_yoy`] as number || null,
+      }))
     })
-  }, [vaccinationTrendsData, selectedCountries])
-
-  // Multiple countries: Coverage Rate data with YoY
-  const coverageRateTrendsData = useMemo(() => {
-    if (selectedCountries.length < 2) return []
     
-    const years = vaccinationTrendsData.map(d => d.year).filter((v, i, a) => a.indexOf(v) === i).sort()
-    return years.map((year, index) => {
-      const entry: Record<string, number | string | null> = { year }
-      selectedCountries.forEach((country) => {
-        const currentData = vaccinationTrendsData.find(d => d.year === year)
-        const value = currentData?.[`${country}_coverageRate`] as number || 0
-        entry[country] = value
-        
-        // Calculate YoY if previous year exists
-        if (index > 0) {
-          const prevData = vaccinationTrendsData.find(d => d.year === years[index - 1])
-          const prevValue = prevData?.[`${country}_coverageRate`] as number || 0
-          if (prevValue > 0) {
-            entry[`${country}_yoy`] = ((value - prevValue) / prevValue) * 100
-          } else {
-            entry[`${country}_yoy`] = null
+    return result
+  }, [vaccinationTrendsDataByDisease, selectedCountries, selectedDiseases])
+
+  // Multiple countries: Vaccination Rate data with YoY - separated by disease
+  const vaccinationRateTrendsDataByDisease = useMemo(() => {
+    if (selectedCountries.length < 2) return {}
+    
+    const result: Record<string, Array<Record<string, number | string | null>>> = {}
+    
+    selectedDiseases.forEach((disease) => {
+      const diseaseData = vaccinationTrendsDataByDisease[disease] || []
+      if (diseaseData.length === 0) return
+      
+      const years = diseaseData.map(d => d.year).filter((v, i, a) => a.indexOf(v) === i).sort()
+      result[disease] = years.map((year, index) => {
+        const entry: Record<string, number | string | null> = { year }
+        selectedCountries.forEach((country) => {
+          const currentData = diseaseData.find(d => d.year === year)
+          const value = currentData?.[`${country}_vaccinationRate`] as number || 0
+          entry[country] = value
+          
+          // Calculate YoY if previous year exists
+          if (index > 0) {
+            const prevData = diseaseData.find(d => d.year === years[index - 1])
+            const prevValue = prevData?.[`${country}_vaccinationRate`] as number || 0
+            if (prevValue > 0) {
+              entry[`${country}_yoy`] = ((value - prevValue) / prevValue) * 100
+            } else {
+              entry[`${country}_yoy`] = null
+            }
           }
-        }
+        })
+        return entry
       })
-      return entry
     })
-  }, [vaccinationTrendsData, selectedCountries])
+    
+    return result
+  }, [vaccinationTrendsDataByDisease, selectedCountries, selectedDiseases])
+
+  // Multiple countries: Coverage Rate data with YoY - separated by disease
+  const coverageRateTrendsDataByDisease = useMemo(() => {
+    if (selectedCountries.length < 2) return {}
+    
+    const result: Record<string, Array<Record<string, number | string | null>>> = {}
+    
+    selectedDiseases.forEach((disease) => {
+      const diseaseData = vaccinationTrendsDataByDisease[disease] || []
+      if (diseaseData.length === 0) return
+      
+      const years = diseaseData.map(d => d.year).filter((v, i, a) => a.indexOf(v) === i).sort()
+      result[disease] = years.map((year, index) => {
+        const entry: Record<string, number | string | null> = { year }
+        selectedCountries.forEach((country) => {
+          const currentData = diseaseData.find(d => d.year === year)
+          const value = currentData?.[`${country}_coverageRate`] as number || 0
+          entry[country] = value
+          
+          // Calculate YoY if previous year exists
+          if (index > 0) {
+            const prevData = diseaseData.find(d => d.year === years[index - 1])
+            const prevValue = prevData?.[`${country}_coverageRate`] as number || 0
+            if (prevValue > 0) {
+              entry[`${country}_yoy`] = ((value - prevValue) / prevValue) * 100
+            } else {
+              entry[`${country}_yoy`] = null
+            }
+          }
+        })
+        return entry
+      })
+    })
+    
+    return result
+  }, [vaccinationTrendsDataByDisease, selectedCountries, selectedDiseases])
 
   // Get dataKeys for LineChart based on selected countries
   const combinedTrendsDataKeys = useMemo(() => {
@@ -541,7 +589,7 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
                     {chart.disease} Vaccination Rate by Year & Country
                   </h3>
                   {selectedCountries.length > 0 && (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+                    <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
                       Countries: {selectedCountries.join(', ')}
                     </p>
                   )}
@@ -584,7 +632,7 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
                     {chart.disease} Coverage Rate by Year & Country
                   </h3>
                   {selectedCountries.length > 0 && (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+                    <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
                       Countries: {selectedCountries.join(', ')}
                     </p>
                   )}
@@ -622,7 +670,7 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
               <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Disease Distribution by Country
               </h3>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+              <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
                 Vaccination Rate Breakdown
               </p>
             </div>
@@ -640,7 +688,7 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
               <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Disease Distribution by Country
               </h3>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+              <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
                 Coverage Rate Breakdown
               </p>
             </div>
@@ -675,99 +723,117 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
           </p>
         </div>
         
-        {/* Single Country: Combined Graph */}
-        {selectedCountries.length === 1 && combinedVaccinationTrendsData.length > 0 && (
-          <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-            <div className="mb-6">
-              <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                {selectedCountries[0]} - Vaccination Rate & Coverage Rate Trends
-              </h3>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                Disease: {Array.isArray(activeFiltersLabel.diseases) ? activeFiltersLabel.diseases.join(', ') : activeFiltersLabel.diseases}
-              </p>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                Country: {selectedCountries[0]}
-              </p>
-              <p className="text-base text-gray-500 dark:text-gray-500 mt-2">
-                Hover over data points to see Year-over-Year (YoY) percentage changes
-              </p>
-            </div>
-            <div className="flex-1 flex items-center justify-center min-h-0 pt-2">
-              <LineChart
-                data={combinedVaccinationTrendsData}
-                dataKeys={combinedTrendsDataKeys}
-                nameKey="year"
-                colors={getChartColors(2)}
-                xAxisLabel="Year"
-                yAxisLabel="Rate (%)"
-                showCountry={selectedCountries}
-              />
-            </div>
+        {/* Single Country: Combined Graph - Separated by Disease */}
+        {selectedCountries.length === 1 && Object.keys(combinedVaccinationTrendsDataByDisease).length > 0 && (
+          <div className={gridClass}>
+            {selectedDiseases.map((disease) => {
+              const diseaseData = combinedVaccinationTrendsDataByDisease[disease] || []
+              if (diseaseData.length === 0) return null
+              
+              return (
+                <div key={disease} className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                  <div className="mb-6">
+                    <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                      {selectedCountries[0]} - {disease} Vaccination Rate & Coverage Rate Trends
+                    </h3>
+                    <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
+                      Disease: {disease}
+                    </p>
+                    <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ml-2 ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
+                      Country: {selectedCountries[0]}
+                    </p>
+                    <p className="text-base text-gray-500 dark:text-gray-500 mt-2">
+                      Hover over data points to see Year-over-Year (YoY) percentage changes
+                    </p>
+                  </div>
+                  <div className="flex-1 flex items-center justify-center min-h-0 pt-2">
+                    <LineChart
+                      data={diseaseData}
+                      dataKeys={combinedTrendsDataKeys}
+                      nameKey="year"
+                      colors={getChartColors(2)}
+                      xAxisLabel="Year"
+                      yAxisLabel="Rate (%)"
+                      showCountry={selectedCountries}
+                    />
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
 
-        {/* Multiple Countries: Separate Graphs */}
+        {/* Multiple Countries: Separate Graphs - Separated by Disease */}
         {selectedCountries.length >= 2 && (
           <div className={gridClass}>
-            {/* Vaccination Rate Graph */}
-            {vaccinationRateTrendsData.length > 0 && (
-              <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-                <div className="mb-6">
-                  <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                    Vaccination Rate Trends by Country
-                  </h3>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                    Disease: {Array.isArray(activeFiltersLabel.diseases) ? activeFiltersLabel.diseases.join(', ') : activeFiltersLabel.diseases}
-                  </p>
-                  {selectedCountries.length > 0 && (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                      Countries: {selectedCountries.join(', ')}
-                    </p>
+            {selectedDiseases.map((disease) => {
+              const vaccinationData = vaccinationRateTrendsDataByDisease[disease] || []
+              const coverageData = coverageRateTrendsDataByDisease[disease] || []
+              
+              return (
+                <div key={disease} className={gridClass}>
+                  {/* Vaccination Rate Graph for this disease */}
+                  {vaccinationData.length > 0 && (
+                    <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                      <div className="mb-6">
+                        <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                          {disease} - Vaccination Rate Trends by Country
+                        </h3>
+                        <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
+                          Disease: {disease}
+                        </p>
+                        {selectedCountries.length > 0 && (
+                          <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ml-2 ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
+                            Countries: {selectedCountries.join(', ')}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex-1 flex items-center justify-center min-h-0 pt-2">
+                        <LineChart
+                          data={vaccinationData}
+                          dataKeys={vaccinationRateTrendsDataKeys}
+                          nameKey="year"
+                          colors={getChartColors(vaccinationRateTrendsDataKeys.length)}
+                          xAxisLabel="Year"
+                          yAxisLabel="Vaccination Rate (%)"
+                          showCountry={selectedCountries}
+                        />
+                      </div>
+                    </div>
                   )}
-                </div>
-                <div className="flex-1 flex items-center justify-center min-h-0 pt-2">
-                  <LineChart
-                    data={vaccinationRateTrendsData}
-                    dataKeys={vaccinationRateTrendsDataKeys}
-                    nameKey="year"
-                    colors={getChartColors(vaccinationRateTrendsDataKeys.length)}
-                    xAxisLabel="Year"
-                    yAxisLabel="Vaccination Rate (%)"
-                    showCountry={selectedCountries}
-                  />
-                </div>
-              </div>
-            )}
 
-            {/* Coverage Rate Graph */}
-            {coverageRateTrendsData.length > 0 && (
-              <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-                <div className="mb-6">
-                  <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                    Coverage Rate Trends by Country
-                  </h3>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                    Disease: {Array.isArray(activeFiltersLabel.diseases) ? activeFiltersLabel.diseases.join(', ') : activeFiltersLabel.diseases}
-                  </p>
-                  {selectedCountries.length > 0 && (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                      Countries: {selectedCountries.join(', ')}
-                    </p>
+                  {/* Coverage Rate Graph for this disease */}
+                  {coverageData.length > 0 && (
+                    <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                      <div className="mb-6">
+                        <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                          {disease} - Coverage Rate Trends by Country
+                        </h3>
+                        <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
+                          Disease: {disease}
+                        </p>
+                        {selectedCountries.length > 0 && (
+                          <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ml-2 ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
+                            Countries: {selectedCountries.join(', ')}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex-1 flex items-center justify-center min-h-0 pt-2">
+                        <LineChart
+                          data={coverageData}
+                          dataKeys={coverageRateTrendsDataKeys}
+                          nameKey="year"
+                          colors={getChartColors(coverageRateTrendsDataKeys.length)}
+                          xAxisLabel="Year"
+                          yAxisLabel="Coverage Rate (%)"
+                          showCountry={selectedCountries}
+                        />
+                      </div>
+                    </div>
                   )}
                 </div>
-                <div className="flex-1 flex items-center justify-center min-h-0 pt-2">
-                  <LineChart
-                    data={coverageRateTrendsData}
-                    dataKeys={coverageRateTrendsDataKeys}
-                    nameKey="year"
-                    colors={getChartColors(coverageRateTrendsDataKeys.length)}
-                    xAxisLabel="Year"
-                    yAxisLabel="Coverage Rate (%)"
-                    showCountry={selectedCountries}
-                  />
-                </div>
-              </div>
-            )}
+              )
+            })}
           </div>
         )}
       </div>

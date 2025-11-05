@@ -1153,6 +1153,33 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
         )}
       </div>
 
+      {/* Cross Segment Analysis Button Section - Between Filters and Key Metrics */}
+      <div className={`p-8 rounded-2xl mb-8 shadow-xl ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-300'}`}>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="flex-1">
+            <h3 className="text-2xl font-bold text-text-primary-light dark:text-text-primary-dark mb-3">
+              Cross Segment Analysis
+            </h3>
+            <p className="text-base text-text-secondary-light dark:text-text-secondary-dark">
+              Analyze relationships between different segments (e.g., Age × ROA, Brand × Gender) to understand how market dynamics vary across segment combinations.
+            </p>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              const element = document.getElementById('cross-segment-analysis')
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+            }}
+            className="px-6 py-3 bg-electric-blue text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md font-semibold whitespace-nowrap"
+          >
+            View Cross Segment Analysis
+          </motion.button>
+        </div>
+      </div>
+
       {/* KPI Cards */}
       <div className="mb-10">
         <div className="mb-6">
@@ -1311,7 +1338,7 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
       })()}
 
       {/* Cross Segment Analysis Section */}
-        <div className="mb-12">
+        <div id="cross-segment-analysis" className="mb-12">
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-3">
               <div className={`w-1 h-10 rounded-full ${isDark ? 'bg-cyan-accent' : 'bg-electric-blue'}`}></div>
@@ -1437,8 +1464,8 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
                     <option value="By Gender">By Gender</option>
                   </>
                 )}
-                <option value="By ROA">By ROA</option>
-                <option value="By FDF">By FDF</option>
+                <option value="By ROA">By ROA (Route of Administration)</option>
+                <option value="By FDF">By FDF (Fixed Dose Formulation)</option>
                 <option value="By Procurement">By Procurement</option>
               </select>
           </div>
@@ -1505,11 +1532,16 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
                 } focus:outline-none focus:ring-2 focus:ring-electric-blue transition-all ${!filters.crossSegmentPrimary ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <option value="">Select Cross Segment</option>
-                {availableCrossSegmentsForStandalone.map((segment) => (
-                  <option key={segment || ''} value={segment || ''}>
-                    {segment}
-                  </option>
-                ))}
+                {availableCrossSegmentsForStandalone.map((segment) => {
+                  let displayText: string = segment || ''
+                  if (segment === 'By ROA') displayText = 'By ROA (Route of Administration)'
+                  else if (segment === 'By FDF') displayText = 'By FDF (Fixed Dose Formulation)'
+                  return (
+                    <option key={segment || ''} value={segment || ''}>
+                      {displayText}
+                    </option>
+                  )
+                })}
               </select>
             </div>
           </div>

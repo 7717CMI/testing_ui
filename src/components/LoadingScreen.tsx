@@ -119,7 +119,7 @@ export function LoadingScreen() {
       variants={containerVariants}
       initial="initial"
       exit="exit"
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-50 dark:bg-navy-dark overflow-hidden"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-50 overflow-hidden"
     >
       <div className="absolute inset-0 overflow-hidden">
         {[...Array(50)].map((_, i) => {
@@ -131,7 +131,7 @@ export function LoadingScreen() {
               custom={i}
               variants={particleVariants}
               animate="animate"
-              className="absolute rounded-full bg-electric-blue/20 dark:bg-electric-blue/30"
+              className="absolute rounded-full bg-electric-blue/20"
               style={{
                 width: `${size}px`,
                 height: `${size}px`,
@@ -167,37 +167,51 @@ export function LoadingScreen() {
           animate="animate"
           className="flex flex-col items-center gap-1 mb-8 relative"
         >
-          <motion.span
-            animate={{
-              textShadow: [
-                '0 0 0px rgba(26, 35, 126, 0)',
-                '0 0 20px rgba(0, 117, 255, 0.5)',
-                '0 0 0px rgba(26, 35, 126, 0)'
-              ]
+          <img 
+            src="/logo.png" 
+            alt="Coherent Market Insights" 
+            className="h-16 w-auto object-contain"
+            onError={(e) => {
+              // Fallback to text if image not found
+              const target = e.target as HTMLImageElement
+              target.style.display = 'none'
+              const fallback = target.nextElementSibling as HTMLElement
+              if (fallback) fallback.style.display = 'flex'
             }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: 'easeInOut'
-            }}
-            className="text-3xl font-bold text-[#1a237e] dark:text-[#3f51b5] leading-tight uppercase tracking-tight relative"
-          >
-            COHERENT
-          </motion.span>
-          <motion.span
-            animate={{
-              opacity: [0.8, 1, 0.8]
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 0.5
-            }}
-            className="text-xs font-sans text-[#1a237e] dark:text-[#3f51b5] tracking-[0.2em] leading-tight uppercase"
-          >
-            MARKET INSIGHTS
-          </motion.span>
+          />
+          <motion.div className="flex-col hidden" style={{ display: 'none' }}>
+            <motion.span
+              animate={{
+                textShadow: [
+                  '0 0 0px rgba(26, 35, 126, 0)',
+                  '0 0 20px rgba(0, 117, 255, 0.5)',
+                  '0 0 0px rgba(26, 35, 126, 0)'
+                ]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut'
+              }}
+              className="text-3xl font-bold text-[#1a237e] leading-tight uppercase tracking-tight relative"
+            >
+              COHERENT
+            </motion.span>
+            <motion.span
+              animate={{
+                opacity: [0.8, 1, 0.8]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: 0.5
+              }}
+              className="text-xs font-sans text-[#1a237e] tracking-[0.2em] leading-tight uppercase"
+            >
+              MARKET INSIGHTS
+            </motion.span>
+          </motion.div>
         </motion.div>
 
         <div className="relative flex items-center justify-center my-4">
@@ -246,7 +260,7 @@ export function LoadingScreen() {
             variants={innerCircleVariants}
             initial="initial"
             animate="animate"
-            className="relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-electric-blue to-cyan-accent shadow-2xl ring-4 ring-electric-blue/20 dark:ring-electric-blue/10"
+            className="relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-electric-blue to-cyan-accent shadow-2xl ring-4 ring-electric-blue/20"
           >
             <motion.div
               animate={{
@@ -298,7 +312,7 @@ export function LoadingScreen() {
               repeat: Infinity,
               ease: 'easeInOut'
             }}
-            className="text-lg font-semibold text-text-primary-light dark:text-text-primary-dark"
+            className="text-lg font-semibold text-text-primary-light"
           >
             Coherent Market Insights
           </motion.h2>
@@ -312,7 +326,7 @@ export function LoadingScreen() {
               ease: 'easeInOut',
               delay: 0.3
             }}
-            className="text-sm text-text-secondary-light dark:text-text-secondary-dark"
+            className="text-sm text-text-secondary-light"
           >
             Loading your data...
           </motion.p>
@@ -345,7 +359,7 @@ export function LoadingScreen() {
         </div>
 
         <div className="w-full max-w-xs mt-4 relative">
-          <div className="h-1 overflow-hidden rounded-full bg-gray-200 dark:bg-navy-light relative">
+          <div className="h-1 overflow-hidden rounded-full bg-gray-200 relative">
             <motion.div
               initial={{ width: '0%' }}
               animate={{ width: '100%' }}

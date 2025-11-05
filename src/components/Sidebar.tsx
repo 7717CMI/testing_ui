@@ -107,19 +107,19 @@ export function Sidebar({ activeItem = 'Home', isOpen = true, onClose, onNavigat
         initial={false}
         animate={getSidebarState()}
         variants={sidebarVariants}
-        className={`fixed left-0 top-0 h-screen bg-white dark:bg-navy-card border-r border-gray-200 dark:border-navy-light flex flex-col z-50 ${
+        className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 flex flex-col z-50 ${
           isCollapsed ? 'w-20' : 'w-60'
         }`}
       >
         {/* Logo */}
-        <div className="p-6 border-b border-gray-200 dark:border-navy-light relative">
+        <div className="p-6 border-b border-gray-200 relative">
           <div className="flex items-center justify-between">
             {!isCollapsed && <Logo isCollapsed={isCollapsed} />}
             {isCollapsed && <div className="w-full" />}
             <div className="flex items-center gap-2">
               <button
                 onClick={onToggleCollapse}
-                className="hidden lg:flex p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-navy-light text-text-secondary-light dark:text-text-secondary-dark transition-all"
+                className="hidden lg:flex p-1.5 rounded-lg hover:bg-gray-100 text-text-secondary-light transition-all"
                 title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                 aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               >
@@ -127,7 +127,7 @@ export function Sidebar({ activeItem = 'Home', isOpen = true, onClose, onNavigat
               </button>
               <button
                 onClick={onClose}
-                className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-navy-light text-text-secondary-light dark:text-text-secondary-dark"
+                className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 text-text-secondary-light"
                 aria-label="Close sidebar"
               >
                 <X size={20} />
@@ -160,7 +160,7 @@ export function Sidebar({ activeItem = 'Home', isOpen = true, onClose, onNavigat
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all relative group min-h-[44px] ${
                     isActive
                       ? 'bg-electric-blue text-white'
-                      : 'text-text-secondary-light dark:text-text-secondary-dark hover:bg-gray-100 dark:hover:bg-navy-light'
+                      : 'text-text-secondary-light hover:bg-gray-100'
                   } ${isCollapsed ? 'justify-center' : ''}`}
                   title={isCollapsed ? item.label : ''}
                 >

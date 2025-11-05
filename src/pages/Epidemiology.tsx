@@ -203,136 +203,182 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
     }))
   }, [filteredData])
 
-  // Case Burden Graph: Prevalence and Incidence Trends Over Time - Country-wise breakdown
+  // Case Burden Graph: Prevalence and Incidence Trends Over Time - Country-wise breakdown, separated by disease
   // Single country: Combined graph with both prevalence and incidence
   // Multiple countries: Separate graphs for prevalence and incidence
-  const caseBurdenData = useMemo(() => {
-    // Get selected countries or all countries in filtered data
+  // NOTE: Now separated by disease - each disease gets its own YoY graph
+  const caseBurdenDataByDisease = useMemo(() => {
     const selectedCountriesList = filters.country && filters.country.length > 0 
       ? filters.country 
       : [...new Set(filteredData.map(d => d.country))].sort()
+    const selectedDiseases = filters.disease && filters.disease.length > 0 
+      ? filters.disease 
+      : [...new Set(filteredData.map(d => d.disease))].sort()
     
-    // Group by year and country
-    const grouped: Record<number, Record<string, { prevalence: number; incidence: number }>> = {}
+    // Group by disease, year, and country
+    const grouped: Record<string, Record<number, Record<string, { prevalence: number; incidence: number }>>> = {}
     
     filteredData.forEach((d) => {
-      if (!grouped[d.year]) {
-        grouped[d.year] = {}
+      if (!grouped[d.disease]) {
+        grouped[d.disease] = {}
       }
-      if (!grouped[d.year][d.country]) {
-        grouped[d.year][d.country] = { prevalence: 0, incidence: 0 }
+      if (!grouped[d.disease][d.year]) {
+        grouped[d.disease][d.year] = {}
       }
-      if (selectedCountriesList.includes(d.country)) {
-        grouped[d.year][d.country].prevalence += d.prevalence
-        grouped[d.year][d.country].incidence += d.incidence
+      if (!grouped[d.disease][d.year][d.country]) {
+        grouped[d.disease][d.year][d.country] = { prevalence: 0, incidence: 0 }
+      }
+      if (selectedCountriesList.includes(d.country) && selectedDiseases.includes(d.disease)) {
+        grouped[d.disease][d.year][d.country].prevalence += d.prevalence
+        grouped[d.disease][d.year][d.country].incidence += d.incidence
       }
     })
     
-    // Transform to array format with YoY calculations
-    const years = Object.keys(grouped).map(y => parseInt(y)).sort()
-    const result: Array<Record<string, number | string>> = []
+    // Transform to array format with YoY calculations, separated by disease
+    const result: Record<string, Array<Record<string, number | string | null>>> = {}
     
-    years.forEach((year, index) => {
-      const entry: Record<string, number | string> = { year }
+    selectedDiseases.forEach((disease) => {
+      if (!grouped[disease]) return
       
-      selectedCountriesList.forEach((country) => {
-        if (grouped[year][country]) {
-          const currentPrevalence = grouped[year][country].prevalence
-          const currentIncidence = grouped[year][country].incidence
-          
-          entry[`${country}_prevalence`] = currentPrevalence
-          entry[`${country}_incidence`] = currentIncidence
-          
-          // Calculate YoY if previous year exists
-          if (index > 0 && grouped[years[index - 1]][country]) {
-            const prevPrevalence = grouped[years[index - 1]][country].prevalence
-            const prevIncidence = grouped[years[index - 1]][country].incidence
+      const years = Object.keys(grouped[disease]).map(y => parseInt(y)).sort()
+      const diseaseData: Array<Record<string, number | string | null>> = []
+      
+      years.forEach((year, index) => {
+        const entry: Record<string, number | string | null> = { year }
+        
+        selectedCountriesList.forEach((country) => {
+          if (grouped[disease][year][country]) {
+            const currentPrevalence = grouped[disease][year][country].prevalence
+            const currentIncidence = grouped[disease][year][country].incidence
             
-            const yoyPrevalence = prevPrevalence > 0 
-              ? ((currentPrevalence - prevPrevalence) / prevPrevalence) * 100 
-              : 0
-            const yoyIncidence = prevIncidence > 0 
-              ? ((currentIncidence - prevIncidence) / prevIncidence) * 100 
-              : 0
+            entry[`${country}_prevalence`] = currentPrevalence
+            entry[`${country}_incidence`] = currentIncidence
             
-            entry[`${country}_prevalence_yoy`] = yoyPrevalence
-            entry[`${country}_incidence_yoy`] = yoyIncidence
+            // Calculate YoY if previous year exists
+            if (index > 0 && grouped[disease][years[index - 1]][country]) {
+              const prevPrevalence = grouped[disease][years[index - 1]][country].prevalence
+              const prevIncidence = grouped[disease][years[index - 1]][country].incidence
+              
+              const yoyPrevalence = prevPrevalence > 0 
+                ? ((currentPrevalence - prevPrevalence) / prevPrevalence) * 100 
+                : 0
+              const yoyIncidence = prevIncidence > 0 
+                ? ((currentIncidence - prevIncidence) / prevIncidence) * 100 
+                : 0
+              
+              entry[`${country}_prevalence_yoy`] = yoyPrevalence
+              entry[`${country}_incidence_yoy`] = yoyIncidence
+            }
           }
-        }
+        })
+        diseaseData.push(entry)
       })
-      result.push(entry)
+      
+      result[disease] = diseaseData
     })
     
     return result
-  }, [filteredData, filters.country])
+  }, [filteredData, filters.country, filters.disease])
 
-  // Single country: Combined graph data (prevalence + incidence)
-  const combinedCaseBurdenData = useMemo(() => {
-    if (selectedCountries.length !== 1) return []
+  // Get selected diseases
+  const selectedDiseases = useMemo(() => {
+    return filters.disease && filters.disease.length > 0 
+      ? filters.disease 
+      : [...new Set(filteredData.map(d => d.disease))].sort()
+  }, [filteredData, filters.disease])
+
+  // Single country: Combined graph data (prevalence + incidence) - separated by disease
+  const combinedCaseBurdenDataByDisease = useMemo(() => {
+    if (selectedCountries.length !== 1) return {}
     
     const country = selectedCountries[0]
-    return caseBurdenData.map((entry) => ({
-      year: entry.year,
-      prevalence: entry[`${country}_prevalence`] as number || 0,
-      incidence: entry[`${country}_incidence`] as number || 0,
-      prevalence_yoy: entry[`${country}_prevalence_yoy`] as number || null,
-      incidence_yoy: entry[`${country}_incidence_yoy`] as number || null,
-    }))
-  }, [caseBurdenData, selectedCountries])
-
-  // Multiple countries: Prevalence data with YoY
-  const prevalenceCaseBurdenData = useMemo(() => {
-    if (selectedCountries.length < 2) return []
+    const result: Record<string, Array<{year: number | string, prevalence: number, incidence: number, prevalence_yoy: number | null, incidence_yoy: number | null}>> = {}
     
-    const years = caseBurdenData.map(d => d.year).filter((v, i, a) => a.indexOf(v) === i).sort()
-    return years.map((year, index) => {
-      const entry: Record<string, number | string | null> = { year }
-      selectedCountries.forEach((country) => {
-        const currentData = caseBurdenData.find(d => d.year === year)
-        const value = currentData?.[`${country}_prevalence`] as number || 0
-        entry[country] = value
-        
-        // Calculate YoY if previous year exists
-        if (index > 0) {
-          const prevData = caseBurdenData.find(d => d.year === years[index - 1])
-          const prevValue = prevData?.[`${country}_prevalence`] as number || 0
-          if (prevValue > 0) {
-            entry[`${country}_yoy`] = ((value - prevValue) / prevValue) * 100
-          } else {
-            entry[`${country}_yoy`] = null
-          }
-        }
-      })
-      return entry
+    selectedDiseases.forEach((disease) => {
+      const diseaseData = caseBurdenDataByDisease[disease] || []
+      result[disease] = diseaseData.map((entry) => ({
+        year: entry.year as number | string,
+        prevalence: entry[`${country}_prevalence`] as number || 0,
+        incidence: entry[`${country}_incidence`] as number || 0,
+        prevalence_yoy: entry[`${country}_prevalence_yoy`] as number || null,
+        incidence_yoy: entry[`${country}_incidence_yoy`] as number || null,
+      }))
     })
-  }, [caseBurdenData, selectedCountries])
-
-  // Multiple countries: Incidence data with YoY
-  const incidenceCaseBurdenData = useMemo(() => {
-    if (selectedCountries.length < 2) return []
     
-    const years = caseBurdenData.map(d => d.year).filter((v, i, a) => a.indexOf(v) === i).sort()
-    return years.map((year, index) => {
-      const entry: Record<string, number | string | null> = { year }
-      selectedCountries.forEach((country) => {
-        const currentData = caseBurdenData.find(d => d.year === year)
-        const value = currentData?.[`${country}_incidence`] as number || 0
-        entry[country] = value
-        
-        // Calculate YoY if previous year exists
-        if (index > 0) {
-          const prevData = caseBurdenData.find(d => d.year === years[index - 1])
-          const prevValue = prevData?.[`${country}_incidence`] as number || 0
-          if (prevValue > 0) {
-            entry[`${country}_yoy`] = ((value - prevValue) / prevValue) * 100
-          } else {
-            entry[`${country}_yoy`] = null
+    return result
+  }, [caseBurdenDataByDisease, selectedCountries, selectedDiseases])
+
+  // Multiple countries: Prevalence data with YoY - separated by disease
+  const prevalenceCaseBurdenDataByDisease = useMemo(() => {
+    if (selectedCountries.length < 2) return {}
+    
+    const result: Record<string, Array<Record<string, number | string | null>>> = {}
+    
+    selectedDiseases.forEach((disease) => {
+      const diseaseData = caseBurdenDataByDisease[disease] || []
+      if (diseaseData.length === 0) return
+      
+      const years = diseaseData.map(d => d.year).filter((v, i, a) => a.indexOf(v) === i).sort()
+      result[disease] = years.map((year, index) => {
+        const entry: Record<string, number | string | null> = { year }
+        selectedCountries.forEach((country) => {
+          const currentData = diseaseData.find(d => d.year === year)
+          const value = currentData?.[`${country}_prevalence`] as number || 0
+          entry[country] = value
+          
+          // Calculate YoY if previous year exists
+          if (index > 0) {
+            const prevData = diseaseData.find(d => d.year === years[index - 1])
+            const prevValue = prevData?.[`${country}_prevalence`] as number || 0
+            if (prevValue > 0) {
+              entry[`${country}_yoy`] = ((value - prevValue) / prevValue) * 100
+            } else {
+              entry[`${country}_yoy`] = null
+            }
           }
-        }
+        })
+        return entry
       })
-      return entry
     })
-  }, [caseBurdenData, selectedCountries])
+    
+    return result
+  }, [caseBurdenDataByDisease, selectedCountries, selectedDiseases])
+
+  // Multiple countries: Incidence data with YoY - separated by disease
+  const incidenceCaseBurdenDataByDisease = useMemo(() => {
+    if (selectedCountries.length < 2) return {}
+    
+    const result: Record<string, Array<Record<string, number | string | null>>> = {}
+    
+    selectedDiseases.forEach((disease) => {
+      const diseaseData = caseBurdenDataByDisease[disease] || []
+      if (diseaseData.length === 0) return
+      
+      const years = diseaseData.map(d => d.year).filter((v, i, a) => a.indexOf(v) === i).sort()
+      result[disease] = years.map((year, index) => {
+        const entry: Record<string, number | string | null> = { year }
+        selectedCountries.forEach((country) => {
+          const currentData = diseaseData.find(d => d.year === year)
+          const value = currentData?.[`${country}_incidence`] as number || 0
+          entry[country] = value
+          
+          // Calculate YoY if previous year exists
+          if (index > 0) {
+            const prevData = diseaseData.find(d => d.year === years[index - 1])
+            const prevValue = prevData?.[`${country}_incidence`] as number || 0
+            if (prevValue > 0) {
+              entry[`${country}_yoy`] = ((value - prevValue) / prevValue) * 100
+            } else {
+              entry[`${country}_yoy`] = null
+            }
+          }
+        })
+        return entry
+      })
+    })
+    
+    return result
+  }, [caseBurdenDataByDisease, selectedCountries, selectedDiseases])
 
   // Get dataKeys for LineChart based on selected countries
   const combinedLineChartDataKeys = useMemo(() => {
@@ -559,7 +605,7 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
           <div className={`p-7 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
             <StatBox
               title={kpis.topDisease}
-              subtitle="Top Disease"
+              subtitle="Disease with largest population"
               icon={<Activity className="text-electric-blue dark:text-cyan-accent" size={28} />}
             />
           </div>
@@ -597,7 +643,7 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
                     {chart.disease} Prevalence by Year & Country
                   </h3>
                   {selectedCountries.length > 0 && (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+                    <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
                       Countries: {selectedCountries.join(', ')}
                     </p>
                   )}
@@ -640,7 +686,7 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
                     {chart.disease} Incidence by Year & Country
                   </h3>
                   {selectedCountries.length > 0 && (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+                    <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
                       Countries: {selectedCountries.join(', ')}
                     </p>
                   )}
@@ -678,7 +724,7 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
               <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Disease Distribution by Country
               </h3>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+              <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
                 Prevalence Breakdown
               </p>
             </div>
@@ -696,7 +742,7 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
               <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                 Disease Distribution by Country
               </h3>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+              <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
                 Incidence Breakdown
               </p>
             </div>
@@ -731,99 +777,117 @@ export function Epidemiology({ onNavigate }: EpidemiologyProps) {
           </p>
         </div>
         
-        {/* Single Country: Combined Graph */}
-        {selectedCountries.length === 1 && combinedCaseBurdenData.length > 0 && (
-          <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-            <div className="mb-6">
-              <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                {selectedCountries[0]} - Prevalence & Incidence Trends
-              </h3>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                Disease: {Array.isArray(activeFiltersLabel.diseases) ? activeFiltersLabel.diseases.join(', ') : activeFiltersLabel.diseases}
-              </p>
-              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                Country: {selectedCountries[0]}
-              </p>
-              <p className="text-base text-gray-500 dark:text-gray-500 mt-2">
-                Hover over data points to see Year-over-Year (YoY) percentage changes
-              </p>
-            </div>
-            <div className="flex-1 flex items-center justify-center min-h-0 pt-2">
-              <LineChart
-                data={combinedCaseBurdenData}
-                dataKeys={combinedLineChartDataKeys}
-                nameKey="year"
-                colors={getChartColors(2)}
-                xAxisLabel="Year"
-                yAxisLabel="Cases"
-                showCountry={selectedCountries}
-              />
-            </div>
+        {/* Single Country: Combined Graph - Separated by Disease */}
+        {selectedCountries.length === 1 && Object.keys(combinedCaseBurdenDataByDisease).length > 0 && (
+          <div className={gridClass}>
+            {selectedDiseases.map((disease) => {
+              const diseaseData = combinedCaseBurdenDataByDisease[disease] || []
+              if (diseaseData.length === 0) return null
+              
+              return (
+                <div key={disease} className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                  <div className="mb-6">
+                    <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                      {selectedCountries[0]} - {disease} Prevalence & Incidence Trends
+                    </h3>
+                    <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
+                      Disease: {disease}
+                    </p>
+                    <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ml-2 ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
+                      Country: {selectedCountries[0]}
+                    </p>
+                    <p className="text-base text-gray-500 dark:text-gray-500 mt-2">
+                      Hover over data points to see Year-over-Year (YoY) percentage changes
+                    </p>
+                  </div>
+                  <div className="flex-1 flex items-center justify-center min-h-0 pt-2">
+                    <LineChart
+                      data={diseaseData}
+                      dataKeys={combinedLineChartDataKeys}
+                      nameKey="year"
+                      colors={getChartColors(2)}
+                      xAxisLabel="Year"
+                      yAxisLabel="Cases"
+                      showCountry={selectedCountries}
+                    />
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
 
-        {/* Multiple Countries: Separate Graphs */}
+        {/* Multiple Countries: Separate Graphs - Separated by Disease */}
         {selectedCountries.length >= 2 && (
           <div className={gridClass}>
-            {/* Prevalence Graph */}
-            {prevalenceCaseBurdenData.length > 0 && (
-              <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-                <div className="mb-6">
-                  <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                    Prevalence Trends by Country
-                  </h3>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                    Disease: {Array.isArray(activeFiltersLabel.diseases) ? activeFiltersLabel.diseases.join(', ') : activeFiltersLabel.diseases}
-                  </p>
-                  {selectedCountries.length > 0 && (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                      Countries: {selectedCountries.join(', ')}
-                    </p>
+            {selectedDiseases.map((disease) => {
+              const prevalenceData = prevalenceCaseBurdenDataByDisease[disease] || []
+              const incidenceData = incidenceCaseBurdenDataByDisease[disease] || []
+              
+              return (
+                <div key={disease} className={gridClass}>
+                  {/* Prevalence Graph for this disease */}
+                  {prevalenceData.length > 0 && (
+                    <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                      <div className="mb-6">
+                        <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                          {disease} - Prevalence Trends by Country
+                        </h3>
+                        <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
+                          Disease: {disease}
+                        </p>
+                        {selectedCountries.length > 0 && (
+                          <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ml-2 ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
+                            Countries: {selectedCountries.join(', ')}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex-1 flex items-center justify-center min-h-0 pt-2">
+                        <LineChart
+                          data={prevalenceData}
+                          dataKeys={prevalenceLineChartDataKeys}
+                          nameKey="year"
+                          colors={getChartColors(prevalenceLineChartDataKeys.length)}
+                          xAxisLabel="Year"
+                          yAxisLabel="Prevalence"
+                          showCountry={selectedCountries}
+                        />
+                      </div>
+                    </div>
                   )}
-                </div>
-                <div className="flex-1 flex items-center justify-center min-h-0 pt-2">
-                  <LineChart
-                    data={prevalenceCaseBurdenData}
-                    dataKeys={prevalenceLineChartDataKeys}
-                    nameKey="year"
-                    colors={getChartColors(prevalenceLineChartDataKeys.length)}
-                    xAxisLabel="Year"
-                    yAxisLabel="Prevalence"
-                    showCountry={selectedCountries}
-                  />
-                </div>
-              </div>
-            )}
 
-            {/* Incidence Graph */}
-            {incidenceCaseBurdenData.length > 0 && (
-              <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
-                <div className="mb-6">
-                  <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                    Incidence Trends by Country
-                  </h3>
-                  <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                    Disease: {Array.isArray(activeFiltersLabel.diseases) ? activeFiltersLabel.diseases.join(', ') : activeFiltersLabel.diseases}
-                  </p>
-                  {selectedCountries.length > 0 && (
-                    <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                      Countries: {selectedCountries.join(', ')}
-                    </p>
+                  {/* Incidence Graph for this disease */}
+                  {incidenceData.length > 0 && (
+                    <div className={`p-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ${chartHeight} w-full flex flex-col ${isDark ? 'bg-navy-card border-2 border-navy-light' : 'bg-white border-2 border-gray-200'}`}>
+                      <div className="mb-6">
+                        <h3 className="text-3xl font-bold text-text-primary-light dark:text-text-primary-dark mb-2" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                          {disease} - Incidence Trends by Country
+                        </h3>
+                        <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
+                          Disease: {disease}
+                        </p>
+                        {selectedCountries.length > 0 && (
+                          <p className={`text-lg font-semibold mt-2 px-4 py-2 rounded-lg inline-block ml-2 ${isDark ? 'bg-navy-dark border-2 border-cyan-accent text-text-primary-dark' : 'bg-blue-50 border-2 border-electric-blue text-electric-blue'}`}>
+                            Countries: {selectedCountries.join(', ')}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex-1 flex items-center justify-center min-h-0 pt-2">
+                        <LineChart
+                          data={incidenceData}
+                          dataKeys={incidenceLineChartDataKeys}
+                          nameKey="year"
+                          colors={getChartColors(incidenceLineChartDataKeys.length)}
+                          xAxisLabel="Year"
+                          yAxisLabel="Incidence"
+                          showCountry={selectedCountries}
+                        />
+                      </div>
+                    </div>
                   )}
                 </div>
-                <div className="flex-1 flex items-center justify-center min-h-0 pt-2">
-                  <LineChart
-                    data={incidenceCaseBurdenData}
-                    dataKeys={incidenceLineChartDataKeys}
-                    nameKey="year"
-                    colors={getChartColors(incidenceLineChartDataKeys.length)}
-                    xAxisLabel="Year"
-                    yAxisLabel="Incidence"
-                    showCountry={selectedCountries}
-                  />
-                </div>
-              </div>
-            )}
+              )
+            })}
           </div>
         )}
       </div>

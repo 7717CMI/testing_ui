@@ -1,22 +1,19 @@
-import { Bell, Settings, Moon, Sun, User } from 'lucide-react'
+import { Bell, Settings, User } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useTheme } from '../context/ThemeContext'
 
 interface HeaderProps {
   currentPage?: string
 }
 
 export function Header({ currentPage = 'Home' }: HeaderProps) {
-  const { theme, toggleTheme } = useTheme()
-
   return (
-    <header className="sticky top-0 z-40 bg-white dark:bg-navy-dark border-b border-gray-200 dark:border-navy-light px-4 lg:px-8 py-5">
+    <header className="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 lg:px-8 py-5">
       <div className="flex items-center justify-between gap-4">
         {/* Breadcrumb */}
-        <div className="hidden md:flex items-center gap-2 text-sm text-text-secondary-light dark:text-text-secondary-dark">
+        <div className="hidden md:flex items-center gap-2 text-sm text-text-secondary-light">
           <span className="hover:text-electric-blue cursor-pointer">Pages</span>
           <span>/</span>
-          <span className="text-text-primary-light dark:text-text-primary-dark font-medium">{currentPage}</span>
+          <span className="text-text-primary-light font-medium">{currentPage}</span>
         </div>
 
         {/* Right Icons */}
@@ -24,7 +21,7 @@ export function Header({ currentPage = 'Home' }: HeaderProps) {
           <motion.button
             whileHover={{ scale: 1.1, rotate: 5 }}
             whileTap={{ scale: 0.9 }}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-navy-card text-text-secondary-light dark:text-text-secondary-dark hover:text-electric-blue transition-all"
+            className="p-2 rounded-lg hover:bg-gray-100 text-text-secondary-light hover:text-electric-blue transition-all"
             aria-label="Notifications"
           >
             <Bell size={20} />
@@ -32,31 +29,15 @@ export function Header({ currentPage = 'Home' }: HeaderProps) {
           <motion.button
             whileHover={{ scale: 1.1, rotate: -5 }}
             whileTap={{ scale: 0.9 }}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-navy-card text-text-secondary-light dark:text-text-secondary-dark hover:text-electric-blue transition-all"
+            className="p-2 rounded-lg hover:bg-gray-100 text-text-secondary-light hover:text-electric-blue transition-all"
             aria-label="Settings"
           >
             <Settings size={20} />
           </motion.button>
           <motion.button
-            onClick={toggleTheme}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-navy-card text-text-secondary-light dark:text-text-secondary-dark hover:text-electric-blue transition-all"
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          >
-            <motion.div
-              key={theme}
-              initial={{ rotate: 0, scale: 0.8 }}
-              animate={{ rotate: 360, scale: 1 }}
-              transition={{ duration: 0.4, ease: 'easeInOut' }}
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </motion.div>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-navy-card transition-all"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-all"
             aria-label="User profile"
           >
             <motion.div
