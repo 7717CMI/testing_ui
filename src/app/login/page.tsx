@@ -57,6 +57,20 @@ export default function LoginPage() {
     }
   }
 
+  async function handleGoogleSignIn() {
+    setLoading(true)
+    try {
+      await signInWithGoogle()
+      toast.success("Signed in with Google! 🎉")
+      router.push("/")
+    } catch (error) {
+      console.error(error)
+      // Error already handled in auth context
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-background to-secondary-50 dark:from-primary-950 dark:via-background dark:to-secondary-950 p-4">
       <div className="w-full max-w-md">
@@ -136,7 +150,12 @@ export default function LoginPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" disabled>
+              <Button 
+                variant="outline" 
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                type="button"
+              >
                 <Chrome className="mr-2 h-4 w-4" />
                 Google
               </Button>

@@ -18,6 +18,7 @@ import { useIntentStore } from "@/lib/store/intent-store"
 import { ParticleBackground } from "@/components/three"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSavedInsightsStore } from "@/stores/saved-insights-store"
+import { PremiumGuard } from "@/components/premium/premium-guard"
 
 interface Article {
   id?: number
@@ -303,6 +304,16 @@ export default function InsightsPage() {
   }
 
   return (
+    <PremiumGuard
+      featureName="Healthcare Insights"
+      featureDescription="Access real-time healthcare industry insights, trending topics, and market analysis"
+      benefits={[
+        "Real-time healthcare news and insights",
+        "Trending topics analysis",
+        "Market intelligence reports",
+        "Saved articles and bookmarks"
+      ]}
+    >
     <div className="min-h-screen bg-background relative overflow-hidden">
       <Navbar />
       
@@ -683,6 +694,7 @@ export default function InsightsPage() {
         article={selectedArticle}
       />
     </div>
+    </PremiumGuard>
   )
 }
 

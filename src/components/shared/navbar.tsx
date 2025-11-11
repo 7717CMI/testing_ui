@@ -75,56 +75,63 @@ export function Navbar() {
             </div>
           </div>
 
-          {/* Right side: Help + Theme toggle + Auth/User */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Right side: Notifications + Help + Theme toggle + Auth/User */}
+          <div className="flex items-center gap-3 flex-shrink-0">
             {user && (
               <NotificationCenter />
             )}
             
-            {/* Help / Tour Button */}
+            {/* Help / Tour Button - Styled with circle background */}
             <Button
               variant="ghost"
               size="icon"
               onClick={startTour}
-              className="text-neutral-600 hover:text-primary-700 hover:bg-accent-50 dark:text-neutral-400 dark:hover:text-primary-400 dark:hover:bg-neutral-800"
+              className="h-9 w-9 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-100 transition-all duration-200"
               title="Start Platform Tour"
             >
-              <HelpCircle className="h-5 w-5" />
+              <HelpCircle className="h-4 w-4" />
             </Button>
             
+            {/* Theme Toggle - Styled with circle background */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800"
+              className="h-9 w-9 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-100 transition-all duration-200 relative"
+              title="Toggle theme"
             >
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>
 
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-neutral-100 dark:hover:bg-neutral-800">
-                    <User className="h-5 w-5" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 rounded-lg border-2 border-primary-500 bg-primary-50 hover:bg-primary-100 text-primary-700 hover:text-primary-800 dark:border-primary-400 dark:bg-primary-950/50 dark:hover:bg-primary-900/50 dark:text-primary-300 dark:hover:text-primary-200 transition-all duration-200 shadow-sm hover:shadow-md"
+                    title="User menu"
+                  >
+                    <User className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-64">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium">{user.name}</p>
-                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                      <p className="text-sm font-semibold">{user.name || "User"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/account">
+                    <Link href="/account" className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       Account Settings
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout}>
+                  <DropdownMenuItem onClick={logout} className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400">
                     <LogOut className="mr-2 h-4 w-4" />
                     Logout
                   </DropdownMenuItem>

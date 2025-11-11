@@ -43,8 +43,29 @@ export interface User {
   plan?: "Free" | "Pro" | "Enterprise"
   avatar?: string
   jobTitle?: string
+  company?: string
+  phone?: string
   emailVerified?: boolean
   uid?: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+export interface UserProfile {
+  name?: string
+  jobTitle?: string
+  company?: string
+  phone?: string
+  avatar?: string
+  role?: "Admin" | "Analyst" | "Viewer"
+}
+
+export interface NotificationPreferences {
+  emailNotifications: boolean
+  weeklySummary: boolean
+  marketAlerts: boolean
+  newListings: boolean
+  productUpdates: boolean
 }
 
 export interface SearchFilters {

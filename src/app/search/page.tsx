@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { AnalysisModal } from '@/components/analysis-modal'
 import { useSavedInsightsStore, type SavedInsight } from '@/stores/saved-insights-store'
 import { useAnalysisPoolStore } from '@/stores/analysis-pool-store'
+import { PremiumGuard } from '@/components/premium/premium-guard'
 
 // Helper function to convert emails, phone numbers, and URLs to clickable links
 function renderContentWithClickableLinks(content: string) {
@@ -295,8 +296,19 @@ I can handle typos and understand natural language!
   }
 
   return (
-    <>
-      <AnalysisModal 
+    <PremiumGuard
+      featureName="Smart Search"
+      featureDescription="AI-powered natural language search across 650K+ healthcare facilities with intelligent analysis."
+      benefits={[
+        "Natural language queries",
+        "AI-powered search results",
+        "Advanced analysis tools",
+        "Export search results",
+        "Real-time data access"
+      ]}
+    >
+      <>
+        <AnalysisModal 
         isOpen={analysisModalOpen} 
         onClose={() => setAnalysisModalOpen(false)} 
       />
@@ -1000,5 +1012,6 @@ I can handle typos and understand natural language!
         </div>
       </div>
     </>
+    </PremiumGuard>
   )
 }

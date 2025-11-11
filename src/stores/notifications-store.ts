@@ -1,9 +1,13 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { NewsNotification, NotificationPreferences } from '@/types/notifications'
 
 export type AlertType = 
   | 'ma_activity'
   | 'facility_change'
+  | 'facility_news'
+  | 'market_trend'
+  | 'category_update'
   | 'intent_spike'
   | 'new_facility'
   | 'competitive_move'
@@ -11,7 +15,7 @@ export type AlertType =
   | 'saved_search_result'
   | 'system'
 
-export type AlertPriority = 'low' | 'medium' | 'high' | 'critical'
+export type AlertPriority = 'low' | 'medium' | 'high' | 'critical' | 'urgent'
 
 export interface Alert {
   id: string
@@ -38,9 +42,10 @@ interface NotificationsState {
   alerts: Alert[]
   unreadCount: number
   
-  // Preferences
+  // User Preferences
   preferences: AlertPreference[]
   globalNotifications: boolean
+  userPreferences: NotificationPreferences | null
   
   // Actions
   addAlert: (alert: Omit<Alert, 'id' | 'createdAt' | 'read'>) => void
@@ -48,14 +53,17 @@ interface NotificationsState {
   markAllAsRead: () => void
   deleteAlert: (id: string) => void
   clearAllAlerts: () => void
+  archiveAlert: (id: string) => void
   
   // Preferences
   updatePreference: (type: AlertType, updates: Partial<AlertPreference>) => void
   toggleGlobalNotifications: () => void
+  setUserPreferences: (prefs: Partial<NotificationPreferences>) => void
   
   // Utilities
   getUnreadAlerts: () => Alert[]
   getAlertsByType: (type: AlertType) => Alert[]
+  getRecentAlerts: (hours: number) => Alert[]
 }
 
 const defaultPreferences: AlertPreference[] = [
@@ -117,7 +125,41 @@ const defaultPreferences: AlertPreference[] = [
   },
 ]
 
-// Mock alerts for demonstration
+// Initial preferences for news notifications
+const defaultUserPreferences: NotificationPreferences = {
+  id: 'default',
+  userId: '',
+  monitoredFacilityListIds: [],
+  monitoredCategories: {
+    expansion: true,
+    technology: true,
+    funding: true,
+    mna: true,
+    regulation: false,
+    policy: false,
+    marketTrend: true,
+  },
+  monitoredRegions: {
+    states: [],
+    cities: [],
+  },
+  frequency: 'twice_daily',
+  deliveryMethods: {
+    inApp: true,
+    email: false,
+    browserPush: false,
+  },
+  quietHours: {
+    enabled: true,
+    start: '22:00',
+    end: '08:00',
+  },
+  enabled: true,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+}
+
+// Mock alerts for demonstration (will be replaced by real data)
 const generateMockAlerts = (): Alert[] => [
   {
     id: 'alert-1',
@@ -187,10 +229,11 @@ const generateMockAlerts = (): Alert[] => [
 export const useNotificationsStore = create<NotificationsState>()(
   persist(
     (set, get) => ({
-      alerts: generateMockAlerts(),
-      unreadCount: generateMockAlerts().filter(a => !a.read).length,
+      alerts: [], // Start with empty array - will be populated by real data
+      unreadCount: 0,
       preferences: defaultPreferences,
       globalNotifications: true,
+      userPreferences: defaultUserPreferences,
 
       addAlert: (alert) => {
         const newAlert: Alert = {
@@ -254,9 +297,33 @@ export const useNotificationsStore = create<NotificationsState>()(
         }))
       },
 
+      archiveAlert: (id) => {
+        set((state) => {
+          const alert = state.alerts.find(a => a.id === id)
+          const wasUnread = alert && !alert.read
+          
+          return {
+            alerts: state.alerts.map((alert) =>
+              alert.id === id ? { ...alert, read: true, metadata: { ...alert.metadata, archived: true } } : alert
+            ),
+            unreadCount: wasUnread ? state.unreadCount - 1 : state.unreadCount,
+          }
+        })
+      },
+
       toggleGlobalNotifications: () => {
         set((state) => ({
           globalNotifications: !state.globalNotifications,
+        }))
+      },
+
+      setUserPreferences: (prefs) => {
+        set((state) => ({
+          userPreferences: state.userPreferences ? {
+            ...state.userPreferences,
+            ...prefs,
+            updatedAt: new Date(),
+          } : defaultUserPreferences
         }))
       },
 
@@ -266,6 +333,11 @@ export const useNotificationsStore = create<NotificationsState>()(
 
       getAlertsByType: (type) => {
         return get().alerts.filter((alert) => alert.type === type)
+      },
+
+      getRecentAlerts: (hours) => {
+        const cutoff = Date.now() - (hours * 60 * 60 * 1000)
+        return get().alerts.filter((alert) => alert.createdAt.getTime() > cutoff)
       },
     }),
     {

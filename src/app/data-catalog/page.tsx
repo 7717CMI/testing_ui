@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Navbar } from '@/components/shared/navbar'
+import { PremiumGuard } from '@/components/premium/premium-guard'
 import {
   Building2,
   Activity,
@@ -180,7 +181,135 @@ export default function DataCatalogPage() {
     )
   }
 
+  // Create preview content for free users
+  const previewContent = (
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
+        <div className="container mx-auto px-4 lg:px-8 py-12 max-w-7xl">
+          {/* Page Header Section */}
+          <div className="mb-12 pb-8 border-b border-neutral-200 dark:border-neutral-800">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+              <div className="flex-1">
+                <h1 className="text-4xl font-semibold text-neutral-900 dark:text-neutral-100 tracking-tight mb-3">
+                  Healthcare Intelligence Database
+                </h1>
+                <p className="text-lg text-neutral-600 dark:text-neutral-400 leading-relaxed max-w-3xl">
+                  Comprehensive data on over {catalogData?.total_providers.toLocaleString() || '650,000'} healthcare facilities across the United States. Search, filter, and analyze organizations to power your market intelligence.
+                </p>
+              </div>
+              <div className="flex gap-8 lg:gap-12">
+                <div>
+                  <div className="text-3xl font-bold text-primary-800 dark:text-primary-400 tracking-tight tabular-nums">
+                    {Math.round((catalogData?.total_providers || 650000) / 1000)}K+
+                  </div>
+                  <div className="text-sm text-neutral-500 dark:text-neutral-500 font-medium uppercase tracking-wider mt-1">
+                    Total Facilities
+                  </div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-primary-800 dark:text-primary-400 tracking-tight tabular-nums">
+                    {catalogData?.total_categories || 10}
+                  </div>
+                  <div className="text-sm text-neutral-500 dark:text-neutral-500 font-medium uppercase tracking-wider mt-1">
+                    Facility Types
+                  </div>
+                </div>
+                <div>
+                  <div className="text-3xl font-bold text-primary-800 dark:text-primary-400 tracking-tight">
+                    Daily
+                  </div>
+                  <div className="text-sm text-neutral-500 dark:text-neutral-500 font-medium uppercase tracking-wider mt-1">
+                    Data Updates
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Search & Export Controls */}
+          <div className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl p-6 mb-6 shadow-sm">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-neutral-400 dark:text-neutral-500" />
+                <Input
+                  placeholder="Search facility categories..."
+                  className="w-full pl-11 pr-4 py-3 text-[15px] border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-900"
+                  disabled
+                />
+              </div>
+              <Button variant="outline" disabled className="px-4 py-3">
+                <Download className="h-4 w-4 mr-2" />
+                Export Data
+              </Button>
+            </div>
+          </div>
+
+          {/* Data Catalog Grid Preview */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">Browse by Category</h2>
+            <p className="text-neutral-600 dark:text-neutral-400">Explore healthcare facilities organized by category</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {Array.from({ length: 6 }).map((_, index) => {
+              const Icon = Building2
+              return (
+                <Card key={index} className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-5">
+                      <div className="flex items-center justify-center w-12 h-12 bg-neutral-100 dark:bg-neutral-700 rounded-xl flex-shrink-0">
+                        <Icon className="w-6 h-6 text-primary-700 dark:text-primary-400 stroke-[2]" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-success-600 rounded-full animate-pulse"></div>
+                        <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                          Updated Daily
+                        </span>
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2 tracking-tight">
+                      Category Name
+                    </h3>
+                    <div className="text-4xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight mb-3 tabular-nums">
+                      XXX,XXX
+                    </div>
+                    <p className="text-[15px] text-neutral-600 dark:text-neutral-400 leading-relaxed mb-5 line-clamp-2">
+                      Healthcare facilities in this category
+                    </p>
+                    <div className="flex items-center justify-between pt-4 border-t border-neutral-200 dark:border-neutral-700 text-[13px]">
+                      <span className="text-neutral-500 dark:text-neutral-400 font-medium">
+                        X facility types
+                      </span>
+                      <div className="flex items-center gap-1.5 text-success-700 dark:text-success-500 font-medium">
+                        <div className="w-1 h-1 bg-success-600 rounded-full"></div>
+                        Real-time data
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </>
+  )
+
   return (
+    <PremiumGuard
+      featureName="Data Catalog"
+      featureDescription="The Data Catalog provides comprehensive access to over 650,000 healthcare facilities across the United States. Browse facilities by category, search and filter by location and type, and export data for analysis. This powerful tool helps you discover healthcare providers, analyze market trends, and make data-driven decisions."
+      benefits={[
+        "Browse 650K+ healthcare facilities",
+        "Advanced filtering and search",
+        "Export data as CSV",
+        "Real-time data updates",
+        "Detailed facility information"
+      ]}
+      showPreview={true}
+      previewContent={previewContent}
+    >
     <>
       <Navbar />
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
@@ -398,5 +527,6 @@ export default function DataCatalogPage() {
       </div>
     </div>
     </>
+    </PremiumGuard>
   )
 }

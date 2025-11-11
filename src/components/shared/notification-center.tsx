@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNotificationsStore } from '@/stores/notifications-store'
+import { notificationService } from '@/services/notification-service'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -21,17 +22,22 @@ import {
   Search,
   Info,
   X,
+  RefreshCw,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { toast } from 'sonner'
 
 const alertTypeIcons = {
   ma_activity: TrendingUp,
   facility_change: Building2,
+  facility_news: Building2,
   intent_spike: Zap,
   new_facility: Building2,
   competitive_move: AlertTriangle,
   data_update: Database,
   saved_search_result: Search,
+  market_trend: TrendingUp,
+  category_update: TrendingUp,
   system: Info,
 }
 
@@ -44,6 +50,7 @@ const priorityColors = {
 
 export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isChecking, setIsChecking] = useState(false)
   const {
     alerts,
     unreadCount,
@@ -52,14 +59,26 @@ export function NotificationCenter() {
     deleteAlert,
   } = useNotificationsStore()
 
-  const sortedAlerts = [...alerts].sort(
-    (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-  )
+  const sortedAlerts = [...alerts].sort((a, b) => {
+    // Handle both Date objects and string dates (from Zustand persist)
+    const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt)
+    const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt)
+    return dateB.getTime() - dateA.getTime()
+  }).slice(0, 10) // Show only last 10 in dropdown
 
   const handleAlertClick = (id: string, link?: string) => {
     markAsRead(id)
     if (link) {
       setIsOpen(false)
+    }
+  }
+
+  async function handleCheckNow() {
+    setIsChecking(true)
+    try {
+      await realNotificationService.checkNow()
+    } finally {
+      setIsChecking(false)
     }
   }
 
@@ -69,15 +88,16 @@ export function NotificationCenter() {
       <Button
         variant="ghost"
         size="icon"
-        className="relative"
+        className="relative h-9 w-9 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-100 transition-all duration-200"
         onClick={() => setIsOpen(!isOpen)}
+        title="Notifications"
       >
-        <Bell className="h-5 w-5" />
+        <Bell className="h-4 w-4" />
         {unreadCount > 0 && (
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-[10px] font-bold text-white"
+            className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-[10px] font-bold text-white shadow-md border-2 border-white dark:border-neutral-900"
           >
             {unreadCount > 9 ? '9+' : unreadCount}
           </motion.div>
@@ -113,6 +133,15 @@ export function NotificationCenter() {
                   )}
                 </div>
                 <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCheckNow}
+                    disabled={isChecking}
+                    title="Check for news now"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isChecking ? 'animate-spin' : ''}`} />
+                  </Button>
                   {unreadCount > 0 && (
                     <Button
                       variant="ghost"
@@ -123,7 +152,7 @@ export function NotificationCenter() {
                       <CheckCheck className="h-4 w-4" />
                     </Button>
                   )}
-                  <Link href="/alerts" onClick={() => setIsOpen(false)}>
+                  <Link href="/notification-settings" onClick={() => setIsOpen(false)}>
                     <Button variant="ghost" size="sm" title="Settings">
                       <Settings className="h-4 w-4" />
                     </Button>
@@ -151,7 +180,7 @@ export function NotificationCenter() {
                 ) : (
                   <div className="divide-y">
                     {sortedAlerts.map((alert) => {
-                      const Icon = alertTypeIcons[alert.type]
+                      const Icon = alertTypeIcons[alert.type as keyof typeof alertTypeIcons] || Bell
                       const content = (
                         <motion.div
                           initial={{ opacity: 0 }}
@@ -238,7 +267,7 @@ export function NotificationCenter() {
               {/* Footer */}
               {sortedAlerts.length > 0 && (
                 <div className="p-3 border-t">
-                  <Link href="/alerts" onClick={() => setIsOpen(false)}>
+                  <Link href="/notifications" onClick={() => setIsOpen(false)}>
                     <Button variant="ghost" className="w-full" size="sm">
                       View All Notifications
                     </Button>

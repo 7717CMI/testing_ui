@@ -2,6 +2,7 @@
 
 import { useRef } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { motion, useInView } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -19,7 +20,13 @@ import {
   Filter,
   Database,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  LogOut,
+  User,
+  Moon,
+  Sun,
+  HelpCircle,
+  Bell
 } from "lucide-react"
 import { ParticleBackground } from "@/components/three/particle-background"
 import { NeuralNetwork } from "@/components/three/neural-network"
@@ -29,6 +36,20 @@ import { ScrollRevealText } from "@/components/animations/scroll-reveal-text"
 import { AnimatedCounter } from "@/components/animations/animated-counter"
 import { FadeInWhenVisible } from "@/components/animations/fade-in-when-visible"
 import { ConversationDemo } from "@/components/conversation-demo"
+import { useAuthStore } from "@/stores/auth-store"
+import { useSubscriptionStore } from "@/stores/subscription-store"
+import { useAuth } from "@/contexts/auth-context"
+import { useTheme } from "next-themes"
+import { toast } from "sonner"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { NotificationCenter } from "@/components/shared/notification-center"
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -45,9 +66,37 @@ const staggerContainer = {
 }
 
 export default function LandingPage() {
+  const router = useRouter()
+  const { user } = useAuthStore()
+  const { plan } = useSubscriptionStore()
+  const { signOut } = useAuth()
+  const { theme, setTheme } = useTheme()
+
+  // Handle feature click - navigate to feature, let PremiumGuard handle free users
+  function handleFeatureClick(featurePath: string) {
+    if (!user) {
+      // Not logged in - redirect to login
+      toast.info("Please login to access this feature")
+      router.push("/login")
+      return
+    }
+
+    // Navigate to feature page - PremiumGuard will show preview for free users
+      router.push(featurePath)
+  }
+
+  async function handleLogout() {
+    try {
+      await signOut()
+      toast.success("Logged out successfully")
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-primary-50/5 to-muted dark:via-primary-950/10">
-      {/* Navigation */}
+      {/* Navigation - Always visible */}
       <motion.nav 
         className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50"
         initial={{ y: -100 }}
@@ -56,7 +105,7 @@ export default function LandingPage() {
       >
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            {/* Left side: Logo + Navigation */}
+            {/* Left side: Logo + Home only */}
             <div className="flex items-center gap-8">
               <Link href="/" className="flex items-center gap-2 flex-shrink-0">
                 <motion.div
@@ -71,28 +120,119 @@ export default function LandingPage() {
                 <Link href="/" className="text-sm font-medium text-gray-900 dark:text-white">
                   Home
                 </Link>
-                <Link href="/data-catalog" className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
-                  Data Catalog
+                <Link href="/pricing" className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
+                  Pricing
                 </Link>
-                <Link href="/search" className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
-                  Search
-                </Link>
-                <Link href="/insights" className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
-                  Insights
-                </Link>
-                <Link href="/saved-searches" className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
-                  Saved
-                </Link>
+                {/* Show features only for logged-in users */}
+                {user && (
+                  <>
+                    <button onClick={() => handleFeatureClick("/data-catalog")} className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
+                      Data Catalog
+                    </button>
+                    <button onClick={() => handleFeatureClick("/search")} className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
+                      Search
+                    </button>
+                    <button onClick={() => handleFeatureClick("/insights")} className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
+                      Insights
+                    </button>
+                    <button onClick={() => handleFeatureClick("/saved-searches")} className="text-sm font-medium text-gray-600 hover:text-primary-500 transition-colors">
+                      Saved
+                    </button>
+                  </>
+                )}
               </div>
             </div>
-            {/* Right side: Auth buttons */}
-            <div className="flex items-center gap-4 flex-shrink-0">
-              <Link href="/login">
-                <Button variant="ghost">Login</Button>
-              </Link>
-              <Link href="/signup">
-                <Button>Start Free Trial</Button>
-              </Link>
+            {/* Right side: Notifications + Help + Theme toggle + Auth/User */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {user && (
+                <NotificationCenter />
+              )}
+              
+              {/* Help Button - Styled with circle background */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => router.push("/help")}
+                className="h-9 w-9 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-100 transition-all duration-200"
+                title="Help & Support"
+              >
+                <HelpCircle className="h-4 w-4" />
+              </Button>
+              
+              {/* Theme Toggle - Styled with circle background */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="h-9 w-9 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 hover:text-neutral-900 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-100 transition-all duration-200 relative"
+                title="Toggle theme"
+              >
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              </Button>
+
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-9 w-9 rounded-lg border-2 border-primary-500 bg-primary-50 hover:bg-primary-100 text-primary-700 hover:text-primary-800 dark:border-primary-400 dark:bg-primary-950/50 dark:hover:bg-primary-900/50 dark:text-primary-300 dark:hover:text-primary-200 transition-all duration-200 shadow-sm hover:shadow-md"
+                      title="User menu"
+                    >
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-semibold">{user.name || "User"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                        <Badge className={
+                          `mt-1 w-fit ${
+                            plan === "enterprise" ? "bg-purple-600" :
+                            plan === "pro" ? "bg-blue-600" : "bg-gray-600"
+                          }`
+                        }>
+                          {plan?.toUpperCase() || "FREE"}
+                        </Badge>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/account" className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        Account Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600 dark:text-red-400">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link href="/login">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      className="text-neutral-700 border border-neutral-300 hover:bg-neutral-50 hover:border-neutral-400 dark:text-neutral-300 dark:border-neutral-600 dark:hover:bg-neutral-800"
+                    >
+                      Login
+                    </Button>
+                  </Link>
+                  <Link href="/signup">
+                    <Button 
+                      size="sm"
+                      className="bg-primary-700 text-white hover:bg-primary-800 shadow-sm hover:shadow-md transition-all duration-200 dark:bg-primary-600 dark:hover:bg-primary-700"
+                    >
+                      Start Free Trial
+                    </Button>
+                  </Link>
+                  </div>
+              )}
             </div>
           </div>
         </div>

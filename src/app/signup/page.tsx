@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Building2, Chrome, Github, Check, X } from "lucide-react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function SignupPage() {
   const [step, setStep] = useState(1)
@@ -22,6 +23,7 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   
   const router = useRouter()
+  const { signUp, signInWithGoogle } = useAuth()
 
   function validateStep1() {
     const newErrors: Record<string, string> = {}
@@ -63,12 +65,49 @@ export default function SignupPage() {
     
     setLoading(true)
     try {
-      // Mock signup API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      toast.success("Account created! Check your email for verification.")
-      router.push("/login")
+      // Real Firebase signup - automatically saves to Firestore & sends verification email
+      await signUp(email, password, name)
+      
+      toast.success("Account created! Check your email to verify your account.")
+      router.push("/login")  // Redirect to login page
+    } catch (error: any) {
+      if (error.code === "auth/email-already-in-use") {
+        toast.error("This email is already registered. Please login instead.")
+      } else if (error.code === "auth/weak-password") {
+        toast.error("Password is too weak. Use at least 6 characters.")
+      } else if (error.code === "auth/invalid-email") {
+        toast.error("Invalid email address format.")
+      } else {
+        toast.error(error.message || "Failed to create account. Please try again.")
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleGoogleSignUp() {
+    setLoading(true)
+    try {
+      await signInWithGoogle()
+      
+      // Show a comprehensive welcome message
+      toast.success("Welcome to HealthData AI! 🎉", {
+        duration: 5000,
+        description: "Your account is ready. You can now access all features based on your plan."
+      })
+      
+      // Show plan info
+      setTimeout(() => {
+        toast.info("🆓 You're on the Free Plan", {
+          duration: 7000,
+          description: "Upgrade anytime to unlock unlimited searches and AI features!"
+        })
+      }, 1500)
+      
+      router.push("/")
     } catch (error) {
-      toast.error("Something went wrong. Please try again.")
+      console.error(error)
+      // Error already handled in auth context
     } finally {
       setLoading(false)
     }
@@ -189,7 +228,12 @@ export default function SignupPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" disabled>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleGoogleSignUp}
+                    disabled={loading}
+                    type="button"
+                  >
                     <Chrome className="mr-2 h-4 w-4" />
                     Google
                   </Button>

@@ -1,4 +1,5 @@
 import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
@@ -44,13 +45,30 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, loading, disabled, children, ...props }, ref) => {
+  ({ className, variant, size, loading, disabled, asChild = false, children, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+    const isDisabled = disabled || loading
+    
+    // When using asChild, we can't use disabled prop on non-button elements
+    // Instead, we'll handle it via className and pointer-events
+    const buttonProps = asChild 
+      ? {
+          ...props,
+          className: cn(
+            buttonVariants({ variant, size, className }),
+            isDisabled && "pointer-events-none opacity-50"
+          ),
+        }
+      : {
+          ...props,
+          className: cn(buttonVariants({ variant, size, className })),
+          disabled: isDisabled,
+        }
+    
     return (
-      <button
-        className={cn(buttonVariants({ variant, size, className }))}
+      <Comp
         ref={ref}
-        disabled={disabled || loading}
-        {...props}
+        {...buttonProps}
       >
         {loading ? (
           <>
@@ -79,7 +97,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ) : (
           children
         )}
-      </button>
+      </Comp>
     )
   }
 )

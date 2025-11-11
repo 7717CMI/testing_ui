@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #357ae8;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            min-height: 50px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Firebase Connection Diagnostic Test</h1>
+        
+        <div class="test-section">
+            <h3>Test 1: Basic Network Connectivity</h3>
+            <button onclick="testBasicConnection()">Test Basic Connection</button>
+            <div id="basicResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: Firebase Auth API Connection</h3>
+            <button onclick="testFirebaseAuth()">Test Firebase Auth</button>
+            <div id="authResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: Full Firebase SDK Test</h3>
+            <button onclick="testFullFirebase()">Test Full Firebase SDK</button>
+            <div id="fullResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 4: Check Browser Network Tab</h3>
+            <p>Open DevTools (F12) → Network tab → Click "Test Firebase Auth" above</p>
+            <p>Look for requests to:</p>
+            <ul>
+                <li><code>identitytoolkit.googleapis.com</code></li>
+                <li><code>firebaseapp.com</code></li>
+                <li><code>googleapis.com</code></li>
+            </ul>
+            <p><strong>If requests show "(failed)" or don't appear → Seqrite is blocking</strong></p>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import Firebase SDK
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAV29AJL7DOhXE4F8YyYbCvgTAB9HBrWss",
+            authDomain: "healthdata-auth.firebaseapp.com",
+            projectId: "healthdata-auth",
+            storageBucket: "healthdata-auth.firebasestorage.app",
+            messagingSenderId: "516171260493",
+            appId: "1:516171260493:web:a6010de743b51280f5f204"
+        };
+
+        // Test 1: Basic Network Connection
+        window.testBasicConnection = async function() {
+            const resultDiv = document.getElementById('basicResult');
+            resultDiv.innerHTML = 'Testing basic connectivity...';
+            resultDiv.className = 'info';
+            
+            try {
+                const response = await fetch('https://identitytoolkit.googleapis.com', {
+                    method: 'GET',
+                    mode: 'no-cors',
+                    cache: 'no-cache'
+                });
+                resultDiv.innerHTML = '✅ CONNECTION SUCCESS: Can reach Firebase servers\n\nSeqrite is NOT blocking basic connections.';
+                resultDiv.className = 'success';
+            } catch (error) {
+                resultDiv.innerHTML = `❌ CONNECTION BLOCKED: ${error.message}\n\nSeqrite is likely blocking Firebase servers.\n\nError: ${error}`;
+                resultDiv.className = 'error';
+            }
+        };
+
+        // Test 2: Firebase Auth API
+        window.testFirebaseAuth = async function() {
+            const resultDiv = document.getElementById('authResult');
+            resultDiv.innerHTML = 'Testing Firebase Auth API...';
+            resultDiv.className = 'info';
+            
+            try {
+                // Try to make a request to Firebase Auth API
+                const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyAV29AJL7DOhXE4F8YyYbCvgTAB9HBrWss', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'test@test.com',
+                        password: 'wrongpassword',
+                        returnSecureToken: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    if (data.error.message.includes('network')) {
+                        resultDiv.innerHTML = '❌ NETWORK ERROR: Request blocked\n\nSeqrite is blocking Firebase Auth API.\n\nError: ' + data.error.message;
+                        resultDiv.className = 'error';
+                    } else {
+                        resultDiv.innerHTML = `✅ CONNECTION WORKS: Reached Firebase Auth API\n\nError: ${data.error.message}\n\n(This error is expected - we used wrong credentials)`;
+                        resultDiv.className = 'success';
+                    }
+                } else {
+                    resultDiv.innerHTML = '✅ CONNECTION WORKS: Firebase Auth API is reachable';
+                    resultDiv.className = 'success';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ CONNECTION BLOCKED: ${error.message}\n\nSeqrite is likely blocking Firebase Auth API.\n\nError: ${error}`;
+                resultDiv.className = 'error';
+            }
+        };
+
+        // Test 3: Full Firebase SDK
+        window.testFullFirebase = async function() {
+            const resultDiv = document.getElementById('fullResult');
+            resultDiv.innerHTML = 'Testing full Firebase SDK...';
+            resultDiv.className = 'info';
+            
+            try {
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                
+                // Try to connect (this will fail, but we'll see the error)
+                await signInWithEmailAndPassword(auth, 'test@test.com', 'wrongpassword');
+                
+                resultDiv.innerHTML = '✅ CONNECTION WORKS: Firebase SDK initialized successfully';
+                resultDiv.className = 'success';
+            } catch (error) {
+                if (error.code === 'auth/network-request-failed') {
+                    resultDiv.innerHTML = `❌ BLOCKED: Network request failed\n\nSeqrite is blocking Firebase connections.\n\nError Code: ${error.code}\nError Message: ${error.message}`;
+                    resultDiv.className = 'error';
+                } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    resultDiv.innerHTML = `✅ CONNECTION WORKS: Reached Firebase servers\n\nError Code: ${error.code}\nError Message: ${error.message}\n\n(This error is expected - we used wrong credentials)`;
+                    resultDiv.className = 'success';
+                } else {
+                    resultDiv.innerHTML = `⚠️ UNEXPECTED ERROR\n\nError Code: ${error.code}\nError Message: ${error.message}\n\nCheck browser console for details.`;
+                    resultDiv.className = 'info';
+                }
+            }
+        };
+    </script>
+</body>
+</html>
+
+
+

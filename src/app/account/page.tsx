@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
+import Link from "next/link"
 import { Navbar } from "@/components/shared/navbar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -9,6 +10,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { useAuthStore } from "@/stores/auth-store"
+import { useAuth } from "@/contexts/auth-context"
+import { useProfile } from "@/hooks/use-profile"
+import { useSubscription } from "@/hooks/use-subscription"
+import { useNotificationPreferences } from "@/hooks/use-notification-preferences"
 import { toast } from "sonner"
 import { 
   User, 
@@ -20,23 +25,147 @@ import {
   Copy,
   Eye,
   EyeOff,
-  Check
+  Check,
+  Upload,
+  Loader2
 } from "lucide-react"
 
 export default function AccountPage() {
   const { user } = useAuthStore()
+  const { changePassword } = useAuth()
+  const { profile, loading: profileLoading, saving, uploadingAvatar, saveProfile, handleAvatarUpload } = useProfile()
+  const { plan, planInfo, loading: subscriptionLoading } = useSubscription()
+  const { preferences, loading: prefsLoading, updatePreference } = useNotificationPreferences()
+  
+  // Profile form state
+  const [profileForm, setProfileForm] = useState({
+    name: "",
+    jobTitle: "",
+    company: "",
+    phone: "",
+  })
+  
+  // Password form state
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  })
+  const [changingPassword, setChangingPassword] = useState(false)
+  
+  // Avatar upload
+  const avatarInputRef = useRef<HTMLInputElement>(null)
   const [showApiKey, setShowApiKey] = useState(false)
 
-  function handleSaveProfile() {
-    toast.success("Profile updated successfully!")
+  // Initialize form when profile loads
+  useEffect(() => {
+    if (profile) {
+      setProfileForm({
+        name: profile.name || "",
+        jobTitle: profile.jobTitle || "",
+        company: profile.company || "",
+        phone: profile.phone || "",
+      })
+    }
+  }, [profile])
+
+  async function handleSaveProfile() {
+    try {
+      await saveProfile(profileForm)
+    } catch (error) {
+      // Error handled in hook
+    }
+  }
+
+  async function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    
+    try {
+      await handleAvatarUpload(file)
+    } catch (error) {
+      // Error handled in hook
+    }
+    
+    // Reset input
+    if (avatarInputRef.current) {
+      avatarInputRef.current.value = ""
+    }
+  }
+
+  async function handlePasswordChange() {
+    // Validate all fields are filled
+    if (!passwordForm.currentPassword.trim()) {
+      toast.error("Please enter your current password")
+      return
+    }
+    
+    if (!passwordForm.newPassword.trim()) {
+      toast.error("Please enter a new password")
+      return
+    }
+    
+    if (!passwordForm.confirmPassword.trim()) {
+      toast.error("Please confirm your new password")
+      return
+    }
+    
+    // Check password length
+    if (passwordForm.newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters")
+      return
+    }
+    
+    // Check passwords match
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      toast.error("New passwords do not match")
+      return
+    }
+    
+    // Check if new password is same as current password
+    if (passwordForm.currentPassword === passwordForm.newPassword) {
+      toast.error("New password must be different from your current password")
+      return
+    }
+
+    try {
+      setChangingPassword(true)
+      await changePassword(passwordForm.currentPassword.trim(), passwordForm.newPassword.trim())
+      // Clear form on success
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      })
+    } catch (error) {
+      // Error is already handled in auth context with toast
+      // Don't clear form on error so user can retry
+    } finally {
+      setChangingPassword(false)
+    }
   }
 
   function handleCopyApiKey() {
-    toast.success("API key copied to clipboard!")
+    toast.info("API key management coming soon")
   }
 
   function handleGenerateApiKey() {
-    toast.success("New API key generated!")
+    toast.info("API key generation coming soon")
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container py-6 max-w-4xl">
+          <Card>
+            <CardContent className="py-12 text-center">
+              <p className="text-muted-foreground">Please log in to view your account settings.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -90,45 +219,123 @@ export default function AccountPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="h-20 w-20 rounded-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold">
-                      {user?.name.charAt(0)}
+                  {profileLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
-                    <Button variant="outline">Change Avatar</Button>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-4">
+                        <div className="relative">
+                          {profile?.avatar ? (
+                            <img
+                              src={profile.avatar}
+                              alt="Avatar"
+                              className="h-20 w-20 rounded-full object-cover border-2 border-primary-500"
+                            />
+                          ) : (
+                            <div className="h-20 w-20 rounded-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold border-2 border-primary-500">
+                              {profileForm.name.charAt(0).toUpperCase() || user?.name?.charAt(0).toUpperCase() || "U"}
+                            </div>
+                          )}
+                          {uploadingAvatar && (
+                            <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                              <Loader2 className="h-6 w-6 animate-spin text-white" />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <input
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarChange}
+                            className="hidden"
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={() => avatarInputRef.current?.click()}
+                            disabled={uploadingAvatar}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            {uploadingAvatar ? "Uploading..." : "Change Avatar"}
+                          </Button>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Max 5MB, JPG/PNG
+                          </p>
+                        </div>
                   </div>
 
                   <Input
                     label="Full Name"
-                    defaultValue={user?.name}
+                        value={profileForm.name}
+                        onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                        disabled={saving}
                   />
 
                   <Input
                     label="Email"
                     type="email"
-                    defaultValue={user?.email}
+                        value={user?.email || ""}
+                        disabled
+                        className="bg-muted"
                   />
 
                   <Input
                     label="Job Title"
-                    defaultValue={user?.jobTitle}
+                        value={profileForm.jobTitle}
+                        onChange={(e) => setProfileForm({ ...profileForm, jobTitle: e.target.value })}
+                        placeholder="e.g., Healthcare Analyst"
+                        disabled={saving}
+                      />
+
+                      <Input
+                        label="Company"
+                        value={profileForm.company}
+                        onChange={(e) => setProfileForm({ ...profileForm, company: e.target.value })}
+                        placeholder="Optional"
+                        disabled={saving}
+                      />
+
+                      <Input
+                        label="Phone"
+                        value={profileForm.phone}
+                        onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                        placeholder="Optional"
+                        disabled={saving}
                   />
 
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <label className="text-sm font-medium">Email Verified</label>
                       <p className="text-sm text-muted-foreground">
-                        Your email has been verified
+                            {user?.emailVerified ? "Your email has been verified" : "Please verify your email"}
                       </p>
                     </div>
+                        {user?.emailVerified ? (
                     <Badge variant="success" className="gap-1">
                       <Check className="h-3 w-3" />
                       Verified
                     </Badge>
+                        ) : (
+                          <Badge variant="outline" className="gap-1">
+                            Unverified
+                          </Badge>
+                        )}
                   </div>
 
-                  <Button onClick={handleSaveProfile}>
-                    Save Changes
+                      <Button onClick={handleSaveProfile} disabled={saving}>
+                        {saving ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          "Save Changes"
+                        )}
                   </Button>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -143,62 +350,40 @@ export default function AccountPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {subscriptionLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <>
                   <div className="flex items-center justify-between p-4 rounded-lg bg-primary-50 dark:bg-primary-950 border-2 border-primary-500">
                     <div>
-                      <h3 className="font-semibold text-lg">{user?.plan} Plan</h3>
+                          <h3 className="font-semibold text-lg">{planInfo.name} Plan</h3>
                       <p className="text-sm text-muted-foreground">
-                        {user?.plan === "Free" 
-                          ? "100 searches per month"
-                          : user?.plan === "Pro"
-                          ? "Unlimited searches, AI access"
-                          : "Custom enterprise features"
-                        }
+                            {planInfo.description}
                       </p>
                     </div>
                     <Badge className="bg-primary-500 text-white">Active</Badge>
                   </div>
 
-                  {user?.plan !== "Enterprise" && (
-                    <Button>Upgrade Plan</Button>
+                      {plan !== "enterprise" && (
+                        <Button onClick={() => toast.info("Upgrade functionality coming soon")}>
+                          Upgrade Plan
+                        </Button>
                   )}
 
                   <div className="space-y-3">
                     <h4 className="font-medium">Billing History</h4>
                     <div className="border rounded-lg">
-                      <table className="w-full">
-                        <thead className="bg-muted">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-sm font-medium">Date</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium">Amount</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
-                            <th className="px-4 py-3 text-left text-sm font-medium">Invoice</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          <tr>
-                            <td className="px-4 py-3 text-sm">Oct 1, 2025</td>
-                            <td className="px-4 py-3 text-sm">$99.00</td>
-                            <td className="px-4 py-3">
-                              <Badge variant="success">Paid</Badge>
-                            </td>
-                            <td className="px-4 py-3">
-                              <Button variant="ghost" size="sm">Download</Button>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="px-4 py-3 text-sm">Sep 1, 2025</td>
-                            <td className="px-4 py-3 text-sm">$99.00</td>
-                            <td className="px-4 py-3">
-                              <Badge variant="success">Paid</Badge>
-                            </td>
-                            <td className="px-4 py-3">
-                              <Button variant="ghost" size="sm">Download</Button>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                          <div className="p-8 text-center text-muted-foreground">
+                            <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                            <p>No billing history yet</p>
+                            <p className="text-sm mt-1">Billing history will appear here once payment is integrated</p>
+                          </div>
                     </div>
                   </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -213,49 +398,10 @@ export default function AccountPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="p-4 rounded-lg bg-muted space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">Production API Key</h4>
-                        <p className="text-sm text-muted-foreground">
-                          Created on Oct 1, 2025
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setShowApiKey(!showApiKey)}
-                        >
-                          {showApiKey ? (
-                            <EyeOff className="h-4 w-4" />
-                          ) : (
-                            <Eye className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={handleCopyApiKey}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="font-mono text-sm p-3 bg-background rounded border">
-                      {showApiKey
-                        ? "hd_live_1234567890abcdefghijklmnopqrstuvwxyz"
-                        : "hd_live_••••••••••••••••••••••••••••••••••"}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button onClick={handleGenerateApiKey}>
-                      Generate New Key
-                    </Button>
-                    <Button variant="destructive" variant="outline">
-                      Revoke All Keys
-                    </Button>
+                  <div className="p-8 text-center text-muted-foreground">
+                    <Key className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                    <p>API Key management coming soon</p>
+                    <p className="text-sm mt-1">This feature will be available in Phase 3</p>
                   </div>
                 </CardContent>
               </Card>
@@ -267,22 +413,66 @@ export default function AccountPage() {
                 <CardHeader>
                   <CardTitle>Notification Preferences</CardTitle>
                   <CardDescription>
-                    Choose what notifications you want to receive
+                    {plan === "free" 
+                      ? "Upgrade to Pro or Enterprise to enable notifications"
+                      : "Choose what notifications you want to receive"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {[
-                    { label: "Email notifications for new insights", defaultChecked: true },
-                    { label: "Weekly summary email", defaultChecked: true },
-                    { label: "Market alert notifications", defaultChecked: false },
-                    { label: "New facility listings", defaultChecked: true },
-                    { label: "Product updates and announcements", defaultChecked: true },
-                  ].map((item) => (
-                    <div key={item.label} className="flex items-center justify-between">
-                      <label className="text-sm font-medium">{item.label}</label>
-                      <Switch defaultChecked={item.defaultChecked} />
+                  {plan === "free" ? (
+                    <div className="text-center py-8">
+                      <Bell className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-20" />
+                      <h3 className="text-lg font-semibold mb-2">Notifications Available for Premium Users</h3>
+                      <p className="text-muted-foreground mb-4">
+                        Upgrade to Pro or Enterprise plan to receive email notifications, market alerts, and more.
+                      </p>
+                      <Button asChild>
+                        <Link href="/pricing">Upgrade to Pro</Link>
+                      </Button>
                     </div>
-                  ))}
+                  ) : prefsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Email notifications for new insights</label>
+                        <Switch
+                          checked={preferences.emailNotifications}
+                          onCheckedChange={(checked) => updatePreference("emailNotifications", checked)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Weekly summary email</label>
+                        <Switch
+                          checked={preferences.weeklySummary}
+                          onCheckedChange={(checked) => updatePreference("weeklySummary", checked)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Market alert notifications</label>
+                        <Switch
+                          checked={preferences.marketAlerts}
+                          onCheckedChange={(checked) => updatePreference("marketAlerts", checked)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">New facility listings</label>
+                        <Switch
+                          checked={preferences.newListings}
+                          onCheckedChange={(checked) => updatePreference("newListings", checked)}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium">Product updates and announcements</label>
+                        <Switch
+                          checked={preferences.productUpdates}
+                          onCheckedChange={(checked) => updatePreference("productUpdates", checked)}
+                        />
+                      </div>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -303,18 +493,36 @@ export default function AccountPage() {
                       type="password"
                       label="Current Password"
                       placeholder="••••••••"
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                      disabled={changingPassword}
                     />
                     <Input
                       type="password"
                       label="New Password"
                       placeholder="••••••••"
+                      value={passwordForm.newPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                      disabled={changingPassword}
                     />
                     <Input
                       type="password"
                       label="Confirm New Password"
                       placeholder="••••••••"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                      disabled={changingPassword}
                     />
-                    <Button>Update Password</Button>
+                    <Button onClick={handlePasswordChange} disabled={changingPassword}>
+                      {changingPassword ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Updating...
+                        </>
+                      ) : (
+                        "Update Password"
+                      )}
+                    </Button>
                   </div>
 
                   <div className="border-t pt-6">
@@ -325,7 +533,9 @@ export default function AccountPage() {
                           Add an extra layer of security to your account
                         </p>
                       </div>
-                      <Button variant="outline">Enable 2FA</Button>
+                      <Button variant="outline" onClick={() => toast.info("2FA coming soon")}>
+                        Enable 2FA
+                      </Button>
                     </div>
                   </div>
                 </CardContent>
@@ -342,31 +552,11 @@ export default function AccountPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {[
-                    { device: "Windows PC", location: "San Francisco, US", ip: "192.168.1.1", current: true },
-                    { device: "iPhone 14", location: "San Francisco, US", ip: "192.168.1.2", current: false },
-                  ].map((session, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 rounded-lg border">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-medium">{session.device}</h4>
-                          {session.current && (
-                            <Badge variant="success" className="text-xs">Current</Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {session.location} • {session.ip}
-                        </p>
-                      </div>
-                      {!session.current && (
-                        <Button variant="outline" size="sm">Revoke</Button>
-                      )}
+                  <div className="p-8 text-center text-muted-foreground">
+                    <Users className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                    <p>Session management coming soon</p>
+                    <p className="text-sm mt-1">This feature will be available in Phase 6</p>
                     </div>
-                  ))}
-
-                  <Button variant="destructive" variant="outline" className="w-full">
-                    Revoke All Sessions
-                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -376,4 +566,3 @@ export default function AccountPage() {
     </div>
   )
 }
-
