@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Navbar } from '@/components/shared/navbar'
 import { PremiumGuard } from '@/components/premium/premium-guard'
+import { ScrollReveal } from '@/components/animations/scroll-reveal'
+import { StaggeredList } from '@/components/animations/staggered-list'
 import {
   Building2,
   Activity,
@@ -246,51 +248,97 @@ export default function DataCatalogPage() {
           </div>
 
           {/* Data Catalog Grid Preview */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">Browse by Category</h2>
-            <p className="text-neutral-600 dark:text-neutral-400">Explore healthcare facilities organized by category</p>
-          </div>
+          <ScrollReveal>
+            <div className="mb-8">
+              <h2 className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2">Browse by Category</h2>
+              <p className="text-neutral-600 dark:text-neutral-400">Explore healthcare facilities organized by category</p>
+            </div>
+          </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.1,
+                  delayChildren: 0.2,
+                },
+              },
+            }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
             {Array.from({ length: 6 }).map((_, index) => {
               const Icon = Building2
               return (
-                <Card key={index} className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-5">
-                      <div className="flex items-center justify-center w-12 h-12 bg-neutral-100 dark:bg-neutral-700 rounded-xl flex-shrink-0">
-                        <Icon className="w-6 h-6 text-primary-700 dark:text-primary-400 stroke-[2]" />
+                <motion.div
+                  key={index}
+                  variants={{
+                    hidden: { opacity: 0, y: 30, scale: 0.95 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                      transition: {
+                        duration: 0.5,
+                        ease: [0.33, 1, 0.68, 1],
+                      },
+                    },
+                  }}
+                  whileHover={{
+                    y: -6,
+                    scale: 1.02,
+                    transition: {
+                      duration: 0.2,
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 20,
+                    },
+                  }}
+                >
+                  <Card className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl transition-all duration-300 hover:shadow-xl">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-5">
+                        <motion.div
+                          whileHover={{ rotate: 360 }}
+                          transition={{ duration: 0.6 }}
+                          className="flex items-center justify-center w-12 h-12 bg-neutral-100 dark:bg-neutral-700 rounded-xl flex-shrink-0"
+                        >
+                          <Icon className="w-6 h-6 text-primary-700 dark:text-primary-400 stroke-[2]" />
+                        </motion.div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-1.5 h-1.5 bg-success-600 rounded-full animate-pulse"></div>
+                          <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                            Updated Daily
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 bg-success-600 rounded-full animate-pulse"></div>
-                        <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-                          Updated Daily
+                      <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2 tracking-tight">
+                        Category Name
+                      </h3>
+                      <div className="text-4xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight mb-3 tabular-nums">
+                        XXX,XXX
+                      </div>
+                      <p className="text-[15px] text-neutral-600 dark:text-neutral-400 leading-relaxed mb-5 line-clamp-2">
+                        Healthcare facilities in this category
+                      </p>
+                      <div className="flex items-center justify-between pt-4 border-t border-neutral-200 dark:border-neutral-700 text-[13px]">
+                        <span className="text-neutral-500 dark:text-neutral-400 font-medium">
+                          X facility types
                         </span>
+                        <div className="flex items-center gap-1.5 text-success-700 dark:text-success-500 font-medium">
+                          <div className="w-1 h-1 bg-success-600 rounded-full"></div>
+                          Real-time data
+                        </div>
                       </div>
-                    </div>
-                    <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2 tracking-tight">
-                      Category Name
-                    </h3>
-                    <div className="text-4xl font-bold text-neutral-900 dark:text-neutral-100 tracking-tight mb-3 tabular-nums">
-                      XXX,XXX
-                    </div>
-                    <p className="text-[15px] text-neutral-600 dark:text-neutral-400 leading-relaxed mb-5 line-clamp-2">
-                      Healthcare facilities in this category
-                    </p>
-                    <div className="flex items-center justify-between pt-4 border-t border-neutral-200 dark:border-neutral-700 text-[13px]">
-                      <span className="text-neutral-500 dark:text-neutral-400 font-medium">
-                        X facility types
-                      </span>
-                      <div className="flex items-center gap-1.5 text-success-700 dark:text-success-500 font-medium">
-                        <div className="w-1 h-1 bg-success-600 rounded-full"></div>
-                        Real-time data
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               )
             })}
-          </div>
+          </motion.div>
         </div>
       </div>
     </>
@@ -465,12 +513,51 @@ export default function DataCatalogPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCategories.map((category) => {
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.1,
+                  delayChildren: 0.1,
+                },
+              },
+            }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {filteredCategories.map((category, index) => {
               const Icon = getCategoryIcon(category.display_name)
               return (
-                <Link key={category.id} href={`/data-catalog/${getCategorySlug(category.display_name)}`}>
-                  <Card className="group relative bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl transition-all duration-300 hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-600 hover:-translate-y-1 cursor-pointer h-full">
+                <motion.div
+                  key={category.id}
+                  variants={{
+                    hidden: { opacity: 0, y: 30, scale: 0.95 },
+                    visible: {
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                      transition: {
+                        duration: 0.5,
+                        ease: [0.33, 1, 0.68, 1],
+                      },
+                    },
+                  }}
+                  whileHover={{
+                    y: -6,
+                    scale: 1.02,
+                    transition: {
+                      duration: 0.2,
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 20,
+                    },
+                  }}
+                >
+                  <Link href={`/data-catalog/${getCategorySlug(category.display_name)}`}>
+                    <Card className="group relative bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl transition-all duration-300 hover:shadow-xl cursor-pointer h-full">
                     
                     {/* Accent line on hover */}
                     <div className="absolute left-0 top-0 bottom-0 w-0 bg-primary-600 dark:bg-primary-500 rounded-l-xl transition-all duration-300 group-hover:w-1"></div>
@@ -479,9 +566,13 @@ export default function DataCatalogPage() {
                       {/* Card Header */}
                       <div className="flex items-start justify-between mb-5">
                         {/* Icon */}
-                        <div className="flex items-center justify-center w-12 h-12 bg-neutral-100 dark:bg-neutral-700 rounded-xl flex-shrink-0">
+                        <motion.div
+                          whileHover={{ rotate: 360 }}
+                          transition={{ duration: 0.6 }}
+                          className="flex items-center justify-center w-12 h-12 bg-neutral-100 dark:bg-neutral-700 rounded-xl flex-shrink-0"
+                        >
                           <Icon className="w-6 h-6 text-primary-700 dark:text-primary-400 stroke-[2]" />
-                        </div>
+                        </motion.div>
                         
                         {/* Status Indicator */}
                         <div className="flex items-center gap-2">
@@ -520,9 +611,10 @@ export default function DataCatalogPage() {
                     </CardContent>
                   </Card>
                 </Link>
+                </motion.div>
               )
             })}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

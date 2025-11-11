@@ -23,6 +23,8 @@ import { useGraphStore } from '@/lib/store/graph-store'
 import { useIntentStore } from '@/lib/store/intent-store'
 import { ParticleBackground } from '@/components/three'
 import Link from 'next/link'
+import { EnhancedMetricCard } from '@/components/animations/enhanced-metric-card'
+import { ScrollReveal } from '@/components/animations/scroll-reveal'
 
 function AnimatedCounter({ value, suffix = '' }: { value: number; suffix?: string }) {
   const [count, setCount] = useState(0)
@@ -342,42 +344,56 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Top Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
+        {/* Top Stats - Enhanced with Meridian-style animations */}
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.15,
+                delayChildren: 0.1,
+              },
+            },
+          }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+        >
+          <EnhancedMetricCard
             title="Total Calls"
             value={totalCalls}
-            icon={Phone}
+            change={12}
             trend="up"
-            trendValue="+12%"
-            color="green"
+            icon={Phone}
+            delay={0}
           />
-          <StatCard
+          <EnhancedMetricCard
             title="Call Duration"
             value={Math.floor(totalDuration / 60)}
             suffix="m"
-            icon={TrendingUp}
+            change={8}
             trend="up"
-            trendValue="+8%"
-            color="blue"
+            icon={TrendingUp}
+            delay={0.15}
           />
-          <StatCard
+          <EnhancedMetricCard
             title="Intent Leads"
             value={totalCompanies}
-            icon={Target}
+            change={24}
             trend="up"
-            trendValue="+24%"
-            color="yellow"
+            icon={Target}
+            delay={0.3}
           />
-          <StatCard
+          <EnhancedMetricCard
             title="Graph Entities"
             value={totalNodes}
-            icon={Network}
+            change={5}
             trend="up"
-            trendValue="+5%"
-            color="purple"
+            icon={Network}
+            delay={0.45}
           />
-        </div>
+        </motion.div>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

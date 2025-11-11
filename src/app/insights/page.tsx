@@ -13,12 +13,15 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Insight } from "@/types"
 import { toast } from "sonner"
-import { TrendingUp, Bookmark, Target, ArrowUp, ArrowDown, ExternalLink, Download, Loader2, Info, RefreshCw, Trash2, Eye, Newspaper } from "lucide-react"
+import { TrendingUp, Bookmark, Target, ArrowUp, ArrowDown, ExternalLink, Download, Loader2, Info, RefreshCw, Trash2, Eye, Newspaper, Building2, Zap, FileText } from "lucide-react"
 import { useIntentStore } from "@/lib/store/intent-store"
 import { ParticleBackground } from "@/components/three"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSavedInsightsStore } from "@/stores/saved-insights-store"
 import { PremiumGuard } from "@/components/premium/premium-guard"
+import { EnhancedMetricCard } from "@/components/animations/enhanced-metric-card"
+import { ScrollReveal } from "@/components/animations/scroll-reveal"
+import { StaggeredList } from "@/components/animations/staggered-list"
 
 interface Article {
   id?: number
@@ -357,90 +360,56 @@ export default function InsightsPage() {
                 </Card>
               )}
 
-              {/* Market Insights Overview */}
+              {/* Market Insights Overview - Enhanced with Meridian-style animations */}
               {realInsights && !loading && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <motion.div 
-                          className="text-3xl font-bold"
-                          style={{
-                            background: 'linear-gradient(90deg, #006AFF, #8A2BE2, #006AFF)',
-                            backgroundSize: '200% 200%',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                          }}
-                          animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-                          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                        >
-                          {realInsights.marketInsights.total_facilities_mentioned}
-                        </motion.div>
-                        <div className="text-xs text-muted-foreground mt-2">Facilities Mentioned</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <motion.div 
-                          className="text-3xl font-bold"
-                          style={{
-                            background: 'linear-gradient(90deg, #006AFF, #8A2BE2, #006AFF)',
-                            backgroundSize: '200% 200%',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                          }}
-                          animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-                          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                        >
-                          {realInsights.marketInsights.recent_expansions}
-                        </motion.div>
-                        <div className="text-xs text-muted-foreground mt-2">Recent Expansions</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <motion.div 
-                          className="text-3xl font-bold"
-                          style={{
-                            background: 'linear-gradient(90deg, #006AFF, #8A2BE2, #006AFF)',
-                            backgroundSize: '200% 200%',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                          }}
-                          animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-                          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                        >
-                          {realInsights.marketInsights.technology_adoptions}
-                        </motion.div>
-                        <div className="text-xs text-muted-foreground mt-2">Tech Adoptions</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <motion.div 
-                          className="text-3xl font-bold"
-                          style={{
-                            background: 'linear-gradient(90deg, #006AFF, #8A2BE2, #006AFF)',
-                            backgroundSize: '200% 200%',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                          }}
-                          animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-                          transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
-                        >
-                          {realInsights.marketInsights.policy_changes}
-                        </motion.div>
-                        <div className="text-xs text-muted-foreground mt-2">Policy Changes</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                <motion.div
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    hidden: { opacity: 0 },
+                    visible: {
+                      opacity: 1,
+                      transition: {
+                        staggerChildren: 0.15,
+                        delayChildren: 0.1,
+                      },
+                    },
+                  }}
+                  className="grid grid-cols-2 md:grid-cols-4 gap-6"
+                >
+                  <EnhancedMetricCard
+                    title="Facilities Mentioned"
+                    value={realInsights.marketInsights.total_facilities_mentioned}
+                    change={12}
+                    trend="up"
+                    icon={Building2}
+                    delay={0}
+                  />
+                  <EnhancedMetricCard
+                    title="Recent Expansions"
+                    value={realInsights.marketInsights.recent_expansions}
+                    change={8}
+                    trend="up"
+                    icon={TrendingUp}
+                    delay={0.15}
+                  />
+                  <EnhancedMetricCard
+                    title="Tech Adoptions"
+                    value={realInsights.marketInsights.technology_adoptions}
+                    change={15}
+                    trend="up"
+                    icon={Zap}
+                    delay={0.3}
+                  />
+                  <EnhancedMetricCard
+                    title="Policy Changes"
+                    value={realInsights.marketInsights.policy_changes}
+                    change={-3}
+                    trend="down"
+                    icon={FileText}
+                    delay={0.45}
+                  />
+                </motion.div>
               )}
             </div>
 
@@ -571,13 +540,14 @@ export default function InsightsPage() {
                       </div>
                     ))
                   ) : realInsights?.trending && realInsights.trending.length > 0 ? (
-                    realInsights.trending.map((topic, index) => (
-                    <div
-                      key={topic.name}
-                      onClick={() => handleTrendingTopicClick(topic.name, topic.category)}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/20 cursor-pointer transition-all border border-transparent hover:border-primary-200 dark:hover:border-primary-800 group"
-                      title={`Click to view articles about ${topic.name}`}
-                    >
+                    <StaggeredList staggerDelay={0.08}>
+                      {realInsights.trending.map((topic, index) => (
+                        <div
+                          key={topic.name}
+                          onClick={() => handleTrendingTopicClick(topic.name, topic.category)}
+                          className="flex items-center justify-between p-3 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-950/20 cursor-pointer transition-all border border-transparent hover:border-primary-200 dark:hover:border-primary-800 group"
+                          title={`Click to view articles about ${topic.name}`}
+                        >
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 text-xs font-bold flex-shrink-0 group-hover:scale-110 transition-transform">
                           {index + 1}
@@ -602,7 +572,8 @@ export default function InsightsPage() {
                           </Badge>
                         </div>
                       </div>
-                    ))
+                      ))}
+                    </StaggeredList>
                   ) : (
                     <p className="text-sm text-muted-foreground text-center py-4">
                       No trending topics available
