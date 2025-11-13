@@ -1,6 +1,4 @@
-import OpenAI from 'openai'
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+import { getOpenAIClient, safeOpenAICall } from './openai-client'
 
 // Assess complexity to select appropriate model
 function assessResponseComplexity(
@@ -92,25 +90,65 @@ When listing multiple facilities, use this format:
 
     const dataContext = JSON.stringify(cleanData, null, 2).substring(0, 8000) // Limit size
 
-    const response = await openai.chat.completions.create({
-      model: selectedModel,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `User query: "${userQuery}"${historyContext}\n\nData:\n${dataContext}\n\nGenerate helpful response:` }
-      ]
-    })
+    const responseContent = await safeOpenAICall(
+      async (client) => {
+        const response = await client.chat.completions.create({
+          model: selectedModel,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `User query: "${userQuery}"${historyContext}\n\nData:\n${dataContext}\n\nGenerate helpful response:` }
+          ],
+          temperature: 0.7,
+          max_tokens: 1500
+        })
+        return response.choices[0].message.content || ''
+      },
+      '', // Fallback: empty string (will use fallback formatting)
+      'Response Formatting'
+    )
 
-    return response.choices[0].message.content || 'I found the information but had trouble formatting it. Please try rephrasing your question.'
-  } catch (error) {
-    console.error('[Response Formatter] Error:', error)
+    if (responseContent) {
+      return responseContent
+    }
+
+    // If response is empty, use fallback
+    throw new Error('Empty response from OpenAI')
+  } catch (error: any) {
+    console.error('[Response Formatter] ❌ Error:', {
+      message: error.message,
+      status: error.status,
+      code: error.code,
+      dataCount: mergedData.length
+    })
     
-    // Fallback: Simple formatting
+    // Enhanced fallback formatting
     if (mergedData.length === 0) {
       return "I couldn't find any facilities matching your query. Could you try rephrasing or providing more details?"
     }
 
+    // Format multiple facilities
+    if (mergedData.length > 1) {
+      const facilityList = mergedData.slice(0, 5).map((f, i) => {
+        return `${i + 1}. ${f.name || f.provider_name || 'Unknown Facility'}
+   ${f.city && f.state ? `Location: ${f.city}, ${f.state}` : ''}
+   ${f.phone || f.business_phone ? `Phone: ${f.phone || f.business_phone}` : ''}`
+      }).join('\n\n')
+      
+      return `I found ${mergedData.length} facilities matching your query:\n\n${facilityList}${mergedData.length > 5 ? `\n\n...and ${mergedData.length - 5} more facilities.` : ''}\n\nWould you like more details about any specific facility?`
+    }
+
+    // Single facility
     const facility = mergedData[0]
-    return `I found ${facility.name} in ${facility.city}, ${facility.state}.\n\nContact: ${facility.phone || 'Not available'}\nType: ${facility.type || 'Healthcare provider'}\n\nWould you like more details about this facility?`
+    const name = facility.name || facility.provider_name || 'Facility'
+    const location = facility.city && facility.state 
+      ? `${facility.city}, ${facility.state}`
+      : facility.business_city && facility.business_state
+      ? `${facility.business_city}, ${facility.business_state}`
+      : 'Location not available'
+    const phone = facility.phone || facility.business_phone || 'Not available'
+    const type = facility.type || facility.facility_type_name || facility.facility_category_name || 'Healthcare provider'
+    
+    return `I found ${name} in ${location}.\n\nContact: ${phone}\nType: ${type}\n\nWould you like more details about this facility?`
   }
 }
 

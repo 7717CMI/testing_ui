@@ -5,7 +5,8 @@ import { Providers } from "@/components/providers"
 import { Toaster } from "sonner"
 import { CallModal } from "@/components/call-modal"
 import { AIAssistant } from "@/components/ai-assistant-chat"
-import { OnboardingTour } from "@/components/onboarding-tour"
+import { DynamicWalkthrough } from "@/components/walkthrough/dynamic-walkthrough"
+import { SmoothScrollProvider } from "@/components/smooth-scroll-provider"
 
 const inter = Inter({
   variable: "--font-inter",
@@ -36,11 +37,13 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >
         <Providers>
-          {children}
-          <Toaster position="top-right" richColors />
-          <CallModal />
-          <AIAssistant />
-          <OnboardingTour />
+          <SmoothScrollProvider>
+            {children}
+            <Toaster position="top-right" richColors />
+            <CallModal />
+            <AIAssistant />
+            <DynamicWalkthrough />
+          </SmoothScrollProvider>
         </Providers>
       </body>
     </html>

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import * as Popover from '@radix-ui/react-popover'
-import { Send, Sparkles, Loader2, Download, MapPin, Phone, Building2, BarChart3, Bookmark, X, FileText, Paperclip, Plus, Check } from 'lucide-react'
+import { Send, Sparkles, Loader2, Download, MapPin, Phone, Building2, BarChart3, Bookmark, X, FileText, Paperclip, Plus, Check, History } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { v4 as uuidv4 } from 'uuid'
@@ -14,6 +14,9 @@ import { AnalysisModal } from '@/components/analysis-modal'
 import { useSavedInsightsStore, type SavedInsight } from '@/stores/saved-insights-store'
 import { useAnalysisPoolStore } from '@/stores/analysis-pool-store'
 import { PremiumGuard } from '@/components/premium/premium-guard'
+import { SmartSearchChatHistorySidebar } from '@/components/smart-search-chat-history-sidebar'
+import { useSmartSearchChatHistoryStore, type ChatMessage as HistoryChatMessage } from '@/stores/smart-search-chat-history-store'
+import { useAuthStore } from '@/stores/auth-store'
 
 // Helper function to convert emails, phone numbers, and URLs to clickable links
 function renderContentWithClickableLinks(content: string) {
@@ -102,6 +105,15 @@ interface Message {
 }
 
 export default function SmartSearchPage() {
+  const { user } = useAuthStore()
+  const {
+    createSession,
+    loadSessionMessages,
+    saveMessages,
+    setCurrentSession,
+    currentSessionId,
+  } = useSmartSearchChatHistoryStore()
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: uuidv4(),
@@ -122,10 +134,12 @@ I can handle typos and understand natural language!
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [sessionId] = useState(() => uuidv4())
+  const [sessionId, setSessionId] = useState(() => uuidv4())
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
   const [showAnalysisPanel, setShowAnalysisPanel] = useState(false)
+  const [showChatHistory, setShowChatHistory] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -149,6 +163,118 @@ I can handle typos and understand natural language!
     inputRef.current?.focus()
   }, [])
 
+  // Auto-save messages to chat history
+  useEffect(() => {
+    if (!user?.id || !isInitialized || messages.length <= 1) return
+
+    const saveToHistory = async () => {
+      // Only save if we have user messages (skip the initial welcome message)
+      const userMessages = messages.filter(m => m.role === 'user')
+      if (userMessages.length === 0) return
+
+      // Get the last 2 messages (user + assistant pair)
+      const lastTwoMessages = messages.slice(-2)
+      if (lastTwoMessages.length < 2) return
+
+      const historyMessages: HistoryChatMessage[] = lastTwoMessages.map(msg => ({
+        id: msg.id,
+        role: msg.role,
+        content: msg.content,
+        timestamp: msg.timestamp.toISOString(),
+        metadata: msg.facilities ? { facilities: msg.facilities } : undefined,
+      }))
+
+      if (currentSessionId) {
+        // Update existing session
+        await saveMessages(user.id, currentSessionId, historyMessages)
+      } else {
+        // Create new session with first user message as title
+        const firstUserMessage = userMessages[0]
+        const title = firstUserMessage.content.slice(0, 100)
+        const newSessionId = await createSession(user.id, title, {
+          id: firstUserMessage.id,
+          role: 'user',
+          content: firstUserMessage.content,
+          timestamp: firstUserMessage.timestamp.toISOString(),
+        })
+        if (newSessionId) {
+          setSessionId(newSessionId)
+          setCurrentSession(newSessionId)
+          // Save the assistant response
+          if (lastTwoMessages[1]?.role === 'assistant') {
+            await saveMessages(user.id, newSessionId, [{
+              id: lastTwoMessages[1].id,
+              role: 'assistant',
+              content: lastTwoMessages[1].content,
+              timestamp: lastTwoMessages[1].timestamp.toISOString(),
+              metadata: lastTwoMessages[1].facilities ? { facilities: lastTwoMessages[1].facilities } : undefined,
+            }])
+          }
+        }
+      }
+    }
+
+    // Debounce auto-save
+    const timeoutId = setTimeout(saveToHistory, 1000)
+    return () => clearTimeout(timeoutId)
+  }, [messages, user?.id, currentSessionId, isInitialized, createSession, saveMessages, setCurrentSession])
+
+  // Load chat history session
+  const handleLoadSession = async (sessionIdToLoad: string) => {
+    if (!user?.id) return
+
+    setCurrentSession(sessionIdToLoad)
+    setSessionId(sessionIdToLoad)
+    setIsLoading(true)
+
+    try {
+      const historyMessages = await loadSessionMessages(user.id, sessionIdToLoad)
+      if (historyMessages) {
+        const convertedMessages: Message[] = historyMessages.map(msg => ({
+          id: msg.id,
+          role: msg.role,
+          content: msg.content,
+          timestamp: new Date(msg.timestamp),
+          facilities: msg.metadata?.facilities,
+          metadata: msg.metadata,
+        }))
+        setMessages(convertedMessages)
+        setIsInitialized(true)
+      }
+    } catch (error) {
+      console.error('Failed to load session:', error)
+      toast.error('Failed to load chat history')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Start new chat
+  const handleNewChat = () => {
+    const newSessionId = uuidv4()
+    setSessionId(newSessionId)
+    setCurrentSession(null)
+    setMessages([
+      {
+        id: uuidv4(),
+        role: 'assistant',
+        content: `Hi! I'm your healthcare data assistant powered by AI. I can help you search our database of 658,000+ healthcare facilities.
+
+Try asking me:
+- "Show me hospitals in California"
+- "Tell me about Mayo Clinic"
+- "Find urgent care centers in New York"
+- "What's the bed count for Cleveland Clinic?"
+
+I can handle typos and understand natural language!
+
+**Need deeper insights?** Click the "Perform Analysis" button to run comprehensive market analysis, competitive intelligence, or custom research!`,
+        timestamp: new Date()
+      }
+    ])
+    setIsInitialized(false)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!input.trim() || isLoading) return
@@ -163,6 +289,7 @@ I can handle typos and understand natural language!
     setInput('')
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
+    setIsInitialized(true)
 
     try {
       const response = await fetch('/api/smart-search', {
@@ -445,8 +572,20 @@ I can handle typos and understand natural language!
         )}
       </AnimatePresence>
 
+      {/* Overlay for mobile when sidebar is open */}
+      {showChatHistory && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={() => setShowChatHistory(false)}
+        />
+      )}
+
       <div className="h-screen flex flex-col bg-background overflow-hidden">
-        <div className="border-b bg-card/50 backdrop-blur-sm flex-shrink-0">
+        {/* Header */}
+        <div className="border-b bg-card/50 backdrop-blur-sm flex-shrink-0 z-20">
           <div className="px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button
@@ -484,6 +623,16 @@ I can handle typos and understand natural language!
 
             <div className="flex items-center gap-2">
               <Button
+                variant={showChatHistory ? "primary" : "outline"}
+                size="sm"
+                onClick={() => setShowChatHistory(!showChatHistory)}
+                className="gap-2 h-9 text-sm"
+              >
+                <History className="h-4 w-4" />
+                History
+              </Button>
+
+              <Button
                 variant={showAnalysisPanel ? "primary" : "outline"}
                 size="sm"
                 onClick={() => setShowAnalysisPanel(!showAnalysisPanel)}
@@ -517,9 +666,17 @@ I can handle typos and understand natural language!
           </div>
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden relative">
+          {/* Chat History Sidebar - Left Side */}
+          <SmartSearchChatHistorySidebar
+            isOpen={showChatHistory}
+            onClose={() => setShowChatHistory(false)}
+            onLoadSession={handleLoadSession}
+            onNewChat={handleNewChat}
+          />
+
           {/* Main Chat Container */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${showChatHistory ? 'lg:ml-80' : ''}`}>
           <Card className="flex-1 flex flex-col m-0 rounded-none border-0 shadow-none overflow-hidden">
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <AnimatePresence>

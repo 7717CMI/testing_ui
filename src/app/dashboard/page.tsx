@@ -359,6 +359,7 @@ export default function DashboardPage() {
             },
           }}
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          data-tour="metrics"
         >
           <EnhancedMetricCard
             title="Total Calls"
@@ -398,7 +399,7 @@ export default function DashboardPage() {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - 2/3 width */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6" data-tour="activity">
             <RecentActivityFeed />
           </div>
 

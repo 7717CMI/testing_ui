@@ -206,6 +206,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(user)
       setPlan(mockUser.plan as any)
       
+      // Check if user has completed or skipped tour - if not, show it automatically
+      setTimeout(() => {
+        // Import dynamically to avoid circular dependencies
+        import('@/stores/onboarding-store').then(({ useOnboardingStore }) => {
+          const { hasCompletedTour, hasSkippedTour, startTour } = useOnboardingStore.getState()
+          // Start tour if user hasn't completed or skipped it yet
+          if (!hasCompletedTour && !hasSkippedTour) {
+            startTour()
+          }
+        })
+      }, 1500)
+      
       toast.success(`Welcome back! (DEV MODE - ${mockUser.plan.toUpperCase()})`)
       console.log("✅ Mock login successful:", mockUser)
       return
@@ -308,13 +320,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           description: `Account created for ${firebaseUser.email}. You're on the Free plan.`
         })
         
+        // Start onboarding tour for new users (if not completed or skipped)
+        setTimeout(() => {
+          import('@/stores/onboarding-store').then(({ useOnboardingStore }) => {
+            const { hasCompletedTour, hasSkippedTour, startTour } = useOnboardingStore.getState()
+            // Start tour if user hasn't completed or skipped it yet
+            if (!hasCompletedTour && !hasSkippedTour) {
+              startTour()
+            }
+          })
+        }, 2000)
+        
         // Additional info toast
         setTimeout(() => {
           toast.info("🚀 Getting Started", {
             duration: 8000,
             description: "Explore 6M+ healthcare facilities, AI-powered search, and real-time insights!"
           })
-        }, 2000)
+        }, 3000)
         
       } else {
         console.log("👋 Returning user - welcome back!")
@@ -324,6 +347,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           duration: 3000,
           description: `Signed in as ${firebaseUser.email}`
         })
+        
+        // Check if returning user has completed tour - if not, show it
+        setTimeout(() => {
+          import('@/stores/onboarding-store').then(({ useOnboardingStore }) => {
+            const { hasCompletedTour, hasSkippedTour, startTour } = useOnboardingStore.getState()
+            // Start tour if user hasn't completed or skipped it yet
+            if (!hasCompletedTour && !hasSkippedTour) {
+              startTour()
+            }
+          })
+        }, 1500)
       }
       
     } catch (error: any) {

@@ -9,6 +9,21 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now()
   
   try {
+    // Validate OpenAI API key at the start
+    const { getAPIKeyStatus } = await import('@/lib/smart-search/openai-client')
+    const apiKeyStatus = getAPIKeyStatus()
+    
+    if (apiKeyStatus === 'missing' || apiKeyStatus === 'invalid') {
+      console.error('[Smart Search] ❌ OpenAI API key issue:', apiKeyStatus)
+      return NextResponse.json({
+        success: false,
+        error: 'OpenAI API key is not configured or invalid. Please check your .env.local file and ensure OPENAI_API_KEY is set correctly.',
+        details: process.env.NODE_ENV === 'development' 
+          ? `Status: ${apiKeyStatus}. Make sure your .env.local file contains: OPENAI_API_KEY=sk-...`
+          : undefined
+      }, { status: 500 })
+    }
+
     const { query, conversationHistory = [], sessionId } = await request.json()
 
     if (!query || typeof query !== 'string') {
@@ -21,6 +36,7 @@ export async function POST(request: NextRequest) {
     console.log(`\n[Smart Search] ==================`)
     console.log(`[Smart Search] Session: ${sessionId}`)
     console.log(`[Smart Search] Query: "${query}"`)
+    console.log(`[Smart Search] API Key Status: ${apiKeyStatus}`)
 
     // STEP 1: Parse user query (with spell correction and context)
     console.log('[Smart Search] Step 1: Parsing query with conversation context...')
@@ -53,6 +69,45 @@ Would you like to try a different search?`,
           correctedQuery: parsedQuery.correctedQuery !== parsedQuery.originalQuery 
             ? parsedQuery.correctedQuery 
             : null
+        }
+      })
+    }
+
+    // STEP 3: Handle email requests specially (emails are not in database)
+    const requestedEmail = parsedQuery.requestedFields.some(f => 
+      ['email', 'emails', 'email_address', 'contact_email'].includes(f.toLowerCase())
+    )
+    
+    if (requestedEmail && dbResult.totalCount > 0) {
+      console.log('[Smart Search] Email requested - providing helpful message')
+      return NextResponse.json({
+        success: true,
+        response: `I found ${dbResult.totalCount} facilities matching your query. However, email addresses are not available in our database for privacy and data protection reasons.
+
+Here are the facilities I found:
+${dbResult.facilities.slice(0, 5).map((f: any, i: number) => 
+  `${i + 1}. ${f.name || f.provider_name || 'Unknown'}
+   Location: ${f.city || f.business_city || 'N/A'}, ${f.state || f.business_state || 'N/A'}
+   Phone: ${f.phone || f.business_phone || 'Not available'}`
+).join('\n\n')}${dbResult.totalCount > 5 ? `\n\n...and ${dbResult.totalCount - 5} more facilities.` : ''}
+
+To contact these facilities, I recommend:
+• Calling the phone number provided
+• Visiting their official website (if available)
+• Using the facility's contact form on their website
+
+Would you like me to search for their websites or provide more details about any specific facility?`,
+        facilities: dbResult.facilities.map((f: any) => {
+          const { _meta, ...publicData } = f
+          return publicData
+        }),
+        metadata: {
+          resultsCount: dbResult.totalCount,
+          gapsFilled: 0,
+          intent: parsedQuery.intent,
+          executionTime: Date.now() - startTime,
+          dbQueryTime: dbResult.queryExecutionTime,
+          emailRequested: true
         }
       })
     }
@@ -116,11 +171,52 @@ Would you like to try a different search?`,
       }
     })
   } catch (error: any) {
-    console.error('[Smart Search] Error:', error)
+    console.error('[Smart Search] ❌ Error:', {
+      message: error.message,
+      status: error.status,
+      code: error.code,
+      type: error.constructor.name,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    })
+    
+    // Handle specific error types
+    if (error.message?.includes('API key') || error.message?.includes('OPENAI_API_KEY')) {
+      return NextResponse.json({
+        success: false,
+        error: 'OpenAI API key is missing or invalid. Please check your .env.local file.',
+        details: process.env.NODE_ENV === 'development' 
+          ? error.message 
+          : 'Make sure OPENAI_API_KEY is set in your .env.local file'
+      }, { status: 500 })
+    }
+
+    if (error.message?.includes('rate limit')) {
+      return NextResponse.json({
+        success: false,
+        error: 'API rate limit exceeded. Please try again in a moment.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      }, { status: 429 })
+    }
+
+    if (error.message?.includes('authentication')) {
+      return NextResponse.json({
+        success: false,
+        error: 'OpenAI API authentication failed. Please check your API key.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      }, { status: 401 })
+    }
+
+    // Generic error response
     return NextResponse.json({
       success: false,
       error: 'Search failed. Please try rephrasing your question.',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' 
+        ? {
+            message: error.message,
+            status: error.status,
+            code: error.code
+          }
+        : undefined
     }, { status: 500 })
   }
 }

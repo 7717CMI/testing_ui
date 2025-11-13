@@ -69,11 +69,29 @@ export async function queryDatabase(parsed: ParsedQuery): Promise<DatabaseResult
       paramIndex++
     }
 
-    // CITY SEARCH
+    // CITY SEARCH (with fallback for New York boroughs)
     if (parsed.location?.city) {
-      whereConditions.push(`hp.business_city ILIKE $${paramIndex}`)
-      params.push(`%${parsed.location.city}%`)
-      paramIndex++
+      const city = parsed.location.city.trim()
+      // For New York, also search for common borough names
+      if (city.toLowerCase() === 'new york') {
+        whereConditions.push(`(
+          hp.business_city ILIKE $${paramIndex} 
+          OR hp.business_city ILIKE $${paramIndex + 1}
+          OR hp.business_city ILIKE $${paramIndex + 2}
+          OR hp.business_city ILIKE $${paramIndex + 3}
+          OR hp.business_city ILIKE $${paramIndex + 4}
+        )`)
+        params.push(`%${city}%`)
+        params.push('%Manhattan%')
+        params.push('%Brooklyn%')
+        params.push('%Queens%')
+        params.push('%Bronx%')
+        paramIndex += 5
+      } else {
+        whereConditions.push(`hp.business_city ILIKE $${paramIndex}`)
+        params.push(`%${city}%`)
+        paramIndex++
+      }
     }
 
     // STATE SEARCH
@@ -142,8 +160,17 @@ export async function queryDatabase(parsed: ParsedQuery): Promise<DatabaseResult
 
     params.push(limit)
 
-    console.log('[DB Query] Executing:', query.replace(/\s+/g, ' ').substring(0, 200) + '...')
+    console.log('[DB Query] ==================')
+    console.log('[DB Query] Parsed Query:', JSON.stringify({
+      intent: parsed.intent,
+      entity: parsed.entity,
+      location: parsed.location,
+      filters: parsed.filters,
+      limit: parsed.limit
+    }, null, 2))
+    console.log('[DB Query] SQL:', query.replace(/\s+/g, ' ').substring(0, 500))
     console.log('[DB Query] Params:', params)
+    console.log('[DB Query] ==================')
 
     const result = await client.query(query, params)
 

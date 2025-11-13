@@ -13,7 +13,9 @@ import {
   ExternalLink,
   RotateCcw,
   Download,
+  MessageCircle,
 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 
 interface Message {
@@ -25,10 +27,11 @@ interface Message {
 export function AIAssistant() {
   const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
+  const [showBubble, setShowBubble] = useState(true)
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: "Hello! I'm your HealthData AI Research Assistant. I can help you navigate our platform and find the healthcare data you need.\n\nHow can I assist you today?",
+      content: "Hello! I'm Bunny, your HealthData AI Research Assistant. I can help you navigate our platform and find the healthcare data you need.\n\nHow can I assist you today?",
     },
   ])
   const [input, setInput] = useState('')
@@ -43,12 +46,23 @@ export function AIAssistant() {
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus()
+      setShowBubble(false) // Hide bubble when chat opens
     }
   }, [isOpen])
 
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // Auto-hide bubble after 8 seconds
+  useEffect(() => {
+    if (!isOpen && showBubble) {
+      const timer = setTimeout(() => {
+        setShowBubble(false)
+      }, 8000)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen, showBubble])
   
   // Hide AI Assistant on Smart Search page - AFTER all hooks
   if (pathname === '/search') {
@@ -118,50 +132,89 @@ export function AIAssistant() {
 
   if (!isOpen) {
     return (
-      <div className="fixed bottom-8 right-8 z-50 no-print">
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-700 via-primary-600 to-blue-700 hover:from-primary-800 hover:via-primary-700 hover:to-blue-800 border-2 border-primary-400/30 shadow-2xl hover:shadow-primary-500/50 flex items-center justify-center transition-all duration-300 hover:scale-110 overflow-hidden group"
-        >
-          {/* Animated gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          
-          {/* Pulsing ring effect */}
-          <div className="absolute inset-0 rounded-2xl bg-primary-500/30 animate-ping"></div>
-          
-          {/* Main icon container */}
-          <div className="relative z-10 flex flex-col items-center justify-center">
-            {/* Chat bubble icon */}
-            <svg 
-              width="32" 
-              height="32" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-              className="text-white drop-shadow-lg"
+      <div className="fixed bottom-6 right-6 z-50 no-print">
+        <div className="flex flex-col items-end gap-3">
+          {/* Text Bubble */}
+          <AnimatePresence>
+            {showBubble && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                className="relative"
+              >
+                <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl border border-neutral-200 dark:border-neutral-700 px-4 py-3 pr-8 max-w-[280px] sm:max-w-[320px]">
+                  <p className="text-sm text-neutral-700 dark:text-neutral-200 leading-relaxed">
+                    Not able to find what you're looking for?{' '}
+                    <span className="font-semibold text-primary-600 dark:text-primary-400">
+                      Ask Bunny
+                    </span>
+                  </p>
+                  {/* Arrow pointing to button */}
+                  <div className="absolute bottom-[-8px] right-8 w-4 h-4 bg-white dark:bg-neutral-800 border-r border-b border-neutral-200 dark:border-neutral-700 transform rotate-45"></div>
+                </div>
+                {/* Close button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowBubble(false)
+                  }}
+                  className="absolute top-2 right-2 p-1 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="h-3.5 w-3.5 text-neutral-500 dark:text-neutral-400" />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* AI Assistant Button */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ 
+              type: "spring", 
+              stiffness: 260, 
+              damping: 20,
+              delay: 0.2 
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Button
+              onClick={() => {
+                setIsOpen(true)
+                setShowBubble(false)
+              }}
+              className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 border border-primary-500/20 shadow-lg hover:shadow-xl flex items-center justify-center transition-all duration-200 overflow-hidden group"
+              aria-label="Open AI Assistant"
             >
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              <circle cx="9" cy="10" r="1" fill="currentColor"></circle>
-              <circle cx="12" cy="10" r="1" fill="currentColor"></circle>
-              <circle cx="15" cy="10" r="1" fill="currentColor"></circle>
-            </svg>
-          </div>
-          
-          {/* Sparkle effect on hover */}
-          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <Sparkles className="w-4 h-4 text-yellow-300 animate-pulse" />
-          </div>
-        </Button>
-        
-        {/* Dynamic tooltip */}
-        <div className="absolute bottom-full right-0 mb-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none">
-          <div className="bg-neutral-900 text-white px-4 py-2 rounded-lg shadow-xl text-sm font-medium whitespace-nowrap">
-            💬 Chat with AI Assistant
-            <div className="absolute bottom-[-6px] right-6 w-3 h-3 bg-neutral-900 transform rotate-45"></div>
-          </div>
+              {/* Subtle pulse animation */}
+              <motion.div
+                className="absolute inset-0 rounded-2xl bg-primary-400/20"
+                animate={{
+                  scale: [1, 1.1, 1],
+                  opacity: [0.5, 0.3, 0.5],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+              
+              {/* Main icon */}
+              <div className="relative z-10">
+                <MessageCircle className="w-7 h-7 sm:w-8 sm:h-8 text-white" strokeWidth={2} />
+              </div>
+              
+              {/* Badge indicator */}
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-neutral-900 flex items-center justify-center">
+                <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+              </div>
+            </Button>
+          </motion.div>
         </div>
       </div>
     )
@@ -170,22 +223,28 @@ export function AIAssistant() {
   return (
     <>
       {/* Overlay */}
-      <div
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 no-print"
         onClick={() => setIsOpen(false)}
       />
       {/* Drawer */}
-      <div className="fixed right-0 top-0 bottom-0 w-[450px] bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 shadow-2xl z-50 flex flex-col animate-slide-in-right no-print">
+      <motion.div
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        className="fixed right-0 top-0 bottom-0 w-full sm:w-[450px] bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 shadow-2xl z-50 flex flex-col no-print"
+      >
         {/* Header */}
         <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between bg-white dark:bg-neutral-900">
           <div>
-            <h2 className="text-lg font-semibold flex items-center gap-2 text-neutral-900 dark:text-neutral-100">
-              <Sparkles className="h-5 w-5 text-primary-700 dark:text-primary-500" />
-              AI Research Assistant
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+              Bunny - AI Assistant
             </h2>
-            <p className="text-xs text-neutral-500 dark:text-neutral-400">
-              Powered by GPT-4 + Perplexity Hybrid Search
-            </p>
           </div>
           <div className="flex items-center gap-2">
             {messages.length > 1 && (
@@ -313,7 +372,7 @@ export function AIAssistant() {
             Verified healthcare data • Real-time insights
           </p>
         </div>
-      </div>
+      </motion.div>
     </>
   )
 }
