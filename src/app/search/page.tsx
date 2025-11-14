@@ -676,7 +676,7 @@ I can handle typos and understand natural language!
           />
 
           {/* Main Chat Container */}
-          <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${showChatHistory ? 'lg:ml-80' : ''}`}>
+          <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] ${showChatHistory ? 'lg:ml-80' : ''}`}>
           <Card className="flex-1 flex flex-col m-0 rounded-none border-0 shadow-none overflow-hidden">
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               <AnimatePresence>

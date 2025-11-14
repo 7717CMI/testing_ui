@@ -109,7 +109,12 @@ export function SmartSearchChatHistorySidebar({
           initial={{ x: '-100%' }}
           animate={{ x: 0 }}
           exit={{ x: '-100%' }}
-          transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+          transition={{ 
+            type: 'spring', 
+            damping: 35, 
+            stiffness: 400,
+            mass: 0.8
+          }}
           className="fixed lg:relative left-0 top-0 h-full w-80 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 z-40 flex flex-col shadow-xl lg:shadow-none"
         >
         {/* Header */}

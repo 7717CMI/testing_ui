@@ -24,7 +24,7 @@ Successfully implemented intelligent model selection that automatically switches
 **Cost**: $0.25/1M input tokens
 
 ---
-
+#vdvre this file is for understanding purpose??/.
 ### 2. Response Formatter (`src/lib/smart-search/response-formatter.ts`)
 
 **New Function**: `assessResponseComplexity()`

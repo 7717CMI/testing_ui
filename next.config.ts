@@ -17,6 +17,14 @@ const nextConfig: NextConfig = {
     MYSQL_DATABASE: process.env.MYSQL_DATABASE,
     MYSQL_USER: process.env.MYSQL_USER,
     MYSQL_PASSWORD: process.env.MYSQL_PASSWORD,
+    
+    // Email Service
+    EMAIL_ESP_PROVIDER: process.env.EMAIL_ESP_PROVIDER,
+    EMAIL_FROM_ADDRESS: process.env.EMAIL_FROM_ADDRESS,
+    
+    // AI APIs
+    PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   },
 };
 

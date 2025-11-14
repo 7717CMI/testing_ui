@@ -8,6 +8,7 @@ import Lenis from 'lenis'
 import { walkthroughConfig, defaultWalkthroughSteps, WalkthroughStep } from '@/config/walkthrough-config'
 import { WalkthroughOverlay } from './walkthrough-overlay'
 import { WalkthroughTooltip } from './walkthrough-tooltip'
+import { ElementHighlighter } from './element-highlighter'
 
 export function DynamicWalkthrough() {
   const pathname = usePathname()
@@ -21,6 +22,7 @@ export function DynamicWalkthrough() {
 
   // Get steps for current page
   const steps = walkthroughConfig[pathname] || defaultWalkthroughSteps
+  const progress = steps.length > 0 ? currentStepIndex / steps.length : 0
   const currentStep = steps[currentStepIndex]
   const isFirst = currentStepIndex === 0
   const isLast = currentStepIndex === steps.length - 1
@@ -263,6 +265,12 @@ export function DynamicWalkthrough() {
       <WalkthroughOverlay
         isVisible={isTourActive}
         highlightedElement={highlightedElement}
+        progress={progress}
+      />
+      <ElementHighlighter
+        element={highlightedElement}
+        isActive={isTourActive && !!highlightedElement}
+        stepColor="#3b82f6"
       />
       <WalkthroughTooltip
         step={currentStep}

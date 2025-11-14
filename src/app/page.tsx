@@ -81,8 +81,20 @@ export default function LandingPage() {
       return
     }
 
-    // Navigate to feature page - PremiumGuard will show preview for free users
+    // Smooth scroll to top before navigation
+    if (typeof window !== 'undefined' && (window as any).lenis) {
+      const lenis = (window as any).lenis
+      lenis.scrollTo(0, {
+        duration: 0.8,
+        easing: (t: number) => 1 - Math.pow(1 - t, 3),
+        onComplete: () => {
+          router.push(featurePath)
+        }
+      })
+    } else {
+      // Fallback to regular navigation
       router.push(featurePath)
+    }
   }
 
   async function handleLogout() {

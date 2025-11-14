@@ -236,7 +236,12 @@ export function AIAssistant() {
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
-        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        transition={{ 
+          type: 'spring', 
+          damping: 35, 
+          stiffness: 400,
+          mass: 0.8
+        }}
         className="fixed right-0 top-0 bottom-0 w-full sm:w-[450px] bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 shadow-2xl z-50 flex flex-col no-print"
       >
         {/* Header */}

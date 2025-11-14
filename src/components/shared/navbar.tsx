@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
-import { Building2, Search, TrendingUp, User, Moon, Sun, LogOut, LayoutDashboard, Network, Bookmark, BookmarkCheck, Filter, Database, HelpCircle } from "lucide-react"
+import { Building2, Search, TrendingUp, User, Moon, Sun, LogOut, LayoutDashboard, Network, Bookmark, BookmarkCheck, Filter, Database, HelpCircle, Mail } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -33,6 +33,7 @@ export function Navbar() {
     { name: "Saved", href: "/saved-searches", icon: Bookmark },
     { name: "Insights", href: "/insights", icon: TrendingUp },
     { name: "Entity Graph", href: "/graph-linkage", icon: Network },
+    { name: "Email Outreach", href: "/email-outreach", icon: Mail },
   ]
 
   return (
@@ -55,12 +56,27 @@ export function Navbar() {
                 const Icon = item.icon
                 const isActive = pathname === item.href
                 return (
-                  <Link key={item.href} href={item.href}>
+                  <Link 
+                    key={item.href} 
+                    href={item.href}
+                    onClick={() => {
+                      // Smooth scroll to top on navigation
+                      if (typeof window !== 'undefined') {
+                        const lenis = (window as any).lenis
+                        if (lenis) {
+                          lenis.scrollTo(0, {
+                            duration: 1.0,
+                            easing: (t: number) => 1 - Math.pow(1 - t, 3),
+                          })
+                        }
+                      }
+                    }}
+                  >
                     <Button
                       variant={isActive ? "default" : "ghost"}
                       size="sm"
                       className={cn(
-                        "gap-2 font-medium transition-all duration-150",
+                        "gap-2 font-medium transition-all duration-200 ease-out",
                         isActive 
                           ? "bg-primary-700 text-white hover:bg-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700" 
                           : "text-neutral-600 hover:text-primary-700 hover:bg-accent-50 dark:text-neutral-400 dark:hover:text-primary-400 dark:hover:bg-neutral-800"

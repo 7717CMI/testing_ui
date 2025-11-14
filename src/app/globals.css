@@ -608,6 +608,77 @@
     background-size: 200% 100%;
     animation: shimmer 2s infinite;
   }
+
+  /* Orbital entrance animation */
+  @keyframes orbital-enter {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) rotate(-180deg) scale(0.8);
+    }
+    50% {
+      transform: translate(-50%, -50%) rotate(0deg) scale(1.1);
+    }
+    100% {
+      opacity: 1;
+      transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    }
+  }
+
+  /* Fractal ripple animation */
+  @keyframes fractal-ripple {
+    0% {
+      transform: scale(0);
+      opacity: 0.8;
+    }
+    50% {
+      opacity: 0.4;
+    }
+    100% {
+      transform: scale(3);
+      opacity: 0;
+    }
+  }
+
+  /* Magnetic pull animation */
+  @keyframes magnetic-pull {
+    0%, 100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(var(--pull-x, 0), var(--pull-y, 0));
+    }
+  }
+
+  /* Ink blob morph */
+  @keyframes ink-blob {
+    0% {
+      clip-path: circle(0% at 50% 50%);
+    }
+    100% {
+      clip-path: circle(100% at 50% 50%);
+    }
+  }
+
+  /* Completion firework */
+  @keyframes firework {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0;
+    }
+  }
+
+  /* Enhanced 3D tilt */
+  .walkthrough-3d-tilt {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
 }
 
 /* ========================================
@@ -676,8 +747,26 @@ html {
 }
 
 /* Smooth transitions for all interactive elements */
-* {
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+a, button, [role="button"] {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth card hover effects */
+.card, [class*="Card"] {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth input focus transitions */
+input, textarea, select {
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth modal/drawer animations */
+[role="dialog"], [data-state] {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Enhanced hover effects */
@@ -726,10 +815,28 @@ html {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Smooth page transitions */
+/* Smooth page transitions - Lenis handles this, but keep for fallback */
 @media (prefers-reduced-motion: no-preference) {
-  * {
+  html {
     scroll-behavior: smooth;
+  }
+  
+  /* Disable native smooth scroll when Lenis is active */
+  html.lenis,
+  html.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  
+  html.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+  
+  html.lenis-stopped {
+    overflow: hidden;
+  }
+  
+  html.lenis-scrolling iframe {
+    pointer-events: none;
   }
 }
 
@@ -742,24 +849,68 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  /* Reduced motion fallback for walkthrough */
+  .walkthrough-tooltip-enter,
+  .walkthrough-pulse,
+  .walkthrough-scale,
+  .fractal-ripple,
+  .magnetic-pull,
+  .ink-blob,
+  .firework {
+    animation: none !important;
+    transition: opacity 0.3s ease !important;
+  }
 }
 
-/* Custom scrollbar for webkit browsers */
+/* Custom scrollbar for webkit browsers - Buttery smooth */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
   background: hsl(var(--muted));
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--primary) / 0.5);
-  border-radius: 5px;
+  background: hsl(var(--primary) / 0.4);
+  border-radius: 4px;
+  transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--primary));
+  background: hsl(var(--primary) / 0.7);
+}
+
+/* Smooth scrollbar for dark mode */
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.6);
+}
+
+/* Lenis smooth scroll integration */
+html.lenis {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }
 
