@@ -27,13 +27,13 @@ export function VaccinationRate({ onNavigate }: VaccinationRateProps) {
     const availableDiseases = [...new Set(data.map(d => d.disease))].sort()
     
     const year2025 = availableYears.includes(2025) ? [2025] : (availableYears.length > 0 ? [availableYears[availableYears.length - 1]] : [])
-    const defaultCountries = availableCountries.includes('USA') && availableCountries.includes('Canada')
-      ? ['USA', 'Canada']
+    const defaultCountries = availableCountries.includes('Nepal') && availableCountries.includes('Philippines')
+      ? ['Nepal', 'Philippines']
       : availableCountries.slice(0, 2)
     
-    // Select two diseases: Influenza and HPV (or first two available)
-    const defaultDiseases = availableDiseases.includes('Influenza') && availableDiseases.includes('HPV')
-      ? ['Influenza', 'HPV']
+    // Select two diseases: HPV and Shingles (or first two available)
+    const defaultDiseases = availableDiseases.includes('HPV') && availableDiseases.includes('Shingles')
+      ? ['HPV', 'Shingles']
       : availableDiseases.length >= 2
         ? availableDiseases.slice(0, 2)
         : availableDiseases.length === 1

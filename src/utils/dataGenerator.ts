@@ -41,53 +41,90 @@ const generateComprehensiveData = (): VaccineData[] => {
   const years = Array.from({ length: 15 }, (_, i) => 2021 + i)
   const regions = ["North America", "Europe", "APAC", "Latin America", "Middle East", "Africa"]
   
-  const diseases = ["HBV", "Herpes", "TCV", "HPV", "Influenza", "Pneumococcal", "MMR", "Rotavirus", 
-                   "Meningococcal", "Varicella"]
+  const diseases = ["HPV", "Shingles", "IPV", "BCG", "Hexavalent"]
   
   const brandMap: Record<string, string[]> = {
-    "HBV": ["Engerix-B", "Heplisav-B", "Recombivax HB", "Twinrix"],
-    "Herpes": ["Shingrix", "Zostavax"],
-    "TCV": ["Typbar TCV", "Typhim Vi", "Vivotif"],
     "HPV": ["Gardasil 9", "Cervarix"],
-    "Influenza": ["Fluzone", "Flucelvax", "FluMist", "Fluad"],
-    "Pneumococcal": ["Prevnar 13", "Prevnar 20", "Pneumovax 23", "Synflorix"],
-    "MMR": ["M-M-R II", "Priorix"],
-    "Rotavirus": ["RotaTeq", "Rotarix"],
-    "Meningococcal": ["Bexsero", "Trumenba", "MenACWY"],
-    "Varicella": ["Varivax", "ProQuad"]
+    "Shingles": ["Shingrix", "Zostavax"],
+    "IPV": ["IPOL", "Polio Sabin", "Imovax Polio"],
+    "BCG": ["BCG Vaccine", "Tice BCG", "Danish BCG"],
+    "Hexavalent": ["Infanrix hexa", "Hexaxim (Sanofi)", "Hexyon (Sanofi)", "Vaxelis (Merck + Sanofi)", "Others"]
   }
   
   const companies = ["Pfizer", "GSK", "Merck", "Sanofi", "AstraZeneca", "Moderna", "Bharat Biotech", 
                      "Serum Institute"]
   
   const countryIncomeMap: Record<string, Record<string, string>> = {
-    "North America": {
-      "USA": "High Income", "Canada": "High Income", "Mexico": "Middle Income"
-    },
-    "Europe": {
-      "Germany": "High Income", "UK": "High Income", "France": "High Income", 
-      "Spain": "High Income", "Italy": "High Income", "Poland": "Middle Income",
-      "Romania": "Middle Income"
-    },
     "APAC": {
-      "Japan": "High Income", "Australia": "High Income", "Singapore": "High Income",
-      "China": "Middle Income", "India": "Middle Income", "Thailand": "Middle Income",
-      "Pakistan": "Low Income", "Bangladesh": "Low Income", "Nepal": "Low Income"
-    },
-    "Latin America": {
-      "Brazil": "Middle Income", "Argentina": "Middle Income", "Chile": "Middle Income", 
-      "Colombia": "Middle Income", "Peru": "Middle Income"
+      "Nepal": "Low Income",
+      "Philippines": "Middle Income",
+      "Myanmar": "Low Income",
+      "Sri Lanka": "Middle Income",
+      "India": "Middle Income",
+      "Vietnam": "Middle Income",
+      "Pakistan": "Low Income",
+      "Bangladesh": "Low Income",
+      "Cambodia": "Low Income",
+      "Bhutan": "Middle Income",
+      "China": "Middle Income",
+      "Malaysia": "Middle Income",
+      "Indonesia": "Middle Income",
+      "Yemen": "Low Income",
+      "Kazakhstan": "Middle Income",
+      "Thailand": "Middle Income"
     },
     "Middle East": {
-      "UAE": "High Income", "Saudi Arabia": "High Income", "Israel": "High Income", 
-      "Egypt": "Middle Income", "Iraq": "Middle Income"
+      "Egypt": "Middle Income",
+      "Afghanistan": "Low Income",
+      "Iran": "Middle Income",
+      "Morocco": "Middle Income",
+      "Kuwait": "High Income",
+      "Tunisia": "Middle Income",
+      "Jordan": "Middle Income",
+      "Qatar": "High Income",
+      "Iraq": "Middle Income",
+      "Libya": "Middle Income",
+      "Saudi Arabia": "High Income",
+      "Bahrain": "High Income",
+      "UAE": "High Income",
+      "Oman": "High Income"
+    },
+    "Latin America": {
+      "Brazil": "Middle Income",
+      "Colombia": "Middle Income",
+      "Chile": "Middle Income",
+      "Mexico": "Middle Income",
+      "Argentina": "Middle Income",
+      "Peru": "Middle Income"
     },
     "Africa": {
-      "South Africa": "Middle Income", "Nigeria": "Low Income", "Kenya": "Low Income", 
-      "Ethiopia": "Low Income", "Ghana": "Low Income"
+      "Uganda": "Low Income",
+      "Kenya": "Low Income",
+      "Mauritius": "Middle Income",
+      "Nigeria": "Low Income",
+      "Ethiopia": "Low Income",
+      "Tanzania": "Low Income",
+      "South Africa": "Middle Income"
     }
   }
   
+  // Vaccine to countries mapping - each vaccine only appears in specific countries
+  const vaccineCountryMap: Record<string, string[]> = {
+    "HPV": ["Nepal", "Philippines"],
+    "Shingles": ["Nepal", "Philippines"],
+    "IPV": ["Myanmar"],
+    "BCG": ["Sri Lanka"],
+    "Hexavalent": [
+      "India", "Vietnam", "Pakistan", "Bangladesh", "Cambodia", "Bhutan",
+      "China", "Malaysia", "Indonesia", "Yemen", "Kazakhstan", "Thailand",
+      "Egypt", "Afghanistan", "Iran", "Morocco", "Kuwait", "Brazil",
+      "Tunisia", "Jordan", "Qatar", "Mexico", "Iraq", "Libya",
+      "Saudi Arabia", "Colombia", "Chile", "Bahrain", "UAE", "Argentina",
+      "Peru", "Oman", "Uganda", "Kenya", "Mauritius", "Nigeria",
+      "Ethiopia", "Tanzania", "South Africa"
+    ]
+  }
+
   const ageGroups = ["Pediatric / Children / Adolescence", "Adult", "Geriatric"]
   const roaTypes = ["IM", "SC", "Oral", "Intranasal"]
   const fdfTypes = ["Vial", "Prefilled Syringe", "Multi-dose Vial", "Oral Solution"]
@@ -95,16 +132,11 @@ const generateComprehensiveData = (): VaccineData[] => {
   
   // Disease-specific multipliers for variation
   const diseaseMultipliers: Record<string, { prevalence: number; incidence: number; price: number; cagr: number }> = {
-    'HBV': { prevalence: 1.2, incidence: 0.9, price: 1.3, cagr: 1.1 },
-    'Herpes': { prevalence: 0.8, incidence: 1.1, price: 1.5, cagr: 0.9 },
-    'TCV': { prevalence: 1.5, incidence: 1.3, price: 0.7, cagr: 1.4 },
     'HPV': { prevalence: 1.1, incidence: 0.8, price: 1.2, cagr: 1.2 },
-    'Influenza': { prevalence: 1.4, incidence: 1.6, price: 0.8, cagr: 1.0 },
-    'Pneumococcal': { prevalence: 1.3, incidence: 1.2, price: 1.4, cagr: 1.3 },
-    'MMR': { prevalence: 0.9, incidence: 0.7, price: 0.9, cagr: 0.8 },
-    'Rotavirus': { prevalence: 1.6, incidence: 1.4, price: 0.6, cagr: 1.5 },
-    'Meningococcal': { prevalence: 0.7, incidence: 1.0, price: 1.6, cagr: 1.1 },
-    'Varicella': { prevalence: 1.0, incidence: 0.9, price: 1.1, cagr: 0.9 }
+    'Shingles': { prevalence: 0.8, incidence: 1.1, price: 1.5, cagr: 0.9 },
+    'IPV': { prevalence: 1.0, incidence: 0.9, price: 0.9, cagr: 1.0 },
+    'BCG': { prevalence: 1.2, incidence: 1.0, price: 0.7, cagr: 1.1 },
+    'Hexavalent': { prevalence: 1.3, incidence: 1.2, price: 1.0, cagr: 1.3 }
   }
 
   // Region-specific multipliers
@@ -133,96 +165,113 @@ const generateComprehensiveData = (): VaccineData[] => {
   }
   
   for (const year of years) {
-    for (const region of regions) {
-      const regionMult = regionMultipliers[region]
-      for (const [country, incomeType] of Object.entries(countryIncomeMap[region])) {
-        for (const disease of diseases) {
-          const diseaseMult = diseaseMultipliers[disease]
-          const brands = brandMap[disease]
-          for (const brand of brands) {
-            const brandMult = brandPremiumMap[brand] || 1.0
-            for (const ageGroup of ageGroups) {
-              // Age group multipliers
-              const ageMult = ageGroup === 'Pediatric / Children / Adolescence' ? 1.3 : ageGroup === 'Geriatric' ? 1.1 : 1.0
-              for (const gender of ["Male", "Female"]) {
-                // Gender multiplier (slight variation)
-                const genderMult = gender === "Male" ? 1.05 : 0.95
-                
-                // Apply all multipliers for variation
-                const basePrevalence = (1 + seededRandom() * 49) * (1 + (year - 2021) * 0.05)
-                const prevalence = Math.floor(basePrevalence * diseaseMult.prevalence * ageMult * genderMult)
-                
-                const baseIncidence = (2 + seededRandom() * 78) * (1 + (year - 2021) * 0.03)
-                const incidence = Math.floor(baseIncidence * diseaseMult.incidence * ageMult)
-                
-                const baseVaxRate = 5 + seededRandom() * 90
-                const vaccinationRate = baseVaxRate * regionMult.vaccinationRate
-                
-                const basePrice = 2 + seededRandom() * 148
-                const price = basePrice * diseaseMult.price * brandMult
-                
-                const priceElasticity = 5 + seededRandom() * 45
-                
-                const baseVolume = 1 + seededRandom() * 199
-                const volumeUnits = Math.floor(baseVolume * regionMult.volume * ageMult)
-                
-                const revenue = price * volumeUnits
-                const marketValueUsd = revenue * (0.8 + seededRandom() * 0.4)
-                
-                const baseMarketShare = 1 + seededRandom() * 24
-                const marketSharePct = baseMarketShare * regionMult.marketShare * brandMult
-                
-                const baseCAGR = -2 + seededRandom() * 17
-                const cagr = baseCAGR * diseaseMult.cagr
-                const yoyGrowth = -5 + seededRandom() * 25
-                const qty = Math.floor((1 + seededRandom() * 99) * regionMult.volume)
-                
-                const roa = roaTypes[Math.floor(seededRandom() * roaTypes.length)]
-                const fdf = fdfTypes[Math.floor(seededRandom() * fdfTypes.length)]
-                const procurement = procurementTypes[Math.floor(seededRandom() * procurementTypes.length)]
-                const company = companies[Math.floor(seededRandom() * companies.length)]
-                
-                data.push({
-                  recordId,
-                  year,
-                  region,
-                  country,
-                  incomeType,
-                  disease,
-                  market: disease,
-                  brand,
-                  company,
-                  ageGroup,
-                  gender,
-                  segment: ["Gender", "Brand", "Age", "ROA", "FDF"][Math.floor(seededRandom() * 5)],
-                  segmentBy: ["male", "female", brand, ageGroup][Math.floor(seededRandom() * 4)],
-                  roa,
-                  fdf,
-                  formulation: fdf,
-                  procurement,
-                  publicPrivate: ["UNICEF", "GAVI", "PAHO", "Government"].includes(procurement) ? "Public" : "Private",
-                  prevalence,
-                  incidence,
-                  vaccinationRate: Math.round(vaccinationRate * 100) / 100,
-                  coverageRate: Math.round(vaccinationRate * (0.8 + seededRandom() * 0.3) * 100) / 100,
-                  price: Math.round(price * 100) / 100,
-                  priceElasticity: Math.round(priceElasticity * 100) / 100,
-                  priceClass: price > 50 ? "Premium" : (price > 20 ? "Standard" : "Budget"),
-                  volumeUnits,
-                  qty,
-                  revenue: Math.round(revenue * 100) / 100,
-                  marketValueUsd: Math.round(marketValueUsd * 100) / 100,
-                  value: Math.round(marketValueUsd * 100) / 100,
-                  marketSharePct: Math.round(marketSharePct * 100) / 100,
-                  share: Math.round(marketSharePct * 100) / 100,
-                  cagr: Math.round(cagr * 100) / 100,
-                  yoyGrowth: Math.round(yoyGrowth * 100) / 100,
-                  yoy: Math.round(yoyGrowth * 100) / 100,
-                  efficacyPct: Math.round((60 + seededRandom() * 38) * 100) / 100,
-                })
-                
-                recordId++
-              }
+    for (const disease of diseases) {
+      const diseaseMult = diseaseMultipliers[disease]
+      const allowedCountries = vaccineCountryMap[disease] || []
+      
+      if (allowedCountries.length === 0) continue
+      
+      // Find region for each allowed country
+      for (const country of allowedCountries) {
+        // Find which region this country belongs to
+        let region = ""
+        let incomeType = ""
+        for (const [reg, countries] of Object.entries(countryIncomeMap)) {
+          if (countries[country]) {
+            region = reg
+            incomeType = countries[country]
+            break
+          }
+        }
+        
+        if (!region) continue // Skip if country not found
+        
+        const regionMult = regionMultipliers[region] || { volume: 1.0, vaccinationRate: 1.0, marketShare: 1.0 }
+        const brands = brandMap[disease]
+        
+        for (const brand of brands) {
+          const brandMult = brandPremiumMap[brand] || 1.0
+          for (const ageGroup of ageGroups) {
+            // Age group multipliers
+            const ageMult = ageGroup === 'Pediatric / Children / Adolescence' ? 1.3 : ageGroup === 'Geriatric' ? 1.1 : 1.0
+            for (const gender of ["Male", "Female"]) {
+              // Gender multiplier (slight variation)
+              const genderMult = gender === "Male" ? 1.05 : 0.95
+              
+              // Apply all multipliers for variation
+              const basePrevalence = (1 + seededRandom() * 49) * (1 + (year - 2021) * 0.05)
+              const prevalence = Math.floor(basePrevalence * diseaseMult.prevalence * ageMult * genderMult)
+              
+              const baseIncidence = (2 + seededRandom() * 78) * (1 + (year - 2021) * 0.03)
+              const incidence = Math.floor(baseIncidence * diseaseMult.incidence * ageMult)
+              
+              const baseVaxRate = 5 + seededRandom() * 90
+              const vaccinationRate = baseVaxRate * regionMult.vaccinationRate
+              
+              const basePrice = 2 + seededRandom() * 148
+              const price = basePrice * diseaseMult.price * brandMult
+              
+              const priceElasticity = 5 + seededRandom() * 45
+              
+              const baseVolume = 1 + seededRandom() * 199
+              const volumeUnits = Math.floor(baseVolume * regionMult.volume * ageMult)
+              
+              const revenue = price * volumeUnits
+              const marketValueUsd = revenue * (0.8 + seededRandom() * 0.4)
+              
+              const baseMarketShare = 1 + seededRandom() * 24
+              const marketSharePct = baseMarketShare * regionMult.marketShare * brandMult
+              
+              const baseCAGR = -2 + seededRandom() * 17
+              const cagr = baseCAGR * diseaseMult.cagr
+              const yoyGrowth = -5 + seededRandom() * 25
+              const qty = Math.floor((1 + seededRandom() * 99) * regionMult.volume)
+              
+              const roa = roaTypes[Math.floor(seededRandom() * roaTypes.length)]
+              const fdf = fdfTypes[Math.floor(seededRandom() * fdfTypes.length)]
+              const procurement = procurementTypes[Math.floor(seededRandom() * procurementTypes.length)]
+              const company = companies[Math.floor(seededRandom() * companies.length)]
+              
+              data.push({
+                recordId,
+                year,
+                region,
+                country,
+                incomeType,
+                disease,
+                market: disease,
+                brand,
+                company,
+                ageGroup,
+                gender,
+                segment: ["Gender", "Brand", "Age", "ROA", "FDF"][Math.floor(seededRandom() * 5)],
+                segmentBy: ["male", "female", brand, ageGroup][Math.floor(seededRandom() * 4)],
+                roa,
+                fdf,
+                formulation: fdf,
+                procurement,
+                publicPrivate: ["UNICEF", "GAVI", "PAHO", "Government"].includes(procurement) ? "Public" : "Private",
+                prevalence,
+                incidence,
+                vaccinationRate: Math.round(vaccinationRate * 100) / 100,
+                coverageRate: Math.round(vaccinationRate * (0.8 + seededRandom() * 0.3) * 100) / 100,
+                price: Math.round(price * 100) / 100,
+                priceElasticity: Math.round(priceElasticity * 100) / 100,
+                priceClass: price > 50 ? "Premium" : (price > 20 ? "Standard" : "Budget"),
+                volumeUnits,
+                qty,
+                revenue: Math.round(revenue * 100) / 100,
+                marketValueUsd: Math.round(marketValueUsd * 100) / 100,
+                value: Math.round(marketValueUsd * 100) / 100,
+                marketSharePct: Math.round(marketSharePct * 100) / 100,
+                share: Math.round(marketSharePct * 100) / 100,
+                cagr: Math.round(cagr * 100) / 100,
+                yoyGrowth: Math.round(yoyGrowth * 100) / 100,
+                yoy: Math.round(yoyGrowth * 100) / 100,
+                efficacyPct: Math.round((60 + seededRandom() * 38) * 100) / 100,
+              })
+              
+              recordId++
             }
           }
         }
@@ -239,7 +288,11 @@ export const getData = (): VaccineData[] => {
   if (!dataCache) {
     try {
       dataCache = generateComprehensiveData()
+      // Log available brands for debugging
+      const hexavalentBrands = [...new Set(dataCache.filter(d => d.disease === 'Hexavalent').map(d => d.brand))].sort()
+      console.log('Hexavalent brands in data:', hexavalentBrands)
     } catch (error) {
+      console.error('Error generating data:', error)
       dataCache = []
     }
   }

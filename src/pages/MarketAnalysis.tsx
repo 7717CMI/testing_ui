@@ -15,7 +15,7 @@ interface MarketAnalysisProps {
 }
 
 type MarketEvaluationType = 'By Value' | 'By Volume'
-type SegmentType = 'By Brand' | 'By Age' | 'By Gender' | 'By ROA' | 'By FDF' | 'By Procurement' | null
+type SegmentType = 'By Brand' | 'By Age' | 'By Gender' | 'By ROA' | 'By FDF' | 'By Procurement' | 'By Country' | null
 
 interface MarketAnalysisFilters extends FilterOptions {
   vaccineType?: string[]
@@ -45,6 +45,9 @@ interface MarketAnalysisFilters extends FilterOptions {
   crossSegmentRoa?: string[]
   crossSegmentDosageForm?: string[]
   crossSegmentProcurementType?: string[]
+  crossSegmentCountry?: string[]
+  // Primary segment country filter
+  crossSegmentPrimaryCountry?: string[]
 }
 
 export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
@@ -66,16 +69,16 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
     const availableDiseases = [...new Set(data.map(d => d.disease))].sort()
     
     const year2025 = availableYears.includes(2025) ? ['2025'] : (availableYears.length > 0 ? [String(availableYears[availableYears.length - 1])] : [])
-      const defaultCountries = availableCountries.length >= 2 && availableCountries.includes('USA') && availableCountries.includes('Canada')
-      ? ['USA', 'Canada']
+      const defaultCountries = availableCountries.length >= 2 && availableCountries.includes('Nepal') && availableCountries.includes('Philippines')
+      ? ['Nepal', 'Philippines']
         : availableCountries.length >= 2
           ? availableCountries.slice(0, 2)
           : availableCountries.length === 1
             ? [availableCountries[0]]
             : []
       
-      const defaultDiseases = availableDiseases.length >= 2 && availableDiseases.includes('Influenza') && availableDiseases.includes('HPV')
-      ? ['Influenza', 'HPV']
+      const defaultDiseases = availableDiseases.length >= 2 && availableDiseases.includes('HPV') && availableDiseases.includes('Shingles')
+      ? ['HPV', 'Shingles']
       : availableDiseases.length >= 2
         ? availableDiseases.slice(0, 2)
         : availableDiseases.length === 1
@@ -198,6 +201,20 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
         baseData = data
       }
     
+    // For brands, show all brands for the selected vaccine type (not filtered by country)
+    // This allows users to see available brands even if selected countries don't have that vaccine
+    let brandsData: any[] = []
+    try {
+      brandsData = filterDataframe(data, {
+        year: filters.year && filters.year.length > 0 ? filters.year : undefined,
+        disease: filters.vaccineType && filters.vaccineType.length > 0 ? filters.vaccineType : undefined,
+        // Don't filter by country for brands - show all brands for the vaccine type
+      } as FilterOptions)
+    } catch (error) {
+      console.error('Error filtering brands data:', error)
+      brandsData = data
+    }
+    
     // For segment-specific options, use filtered data to show only available options
     let segmentFilteredData = baseData
     
@@ -222,8 +239,8 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
       years: [...new Set(data.map(d => d.year))].sort(),
       diseases: [...new Set(data.map(d => d.disease))].sort(),
       countries: [...new Set(data.map(d => d.country))].sort(),
-      // Segment-specific options filtered based on current selections
-      brands: [...new Set(baseData.map(d => d.brand))].sort(),
+      // Brands: Show all brands for the selected vaccine type (not filtered by country)
+      brands: [...new Set(brandsData.map(d => d.brand))].sort(),
       ageGroups: [...new Set(baseData.map(d => d.ageGroup))].sort(),
       genders: [...new Set(baseData.map(d => d.gender))].sort(),
       roaTypes: [...new Set(baseData.map(d => d.roa))].sort(),
@@ -344,12 +361,12 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
 
   // Available cross-segments for standalone cross-analysis (exclude the primary cross-segment)
   const availableCrossSegmentsForStandalone = useMemo(() => {
-    const allSegments: SegmentType[] = ['By Brand', 'By Age', 'By Gender', 'By ROA', 'By FDF', 'By Procurement']
+    const allSegments: SegmentType[] = ['By Brand', 'By Age', 'By Gender', 'By ROA', 'By FDF', 'By Procurement', 'By Country']
     // Filter based on marketEvaluation: hide By Age and By Gender when By Volume is selected
     const filteredSegments = filters.marketEvaluation === 'By Volume'
       ? allSegments.filter(s => s !== 'By Age' && s !== 'By Gender')
       : allSegments
-    return filteredSegments.filter(s => s !== filters.crossSegmentPrimary)
+    return filteredSegments.filter(s => s !== filters.crossSegmentPrimary && s !== null)
   }, [filters.crossSegmentPrimary, filters.marketEvaluation])
 
   // Standalone cross-segment filtered data (apply crossSegmentPrimary filters)
@@ -383,10 +400,14 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
       if (filters.crossSegmentPrimaryProcurementType && filters.crossSegmentPrimaryProcurementType.length > 0) {
         filtered = filtered.filter(d => filters.crossSegmentPrimaryProcurementType!.includes(d.publicPrivate))
       }
+    } else if (filters.crossSegmentPrimary === 'By Country') {
+      if (filters.crossSegmentPrimaryCountry && filters.crossSegmentPrimaryCountry.length > 0) {
+        filtered = filtered.filter(d => filters.crossSegmentPrimaryCountry!.includes(d.country))
+      }
     }
     
     return filtered
-  }, [filteredData, filters.crossSegmentPrimary, filters.crossSegmentPrimaryBrand, filters.crossSegmentPrimaryAgeGroup, filters.crossSegmentPrimaryGender, filters.crossSegmentPrimaryRoa, filters.crossSegmentPrimaryDosageForm, filters.crossSegmentPrimaryProcurementType])
+  }, [filteredData, filters.crossSegmentPrimary, filters.crossSegmentPrimaryBrand, filters.crossSegmentPrimaryAgeGroup, filters.crossSegmentPrimaryGender, filters.crossSegmentPrimaryRoa, filters.crossSegmentPrimaryDosageForm, filters.crossSegmentPrimaryProcurementType, filters.crossSegmentPrimaryCountry])
 
   // Standalone cross-segment analysis data - Individual level granularity
   // This creates data grouped by primary segment with cross-segment breakdown
@@ -405,6 +426,10 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
       if (filters.crossSegmentAgeGroup && filters.crossSegmentAgeGroup.length > 0) {
         filtered = filtered.filter(d => filters.crossSegmentAgeGroup!.includes(d.ageGroup))
       }
+    } else if (filters.crossSegment === 'By Country') {
+      if (filters.crossSegmentCountry && filters.crossSegmentCountry.length > 0) {
+        filtered = filtered.filter(d => filters.crossSegmentCountry!.includes(d.country))
+      }
     }
     
     // Get keys for both segments
@@ -415,6 +440,7 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
     else if (filters.crossSegmentPrimary === 'By ROA') primarySegmentKey = 'roa'
     else if (filters.crossSegmentPrimary === 'By FDF') primarySegmentKey = 'fdf'
     else if (filters.crossSegmentPrimary === 'By Procurement') primarySegmentKey = 'publicPrivate'
+    else if (filters.crossSegmentPrimary === 'By Country') primarySegmentKey = 'country'
       
       let crossSegmentKey = ''
       if (filters.crossSegment === 'By Brand') crossSegmentKey = 'brand'
@@ -423,6 +449,7 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
     else if (filters.crossSegment === 'By ROA') crossSegmentKey = 'roa'
       else if (filters.crossSegment === 'By FDF') crossSegmentKey = 'fdf'
       else if (filters.crossSegment === 'By Procurement') crossSegmentKey = 'publicPrivate'
+      else if (filters.crossSegment === 'By Country') crossSegmentKey = 'country'
       
       if (!primarySegmentKey || !crossSegmentKey) return []
       
@@ -518,7 +545,7 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
     })
     
     return combinations
-  }, [standaloneCrossSegmentFilteredData, filters.crossSegmentPrimary, filters.crossSegment, filters.crossSegmentBrand, filters.crossSegmentAgeGroup, filters.crossSegmentGender, filters.crossSegmentRoa, filters.crossSegmentDosageForm, filters.crossSegmentProcurementType])
+  }, [standaloneCrossSegmentFilteredData, filters.crossSegmentPrimary, filters.crossSegment, filters.crossSegmentBrand, filters.crossSegmentAgeGroup, filters.crossSegmentGender, filters.crossSegmentRoa, filters.crossSegmentDosageForm, filters.crossSegmentProcurementType, filters.crossSegmentCountry])
 
   // Alternative: Grouped by primary segment, showing cross-segment values grouped by year
   const standaloneCrossSegmentGroupedData = useMemo(() => {
@@ -551,6 +578,10 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
       if (filters.crossSegmentProcurementType && filters.crossSegmentProcurementType.length > 0) {
         filtered = filtered.filter(d => filters.crossSegmentProcurementType!.includes(d.publicPrivate))
       }
+    } else if (filters.crossSegment === 'By Country') {
+      if (filters.crossSegmentCountry && filters.crossSegmentCountry.length > 0) {
+        filtered = filtered.filter(d => filters.crossSegmentCountry!.includes(d.country))
+      }
     }
     
         let primarySegmentKey = ''
@@ -560,6 +591,7 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
     else if (filters.crossSegmentPrimary === 'By ROA') primarySegmentKey = 'roa'
     else if (filters.crossSegmentPrimary === 'By FDF') primarySegmentKey = 'fdf'
     else if (filters.crossSegmentPrimary === 'By Procurement') primarySegmentKey = 'publicPrivate'
+    else if (filters.crossSegmentPrimary === 'By Country') primarySegmentKey = 'country'
         
         let crossSegmentKey = ''
         if (filters.crossSegment === 'By Brand') crossSegmentKey = 'brand'
@@ -568,6 +600,7 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
     else if (filters.crossSegment === 'By ROA') crossSegmentKey = 'roa'
         else if (filters.crossSegment === 'By FDF') crossSegmentKey = 'fdf'
         else if (filters.crossSegment === 'By Procurement') crossSegmentKey = 'publicPrivate'
+        else if (filters.crossSegment === 'By Country') crossSegmentKey = 'country'
         
     if (!primarySegmentKey || !crossSegmentKey) return []
     
@@ -630,6 +663,10 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
       if (filters.crossSegmentProcurementType && filters.crossSegmentProcurementType.length > 0) {
         filtered = filtered.filter(d => filters.crossSegmentProcurementType!.includes(d.publicPrivate))
       }
+    } else if (filters.crossSegment === 'By Country') {
+      if (filters.crossSegmentCountry && filters.crossSegmentCountry.length > 0) {
+        filtered = filtered.filter(d => filters.crossSegmentCountry!.includes(d.country))
+      }
     }
     
       let primarySegmentKey = ''
@@ -639,6 +676,7 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
     else if (filters.crossSegmentPrimary === 'By ROA') primarySegmentKey = 'roa'
     else if (filters.crossSegmentPrimary === 'By FDF') primarySegmentKey = 'fdf'
     else if (filters.crossSegmentPrimary === 'By Procurement') primarySegmentKey = 'publicPrivate'
+    else if (filters.crossSegmentPrimary === 'By Country') primarySegmentKey = 'country'
       
       let crossSegmentKey = ''
       if (filters.crossSegment === 'By Brand') crossSegmentKey = 'brand'
@@ -647,9 +685,10 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
     else if (filters.crossSegment === 'By ROA') crossSegmentKey = 'roa'
       else if (filters.crossSegment === 'By FDF') crossSegmentKey = 'fdf'
       else if (filters.crossSegment === 'By Procurement') crossSegmentKey = 'publicPrivate'
+      else if (filters.crossSegment === 'By Country') crossSegmentKey = 'country'
       
       if (!primarySegmentKey || !crossSegmentKey) return []
-      
+    
     const primaryValues = [...new Set(filtered.map(d => d[primarySegmentKey as keyof typeof d] as string))].sort()
     const crossValues = [...new Set(filtered.map(d => d[crossSegmentKey as keyof typeof d] as string))].sort()
       
@@ -662,7 +701,7 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
       })
       
     return combinations
-  }, [standaloneCrossSegmentFilteredData, filters.crossSegmentPrimary, filters.crossSegment, filters.crossSegmentBrand, filters.crossSegmentAgeGroup, filters.crossSegmentGender, filters.crossSegmentRoa, filters.crossSegmentDosageForm, filters.crossSegmentProcurementType])
+  }, [standaloneCrossSegmentFilteredData, filters.crossSegmentPrimary, filters.crossSegment, filters.crossSegmentBrand, filters.crossSegmentAgeGroup, filters.crossSegmentGender, filters.crossSegmentRoa, filters.crossSegmentDosageForm, filters.crossSegmentProcurementType, filters.crossSegmentCountry])
 
   // KPIs
   const kpis = useMemo(() => {
@@ -1392,6 +1431,7 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
                   delete newFilters.crossSegmentPrimaryRoa
                   delete newFilters.crossSegmentPrimaryDosageForm
                   delete newFilters.crossSegmentPrimaryProcurementType
+                  delete newFilters.crossSegmentPrimaryCountry
                   
                   // Auto-populate defaults if needed
                   if (newPrimary === 'By Brand') {
@@ -1446,6 +1486,18 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
                     } as FilterOptions)
                     const availableProcurementTypes = [...new Set(baseData.map(d => d.publicPrivate))].sort()
                     newFilters.crossSegmentPrimaryProcurementType = availableProcurementTypes
+                  } else if (newPrimary === 'By Country') {
+                    const baseData = filterDataframe(data, {
+                      year: filters.year && filters.year.length > 0 ? filters.year : undefined,
+                      disease: filters.vaccineType && filters.vaccineType.length > 0 ? filters.vaccineType : undefined,
+                      country: filters.country && filters.country.length > 0 ? filters.country : undefined,
+                    } as FilterOptions)
+                    const availableCountries = [...new Set(baseData.map(d => d.country))].sort()
+                    if (availableCountries.length >= 2) {
+                      newFilters.crossSegmentPrimaryCountry = availableCountries.slice(0, 2)
+                    } else if (availableCountries.length === 1) {
+                      newFilters.crossSegmentPrimaryCountry = [availableCountries[0]]
+                    }
                   }
                   
                   setFilters(newFilters)
@@ -1467,6 +1519,7 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
                 <option value="By ROA">By ROA (Route of Administration)</option>
                 <option value="By FDF">By FDF (Fixed Dose Formulation)</option>
                 <option value="By Procurement">By Procurement</option>
+                <option value="By Country">By Country</option>
               </select>
           </div>
 
@@ -1488,6 +1541,7 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
                   delete newFilters.crossSegmentRoa
                   delete newFilters.crossSegmentDosageForm
                   delete newFilters.crossSegmentProcurementType
+                  delete newFilters.crossSegmentCountry
                   
                   // Auto-select all available options for the new cross-segment
                   if (newCrossSegment) {
@@ -1519,6 +1573,13 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
                     } else if (newCrossSegment === 'By Procurement') {
                       const availableProcurementTypes = [...new Set(baseData.map(d => d.publicPrivate))].sort()
                       newFilters.crossSegmentProcurementType = availableProcurementTypes
+                    } else if (newCrossSegment === 'By Country') {
+                      const availableCountries = [...new Set(baseData.map(d => d.country))].sort()
+                      if (availableCountries.length >= 2) {
+                        newFilters.crossSegmentCountry = availableCountries.slice(0, 2)
+                      } else if (availableCountries.length === 1) {
+                        newFilters.crossSegmentCountry = [availableCountries[0]]
+                      }
                     }
                   }
                   
@@ -1637,7 +1698,39 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
                 onChange={(value) => setFilters({ ...filters, crossSegmentPrimaryProcurementType: value as string[] })}
                 options={uniqueOptions.procurementTypes}
               />
-                </div>
+            </div>
+          )}
+
+          {filters.crossSegmentPrimary === 'By Country' && (
+            <div className="mb-6 pt-4 border-t border-gray-300 dark:border-navy-light">
+              <FilterDropdown
+                label="Country (Minimum 2 required)"
+                value={(filters.crossSegmentPrimaryCountry || []) as string[]}
+                onChange={(value) => {
+                  if (!Array.isArray(value)) return
+                  const countryValues = value as string[]
+                  const currentCountries = (filters.crossSegmentPrimaryCountry || []) as string[]
+                  
+                  if (countryValues.length < 2 && uniqueOptions.countries.length >= 2) {
+                    if (currentCountries.length >= 2) {
+                      const newCountries = countryValues.filter(c => currentCountries.includes(c))
+                      if (newCountries.length >= 2) {
+                        setFilters({ ...filters, crossSegmentPrimaryCountry: newCountries })
+                      } else {
+                        setFilters({ ...filters, crossSegmentPrimaryCountry: currentCountries.slice(0, 2) })
+                      }
+                    } else {
+                      const availableCountries = uniqueOptions.countries.filter(c => !currentCountries.includes(c))
+                      const neededCountries = availableCountries.slice(0, Math.max(0, 2 - currentCountries.length))
+                      setFilters({ ...filters, crossSegmentPrimaryCountry: [...currentCountries, ...neededCountries].slice(0, 2) })
+                    }
+                  } else if (countryValues.length >= 2) {
+                    setFilters({ ...filters, crossSegmentPrimaryCountry: countryValues })
+                  }
+                }}
+                options={uniqueOptions.countries}
+              />
+            </div>
           )}
 
           {/* Cross Segment Sub-Filters */}
@@ -1726,6 +1819,38 @@ export function MarketAnalysis({ onNavigate }: MarketAnalysisProps) {
                 options={uniqueOptions.procurementTypes}
                         />
                       </div>
+          )}
+
+          {filters.crossSegment === 'By Country' && (
+            <div className="mb-6 pt-4 border-t border-gray-300 dark:border-navy-light">
+              <FilterDropdown
+                label="Cross Segment Country (Minimum 2 required)"
+                value={(filters.crossSegmentCountry || []) as string[]}
+                onChange={(value) => {
+                  if (!Array.isArray(value)) return
+                  const countryValues = value as string[]
+                  const currentCountries = (filters.crossSegmentCountry || []) as string[]
+                  
+                  if (countryValues.length < 2 && uniqueOptions.countries.length >= 2) {
+                    if (currentCountries.length >= 2) {
+                      const newCountries = countryValues.filter(c => currentCountries.includes(c))
+                      if (newCountries.length >= 2) {
+                        setFilters({ ...filters, crossSegmentCountry: newCountries })
+                      } else {
+                        setFilters({ ...filters, crossSegmentCountry: currentCountries.slice(0, 2) })
+                      }
+                    } else {
+                      const availableCountries = uniqueOptions.countries.filter(c => !currentCountries.includes(c))
+                      const neededCountries = availableCountries.slice(0, Math.max(0, 2 - currentCountries.length))
+                      setFilters({ ...filters, crossSegmentCountry: [...currentCountries, ...neededCountries].slice(0, 2) })
+                    }
+                  } else if (countryValues.length >= 2) {
+                    setFilters({ ...filters, crossSegmentCountry: countryValues })
+                  }
+                }}
+                options={uniqueOptions.countries}
+              />
+            </div>
           )}
           
           {/* Analysis Status */}
