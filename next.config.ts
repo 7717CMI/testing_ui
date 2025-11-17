@@ -26,6 +26,27 @@ const nextConfig: NextConfig = {
     PERPLEXITY_API_KEY: process.env.PERPLEXITY_API_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   },
+  webpack: (config, { isServer }) => {
+    // Handle OpenTelemetry and other problematic packages
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    
+    // Exclude OpenTelemetry from client-side bundle
+    config.externals = config.externals || [];
+    if (!isServer) {
+      config.externals.push({
+        '@opentelemetry/api': 'commonjs @opentelemetry/api',
+      });
+    }
+    
+    return config;
+  },
 };
 
 export default nextConfig;

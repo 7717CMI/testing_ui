@@ -25,11 +25,32 @@ export interface SavedSearch {
   notifyOnNewResults?: boolean
 }
 
+export interface FacilityData {
+  id: number
+  npi_number: string
+  provider_name: string
+  facility_type: string
+  category: string
+  business_address_line1: string
+  business_city: string
+  business_state: string
+  business_postal_code: string
+  business_phone: string | null
+  business_fax: string | null
+  authorized_person_name?: string
+  authorized_person_designation?: string
+  authorized_person_phone?: string
+  authorized_person_email?: string
+  authorized_person_number?: string
+  [key: string]: any
+}
+
 export interface FacilityList {
   id: string
   name: string
   description?: string
   facilityIds: string[]
+  facilities: FacilityData[]
   createdAt: Date
   updatedAt: Date
   color?: string
@@ -112,6 +133,8 @@ export const useSavedSearchesStore = create<SavedSearchesState>()(
       addFacilityList: (list) => {
         const newList: FacilityList = {
           ...list,
+          facilities: list.facilities || [],
+          facilityIds: list.facilityIds || list.facilities?.map(f => f.id.toString()) || [],
           id: `list-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -183,9 +206,10 @@ export const useSavedSearchesStore = create<SavedSearchesState>()(
           link.click()
           URL.revokeObjectURL(url)
         } else if (format === 'csv') {
-          let csv = 'Facility ID\n'
-          list.facilityIds.forEach((id) => {
-            csv += `${id}\n`
+          // Enhanced CSV export with facility details
+          let csv = 'ID,NPI Number,Provider Name,Facility Type,Address,City,State,Phone,Authorized Person,Authorized Person Email,Authorized Person Number\n'
+          list.facilities.forEach((facility) => {
+            csv += `${facility.id},"${facility.npi_number}","${facility.provider_name}","${facility.facility_type}","${facility.business_address_line1}","${facility.business_city}","${facility.business_state}","${facility.business_phone || ''}","${facility.authorized_person_name || ''}","${facility.authorized_person_email || ''}","${facility.authorized_person_number || ''}"\n`
           })
           const dataBlob = new Blob([csv], { type: 'text/csv' })
           const url = URL.createObjectURL(dataBlob)

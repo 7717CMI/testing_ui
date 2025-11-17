@@ -40,7 +40,8 @@ export function TypewriterText({
     }, speed)
 
     return () => clearInterval(timer)
-  }, [text, speed, startTyping, onComplete])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, speed, startTyping])
 
   return <span className={className}>{displayText}</span>
 }

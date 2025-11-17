@@ -192,3 +192,4 @@ If you encounter issues:
 3. Test connection manually using the init endpoint
 4. Check authorized networks in Cloud SQL settings
 
+

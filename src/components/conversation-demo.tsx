@@ -1,53 +1,71 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, User } from 'lucide-react'
 import { TypewriterText } from './animations/typewriter-text'
 
+const CONVERSATION = [
+  { 
+    speaker: 'user', 
+    text: 'Show me all hospitals in California with over 500 beds', 
+    name: 'You' 
+  },
+  { 
+    speaker: 'assistant', 
+    text: 'Found 127 hospitals matching your criteria. Filtering by region...', 
+    name: 'HealthData AI' 
+  },
+  { 
+    speaker: 'user', 
+    text: 'Can you generate a report with their contact details?', 
+    name: 'You' 
+  },
+  { 
+    speaker: 'assistant', 
+    text: 'Report generated! Sent to your email with 127 verified contacts. ✓', 
+    name: 'HealthData AI' 
+  },
+] as const
+
 export function ConversationDemo() {
   const [step, setStep] = useState(0)
   const [isVisible, setIsVisible] = useState(true)
-
-  const conversation = [
-    { 
-      speaker: 'user', 
-      text: 'Show me all hospitals in California with over 500 beds', 
-      name: 'You' 
-    },
-    { 
-      speaker: 'assistant', 
-      text: 'Found 127 hospitals matching your criteria. Filtering by region...', 
-      name: 'HealthData AI' 
-    },
-    { 
-      speaker: 'user', 
-      text: 'Can you generate a report with their contact details?', 
-      name: 'You' 
-    },
-    { 
-      speaker: 'assistant', 
-      text: 'Report generated! Sent to your email with 127 verified contacts. ✓', 
-      name: 'HealthData AI' 
-    },
-  ]
+  const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    if (step < conversation.length) {
-      const timer = setTimeout(() => setStep(step + 1), 2500)
-      return () => clearTimeout(timer)
-    } else {
-      const fadeOut = setTimeout(() => setIsVisible(false), 1000)
-      const reset = setTimeout(() => {
-        setStep(0)
-        setIsVisible(true)
-      }, 2000)
+    if (resetTimeoutRef.current) {
+      clearTimeout(resetTimeoutRef.current)
+      resetTimeoutRef.current = null
+    }
+
+    if (!isVisible) {
+      if (step >= CONVERSATION.length) {
+        resetTimeoutRef.current = setTimeout(() => {
+          setStep(0)
+          setIsVisible(true)
+        }, 2000)
+      }
       return () => {
-        clearTimeout(fadeOut)
-        clearTimeout(reset)
+        if (resetTimeoutRef.current) {
+          clearTimeout(resetTimeoutRef.current)
+          resetTimeoutRef.current = null
+        }
       }
     }
-  }, [step, conversation.length])
+
+    if (step < CONVERSATION.length) {
+      const timer = setTimeout(() => {
+        setStep((prevStep) => prevStep + 1)
+      }, 2500)
+      return () => clearTimeout(timer)
+    } else {
+      const fadeOut = setTimeout(() => {
+        setIsVisible(false)
+      }, 1000)
+      return () => clearTimeout(fadeOut)
+    }
+  }, [step, isVisible])
 
   if (!isVisible) return null
 
@@ -70,7 +88,7 @@ export function ConversationDemo() {
       {/* Conversation */}
       <div className="space-y-6">
         <AnimatePresence mode="popLayout">
-          {conversation.slice(0, step).map((msg, i) => (
+          {CONVERSATION.slice(0, step).map((msg, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, x: msg.speaker === 'user' ? 50 : -50, scale: 0.9 }}
@@ -114,7 +132,7 @@ export function ConversationDemo() {
         </AnimatePresence>
 
         {/* Typing Indicator */}
-        {step < conversation.length && step > 0 && step % 2 === 0 && (
+        {step < CONVERSATION.length && step > 0 && step % 2 === 0 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -125,18 +143,18 @@ export function ConversationDemo() {
             </div>
             <div className="px-6 py-4 rounded-2xl bg-muted border border-border flex items-center gap-1">
               <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 0.6, repeat: Infinity }}
+                animate={{ scale: [1, 1.2] }}
+                transition={{ duration: 0.6, repeat: Infinity, repeatType: "reverse" }}
                 className="w-2 h-2 rounded-full bg-muted-foreground/60"
               />
               <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
+                animate={{ scale: [1, 1.2] }}
+                transition={{ duration: 0.6, repeat: Infinity, repeatType: "reverse", delay: 0.2 }}
                 className="w-2 h-2 rounded-full bg-muted-foreground/60"
               />
               <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
+                animate={{ scale: [1, 1.2] }}
+                transition={{ duration: 0.6, repeat: Infinity, repeatType: "reverse", delay: 0.4 }}
                 className="w-2 h-2 rounded-full bg-muted-foreground/60"
               />
             </div>

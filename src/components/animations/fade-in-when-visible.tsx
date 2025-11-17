@@ -19,7 +19,7 @@ export function FadeInWhenVisible({
   className = ''
 }: FadeInWhenVisibleProps) {
   const ref = useRef(null)
-  const isInView = useInView(ref, { once, amount: 0.3 })
+  const isInView = useInView(ref, { once, amount: 0.1, margin: '-100px' })
 
   const directions = {
     up: { y: 50 },
@@ -31,14 +31,15 @@ export function FadeInWhenVisible({
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, ...directions[direction] }}
-      animate={isInView ? { opacity: 1, y: 0, x: 0 } : { opacity: 0, ...directions[direction] }}
+      initial={{ opacity: 0.3, ...directions[direction] }}
+      animate={isInView ? { opacity: 1, y: 0, x: 0 } : { opacity: 0.3, ...directions[direction] }}
       transition={{
         duration: 0.6,
         delay,
         ease: [0.33, 1, 0.68, 1]
       }}
       className={className}
+      style={{ willChange: 'opacity, transform' }}
     >
       {children}
     </motion.div>

@@ -161,12 +161,13 @@ export function WalkthroughTooltip({
           <motion.div
             className="absolute inset-0 bg-primary-500/10 rounded-2xl blur-2xl"
             animate={{
-              opacity: [0.3, 0.6, 0.3],
-              scale: [1, 1.1, 1],
+              opacity: [0.3, 0.6],
+              scale: [1, 1.1],
             }}
             transition={{
               duration: 3,
               repeat: Infinity,
+              repeatType: "reverse",
               ease: 'easeInOut',
             }}
           />
@@ -196,12 +197,13 @@ export function WalkthroughTooltip({
                 <motion.span
                   className="text-2xl"
                   animate={{
-                    rotate: [0, 10, -10, 0],
-                    scale: [1, 1.1, 1],
+                    rotate: [0, 10],
+                    scale: [1, 1.1],
                   }}
                   transition={{
                     duration: 2,
                     repeat: Infinity,
+                    repeatType: "reverse",
                     repeatDelay: 3,
                   }}
                 >
@@ -264,7 +266,7 @@ export function WalkthroughTooltip({
                 </motion.div>
                 <motion.div
                   whileHover={{ scale: 1.05, x: 2 }}
-                  whileTap={{ scale: 0.95, rotate: [0, -3, 3, 0] }}
+                  whileTap={{ scale: 0.95 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                 >
                   <Button

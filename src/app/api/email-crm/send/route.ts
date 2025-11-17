@@ -8,9 +8,10 @@ import { useEmailCRMStore } from '@/stores/email-crm-store'
  * Handles real email sending with tracking and unsubscribe support
  * 
  * Environment Variables Required:
- * - EMAIL_ESP_PROVIDER: 'sendgrid' | 'resend' | 'smtp' | 'mock'
+ * - EMAIL_ESP_PROVIDER: 'sendgrid' | 'resend' | 'smtp' | 'professional' | 'mock'
  * - SENDGRID_API_KEY: (if using SendGrid)
  * - RESEND_API_KEY: (if using Resend)
+ * - PROFESSIONAL_EMAIL_API_KEY: (if using Professional Email Service)
  * - SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS: (if using SMTP)
  * - EMAIL_FROM_ADDRESS: Sender email address
  * - NEXT_PUBLIC_APP_URL: Your app URL for tracking links

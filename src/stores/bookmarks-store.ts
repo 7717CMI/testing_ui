@@ -13,6 +13,11 @@ export interface BookmarkedFacility {
   bookmarkedAt: number
   lastNewsFetch?: number
   latestNews?: NewsArticle[]
+  authorized_person_name?: string
+  authorized_person_designation?: string
+  authorized_person_number?: string
+  authorized_person_phone?: string
+  authorized_person_email?: string
 }
 
 export interface NewsArticle {
@@ -81,6 +86,7 @@ export const useBookmarksStore = create<BookmarksState>()(
     }
   )
 )
+
 
 
 

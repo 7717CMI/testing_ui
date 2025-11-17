@@ -308,3 +308,4 @@ const signature = request.headers.get('resend-signature')
 - [Email Deliverability Guide](https://www.mailgun.com/blog/email-deliverability-guide/)
 - [CAN-SPAM Compliance](https://www.ftc.gov/tips-advice/business-center/guidance/can-spam-act-compliance-guide-business)
 
+

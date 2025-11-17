@@ -1,16 +1,98 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Pool } from 'pg'
 
-const pool = new Pool({
-  host: process.env.DB_HOST || '34.26.64.219',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'postgres',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'Platoon@1',
-  ssl: false,
-  max: 10,
-  connectionTimeoutMillis: 10000,
-})
+// Use shared database pool configuration with proper retry logic
+let pool: Pool | null = null
+
+async function getPool(): Promise<Pool> {
+  if (pool && !pool.ended) {
+    // Test if pool is still healthy
+    try {
+      const testClient = await pool.connect()
+      await testClient.query('SELECT 1')
+      testClient.release()
+      return pool
+    } catch (error) {
+      // Pool is unhealthy, recreate it
+      console.warn('[Facilities API] Pool unhealthy, recreating...')
+      try {
+        await pool.end()
+      } catch (e) {
+        // Ignore errors when ending unhealthy pool
+      }
+      pool = null
+    }
+  }
+
+  // Create new pool with optimized settings
+  const poolConfig = {
+    host: process.env.DB_HOST || '34.26.64.219',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: process.env.DB_NAME || 'postgres',
+    user: process.env.DB_USER || 'postgres',
+    password: process.env.DB_PASSWORD || 'Platoon@1',
+    ssl: false,
+    max: 10,
+    min: 2,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 20000, // Increased timeout
+    acquireTimeoutMillis: 20000,
+    allowExitOnIdle: false,
+  }
+
+  pool = new Pool(poolConfig)
+
+  // Handle pool errors gracefully
+  pool.on('error', (err, client) => {
+    console.error('[Facilities API] Unexpected error on idle client:', err)
+    // Don't exit, just log - pool will handle reconnection
+  })
+
+  return pool
+}
+
+// Retry logic with exponential backoff
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: any
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation()
+    } catch (error: any) {
+      lastError = error
+
+      // Don't retry on certain errors
+      if (
+        error?.code === '28P01' || // Authentication failed
+        error?.code === '3D000' || // Database does not exist
+        error?.code === '42P01' || // Table does not exist
+        error?.code === '42703'    // Column does not exist
+      ) {
+        throw error
+      }
+
+      // If it's the last attempt, throw the error
+      if (attempt === maxRetries - 1) {
+        throw error
+      }
+
+      // Calculate delay with exponential backoff
+      const delay = baseDelay * Math.pow(2, attempt)
+      console.warn(
+        `[Facilities API] Connection attempt ${attempt + 1} failed, retrying in ${delay}ms...`,
+        error.message
+      )
+
+      await new Promise((resolve) => setTimeout(resolve, delay))
+    }
+  }
+
+  throw lastError
+}
 
 export interface Facility {
   id: number
@@ -24,6 +106,9 @@ export interface Facility {
   business_postal_code: string
   business_phone: string | null
   business_fax: string | null
+  authorized_person_name?: string | null
+  authorized_person_designation?: string | null
+  authorized_person_phone?: string | null
 }
 
 export async function GET(request: NextRequest) {
@@ -38,9 +123,18 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = (page - 1) * limit
 
+    // Use retry logic for connection
+    const workingPool = await withRetry(() => getPool(), 3, 1000)
+    
     let client
     try {
-      client = await pool.connect()
+      // Get client with timeout
+      client = await Promise.race([
+        workingPool.connect(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timeout after 20 seconds')), 20000)
+        ),
+      ])
     } catch (connectionError: any) {
       console.error('[Facilities API] Connection error:', connectionError)
       throw new Error(`Database connection failed: ${connectionError.message}`)
@@ -59,7 +153,14 @@ export async function GET(request: NextRequest) {
           s.code as business_state,
           hp.business_zip_code as business_postal_code,
           hp.business_phone,
-          hp.business_fax
+          hp.business_fax,
+          CASE 
+            WHEN hp.authorized_official_first_name IS NOT NULL OR hp.authorized_official_last_name IS NOT NULL
+            THEN TRIM(CONCAT(COALESCE(hp.authorized_official_first_name, ''), ' ', COALESCE(hp.authorized_official_last_name, '')))
+            ELSE NULL
+          END as authorized_person_name,
+          hp.authorized_official_title as authorized_person_designation,
+          hp.authorized_official_phone as authorized_person_phone
         FROM healthcare_production.healthcare_providers hp
         LEFT JOIN healthcare_production.facility_types ft ON hp.facility_type_id = ft.id
         LEFT JOIN healthcare_production.facility_categories fc ON hp.facility_category_id = fc.id
@@ -154,6 +255,9 @@ export async function GET(request: NextRequest) {
         business_postal_code: row.business_postal_code || '',
         business_phone: row.business_phone,
         business_fax: row.business_fax,
+        authorized_person_name: row.authorized_person_name || null,
+        authorized_person_designation: row.authorized_person_designation || null,
+        authorized_person_phone: row.authorized_person_phone || null,
       }))
 
       return NextResponse.json({

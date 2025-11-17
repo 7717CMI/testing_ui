@@ -82,3 +82,4 @@ STARTS CURRENT_DATE + INTERVAL 1 DAY + INTERVAL 2 HOUR
 DO
   CALL cleanup_expired_chat_sessions();
 
+

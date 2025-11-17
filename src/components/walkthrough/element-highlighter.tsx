@@ -21,14 +21,15 @@ function FractalRipple({ isActive }: { isActive: boolean }) {
           animate={
             isActive
               ? {
-                  scale: [1, 2, 3],
-                  opacity: [0.8, 0.4, 0],
+                  scale: [1, 3],
+                  opacity: [0.8, 0],
                 }
               : {}
           }
           transition={{
             duration: 2,
             repeat: Infinity,
+            repeatType: "loop",
             delay: i * 0.3,
             ease: 'easeOut',
           }}
@@ -56,10 +57,25 @@ export function ElementHighlighter({ element, isActive, stepColor = '#3b82f6' }:
   const rotateX = useTransform(springY, [-100, 100], [5, -5])
 
   useEffect(() => {
-    if (!element) return
+    if (!element) {
+      setRect(null)
+      return
+    }
 
     const updateRect = () => {
-      setRect(element.getBoundingClientRect())
+      if (element) {
+        const newRect = element.getBoundingClientRect()
+        setRect((prevRect) => {
+          if (!prevRect ||
+              prevRect.left !== newRect.left ||
+              prevRect.top !== newRect.top ||
+              prevRect.width !== newRect.width ||
+              prevRect.height !== newRect.height) {
+            return newRect
+          }
+          return prevRect
+        })
+      }
     }
 
     updateRect()
@@ -68,9 +84,10 @@ export function ElementHighlighter({ element, isActive, stepColor = '#3b82f6' }:
 
     // Magnetic pull effect - move nearby elements slightly
     const handleMouseMove = (e: MouseEvent) => {
-      if (!rect) return
-      const centerX = rect.left + rect.width / 2
-      const centerY = rect.top + rect.height / 2
+      if (!element) return
+      const currentRect = element.getBoundingClientRect()
+      const centerX = currentRect.left + currentRect.width / 2
+      const centerY = currentRect.top + currentRect.height / 2
       mouseX.set((e.clientX - centerX) * 0.1)
       mouseY.set((e.clientY - centerY) * 0.1)
     }
@@ -82,7 +99,7 @@ export function ElementHighlighter({ element, isActive, stepColor = '#3b82f6' }:
       window.removeEventListener('resize', updateRect)
       document.removeEventListener('mousemove', handleMouseMove)
     }
-  }, [element, rect, mouseX, mouseY])
+  }, [element, mouseX, mouseY])
 
   if (!rect || !isActive) return null
 
@@ -110,13 +127,13 @@ export function ElementHighlighter({ element, isActive, stepColor = '#3b82f6' }:
         animate={{
           boxShadow: [
             `0 0 0 0px ${stepColor}40, 0 0 0 0px ${stepColor}20`,
-            `0 0 0 4px ${stepColor}40, 0 0 0 8px ${stepColor}20`,
             `0 0 0 8px ${stepColor}40, 0 0 0 16px ${stepColor}20`,
           ],
         }}
         transition={{
           duration: 2,
           repeat: Infinity,
+          repeatType: "reverse",
           ease: 'easeInOut',
         }}
       />
@@ -128,12 +145,12 @@ export function ElementHighlighter({ element, isActive, stepColor = '#3b82f6' }:
           background: [
             `linear-gradient(135deg, ${stepColor}00, ${stepColor}40)`,
             `linear-gradient(135deg, ${stepColor}40, ${stepColor}80)`,
-            `linear-gradient(135deg, ${stepColor}00, ${stepColor}40)`,
           ],
         }}
         transition={{
           duration: 3,
           repeat: Infinity,
+          repeatType: "reverse",
           ease: 'easeInOut',
         }}
       />
@@ -149,12 +166,12 @@ export function ElementHighlighter({ element, isActive, stepColor = '#3b82f6' }:
           boxShadow: [
             `0 0 0 0px ${stepColor}`,
             `0 0 20px 2px ${stepColor}80`,
-            `0 0 0 0px ${stepColor}`,
           ],
         }}
         transition={{
           duration: 2,
           repeat: Infinity,
+          repeatType: "reverse",
           ease: 'easeInOut',
         }}
       />

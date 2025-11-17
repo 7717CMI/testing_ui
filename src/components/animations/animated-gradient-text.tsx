@@ -24,11 +24,12 @@ export function AnimatedGradientText({
         backgroundClip: 'text',
       }}
       animate={{
-        backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+        backgroundPosition: ['0% 50%', '100% 50%'],
       }}
       transition={{
         duration,
         repeat: Infinity,
+        repeatType: "reverse",
         ease: 'linear',
       }}
     >
@@ -36,4 +37,5 @@ export function AnimatedGradientText({
     </motion.span>
   )
 }
+
 

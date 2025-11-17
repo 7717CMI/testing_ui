@@ -61,7 +61,23 @@ export function FacilitySelector() {
       if (category) params.append('category', category)
       if (state) params.append('state', state)
 
-      const response = await fetch(`/api/email-crm/facilities?${params}`)
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 25000) // 25 second timeout
+
+      let response
+      try {
+        response = await fetch(`/api/email-crm/facilities?${params}`, {
+          signal: controller.signal,
+        })
+        clearTimeout(timeoutId)
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId)
+        if (fetchError.name === 'AbortError') {
+          throw new Error('Request timed out. The database may be slow or unreachable.')
+        }
+        throw fetchError
+      }
       
       // Always try to parse the response, even if status is not ok
       let data
@@ -77,15 +93,34 @@ export function FacilitySelector() {
         const errorMsg = data?.error || data?.message || `HTTP error! status: ${response.status}`
         const errorCode = data?.errorCode || response.status
         
+        // Check if it's a connection-related error
+        const isConnectionError = 
+          errorMsg.includes('EHOSTUNREACH') ||
+          errorMsg.includes('connection timeout') ||
+          errorMsg.includes('Connection terminated') ||
+          errorMsg.includes('ECONNREFUSED') ||
+          errorMsg.includes('ETIMEDOUT') ||
+          errorCode === 'ECONNREFUSED' ||
+          errorCode === 'ETIMEDOUT' ||
+          errorCode === 'EHOSTUNREACH'
+        
         // Log full error details for debugging
         console.error('Facilities API error:', {
           status: response.status,
           statusText: response.statusText,
           error: errorMsg,
           errorCode: errorCode,
+          isConnectionError,
           details: data?.details,
-          fullResponse: data, // Log entire response for debugging
         })
+        
+        // Set user-friendly error message for connection issues
+        if (isConnectionError) {
+          const friendlyError = 'Database connection unavailable. The facility search feature requires database access. Please check your network connection or contact support.'
+          setError(friendlyError)
+          toast.error('Unable to connect to database. Facility search is temporarily unavailable.')
+          return // Don't throw, just show the error
+        }
         
         throw new Error(errorMsg)
       }
@@ -101,17 +136,44 @@ export function FacilitySelector() {
         toast.error(errorMsg)
       }
     } catch (error: any) {
+      // Handle AbortError (timeout)
+      if (error.name === 'AbortError') {
+        const errorMsg = 'Request timed out. The database may be slow or unreachable.'
+        setError(errorMsg)
+        toast.error(errorMsg)
+        return
+      }
+      
       console.error('Error fetching facilities:', error)
       const errorMsg = error.message || 'Failed to load facilities. Please check your database connection.'
-      setError(errorMsg)
-      toast.error(errorMsg)
+      
+      // Check if it's a connection-related error
+      const isConnectionError = 
+        errorMsg.includes('EHOSTUNREACH') ||
+        errorMsg.includes('connection timeout') ||
+        errorMsg.includes('Connection terminated') ||
+        errorMsg.includes('ECONNREFUSED') ||
+        errorMsg.includes('ETIMEDOUT')
+      
+      if (isConnectionError) {
+        const friendlyError = 'Database connection unavailable. The facility search feature requires database access. Please check your network connection or contact support.'
+        setError(friendlyError)
+        toast.error('Unable to connect to database. Facility search is temporarily unavailable.')
+      } else {
+        setError(errorMsg)
+        toast.error(errorMsg)
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
   useEffect(() => {
-    fetchFacilities()
+    // Only fetch if we don't have a persistent connection error
+    if (!error || !error.includes('Database connection unavailable')) {
+      fetchFacilities()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, searchQuery, category, state])
 
   const handleSelectFacility = (facilityId: number) => {
@@ -244,18 +306,25 @@ export function FacilitySelector() {
 
       {/* Error Message */}
       {error && !isLoading && (
-        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
             <div className="flex-1">
-              <h4 className="font-semibold text-red-900 dark:text-red-100 mb-1">Error Loading Facilities</h4>
-              <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
-              <button
-                onClick={fetchFacilities}
-                className="mt-2 text-sm text-red-600 dark:text-red-400 hover:underline"
-              >
-                Try again
-              </button>
+              <h4 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-1">
+                Database Connection Unavailable
+              </h4>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-3">{error}</p>
+              <div className="flex gap-2 items-center">
+                <button
+                  onClick={fetchFacilities}
+                  className="text-sm px-3 py-1.5 bg-yellow-100 dark:bg-yellow-900/50 text-yellow-900 dark:text-yellow-100 rounded hover:bg-yellow-200 dark:hover:bg-yellow-900 transition-colors"
+                >
+                  Try again
+                </button>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                  You can still use the Email Outreach features by manually adding leads.
+                </p>
+              </div>
             </div>
           </div>
         </div>

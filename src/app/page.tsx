@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from "react"
+import { useRef, Suspense } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { motion, useInView } from "framer-motion"
@@ -107,7 +107,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-primary-50/5 to-muted dark:via-primary-950/10">
+    <div className="min-h-screen bg-gradient-to-b from-background via-primary-50/5 to-muted dark:via-primary-950/10 overflow-x-hidden">
       {/* Navigation - Always visible */}
       <motion.nav 
         className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50"
@@ -254,32 +254,41 @@ export default function LandingPage() {
       <section className="w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-24 lg:py-32 relative overflow-hidden">
         {/* Three.js Background Animation */}
         <div className="absolute inset-0 pointer-events-none opacity-30">
-          <ParticleBackground particleCount={800} color="#3B82F6" speed={0.0003} />
+          <Suspense fallback={null}>
+            <ParticleBackground particleCount={800} color="#3B82F6" speed={0.0003} />
+          </Suspense>
         </div>
         
         <motion.div 
           className="flex flex-col items-center text-center gap-4 sm:gap-6 md:gap-8 relative z-10 max-w-7xl mx-auto"
-          initial="initial"
-          animate="animate"
-          variants={staggerContainer}
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
         >
-          <motion.div variants={fadeInUp}>
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
             <Badge variant="secondary" className="px-3 py-1.5 sm:px-4 sm:py-2 glass text-xs sm:text-sm">
               Over 6M healthcare facilities indexed
             </Badge>
           </motion.div>
           
           <motion.h1 
-            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight max-w-5xl px-4"
-            variants={fadeInUp}
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight max-w-5xl px-4 text-foreground"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
             Healthcare Data.{" "}
             <span className="gradient-text">Reimagined.</span>
           </motion.h1>
           
           <motion.p 
-            className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl px-4"
-            variants={fadeInUp}
+            className="text-base sm:text-lg md:text-xl text-foreground/80 max-w-3xl px-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
           >
             Next-generation intelligence platform for U.S. healthcare providers. 
             Real-time insights, AI-powered search, and comprehensive facility data 
@@ -288,7 +297,9 @@ export default function LandingPage() {
           
           <motion.div 
             className="flex flex-col sm:flex-row gap-3 sm:gap-4 mt-2 sm:mt-4 w-full sm:w-auto px-4"
-            variants={fadeInUp}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
           >
             <Link href="/signup" className="w-full sm:w-auto">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-full">
@@ -311,43 +322,68 @@ export default function LandingPage() {
           {/* Stats Ticker */}
           <motion.div 
             className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 mt-8 sm:mt-12 md:mt-16 w-full max-w-5xl relative px-4"
-            variants={staggerContainer}
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
           >
             {/* Decorative Floating Spheres */}
             <div className="absolute -top-20 -left-20 opacity-15 pointer-events-none hidden md:block">
-              <FloatingSphere size={150} color="#F59E0B" />
+              <Suspense fallback={null}>
+                <FloatingSphere size={150} color="#F59E0B" />
+              </Suspense>
             </div>
             <div className="absolute -bottom-20 -right-20 opacity-15 pointer-events-none hidden md:block">
-              <FloatingSphere size={150} color="#8B5CF6" />
+              <Suspense fallback={null}>
+                <FloatingSphere size={150} color="#8B5CF6" />
+              </Suspense>
             </div>
-            <motion.div className="space-y-1 sm:space-y-2" variants={fadeInUp}>
+            <motion.div 
+              className="space-y-1 sm:space-y-2" 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
               <AnimatedCounter 
                 end={6000000} 
                 duration={2.5}
                 suffix="+"
                 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-500"
               />
-              <div className="text-xs sm:text-sm text-muted-foreground">Facilities Tracked</div>
+              <div className="text-xs sm:text-sm text-foreground/70">Facilities Tracked</div>
             </motion.div>
-            <motion.div className="space-y-1 sm:space-y-2" variants={fadeInUp}>
+            <motion.div 
+              className="space-y-1 sm:space-y-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
               <AnimatedCounter 
                 end={99.9} 
                 duration={2}
                 suffix="%"
                 className="text-2xl sm:text-3xl md:text-4xl font-bold text-secondary-500"
               />
-              <div className="text-xs sm:text-sm text-muted-foreground">Data Accuracy</div>
+              <div className="text-xs sm:text-sm text-foreground/70">Data Accuracy</div>
             </motion.div>
-            <motion.div className="space-y-1 sm:space-y-2" variants={fadeInUp}>
+            <motion.div 
+              className="space-y-1 sm:space-y-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.7 }}
+            >
               <AnimatedCounter 
                 end={50000} 
                 duration={2.5}
                 suffix="+"
                 className="text-2xl sm:text-3xl md:text-4xl font-bold text-accent-500"
               />
-              <div className="text-xs sm:text-sm text-muted-foreground">Daily Updates</div>
+              <div className="text-xs sm:text-sm text-foreground/70">Daily Updates</div>
             </motion.div>
-            <motion.div className="space-y-1 sm:space-y-2" variants={fadeInUp}>
+            <motion.div 
+              className="space-y-1 sm:space-y-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+            >
               <div className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-500">
                 <AnimatedCounter 
                   end={24} 
@@ -356,7 +392,7 @@ export default function LandingPage() {
                   className=""
                 />
               </div>
-              <div className="text-xs sm:text-sm text-muted-foreground">AI Support</div>
+              <div className="text-xs sm:text-sm text-foreground/70">AI Support</div>
             </motion.div>
           </motion.div>
 
@@ -368,20 +404,20 @@ export default function LandingPage() {
             className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden sm:flex flex-col items-center gap-2 text-muted-foreground"
           >
             <motion.div
-              animate={{ y: [0, 8, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              animate={{ y: [0, 8] }}
+              transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
               className="text-sm font-medium"
             >
               Scroll to explore
             </motion.div>
             <motion.div
-              animate={{ y: [0, 8, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              animate={{ y: [0, 8] }}
+              transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
               className="w-6 h-10 border-2 border-muted-foreground/30 rounded-full flex justify-center pt-2"
             >
               <motion.div
-                animate={{ y: [0, 12, 0], opacity: [1, 0.3, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                animate={{ y: [0, 12], opacity: [1, 0.3] }}
+                transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
                 className="w-1.5 h-2 bg-muted-foreground/60 rounded-full"
               />
             </motion.div>
@@ -477,10 +513,14 @@ export default function LandingPage() {
       <section className="w-full px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-24 bg-background/50 relative overflow-hidden">
         {/* Three.js Decorative Elements */}
         <div className="absolute top-10 right-10 opacity-20 pointer-events-none hidden lg:block">
-          <FloatingSphere size={250} color="#10B981" />
+          <Suspense fallback={null}>
+            <FloatingSphere size={250} color="#10B981" />
+          </Suspense>
         </div>
         <div className="absolute bottom-10 left-10 opacity-20 pointer-events-none hidden lg:block">
-          <NeuralNetwork width={400} height={300} />
+          <Suspense fallback={null}>
+            <NeuralNetwork width={400} height={300} />
+          </Suspense>
         </div>
         
         <div className="text-center mb-8 sm:mb-12 md:mb-16 relative z-10 max-w-7xl mx-auto">
@@ -605,29 +645,37 @@ export default function LandingPage() {
             </Link>
           </FadeInWhenVisible>
 
-          <Link href="/analytics" className="block">
-            <Card className="card-hover h-full cursor-pointer transition-all hover:border-secondary-300 dark:hover:border-secondary-700">
-              <CardHeader>
-                <BarChart3 className="h-10 w-10 sm:h-12 sm:w-12 text-secondary-500 mb-3 sm:mb-4" />
-                <CardTitle className="text-lg sm:text-xl">Advanced Analytics</CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  Interactive charts and visualizations for deep data analysis
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
+          <FadeInWhenVisible direction="up" delay={0.7}>
+            <Link href="/analytics" className="block h-full">
+              <motion.div whileHover={{ scale: 1.03, y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
+                <Card className="card-hover h-full cursor-pointer transition-all hover:border-secondary-300 dark:hover:border-secondary-700 hover:shadow-2xl">
+                  <CardHeader>
+                    <BarChart3 className="h-10 w-10 sm:h-12 sm:w-12 text-secondary-500 mb-3 sm:mb-4" />
+                    <CardTitle className="text-lg sm:text-xl">Advanced Analytics</CardTitle>
+                    <CardDescription className="text-sm sm:text-base">
+                      Interactive charts and visualizations for deep data analysis
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            </Link>
+          </FadeInWhenVisible>
 
-          <Link href="/verified-data" className="block">
-            <Card className="card-hover h-full cursor-pointer transition-all hover:border-accent-300 dark:hover:border-accent-700">
-              <CardHeader>
-                <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-accent-500 mb-3 sm:mb-4" />
-                <CardTitle className="text-lg sm:text-xl">Verified Data</CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  Comprehensive verification process ensuring data quality and accuracy
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </Link>
+          <FadeInWhenVisible direction="up" delay={0.8}>
+            <Link href="/verified-data" className="block h-full">
+              <motion.div whileHover={{ scale: 1.03, y: -5 }} transition={{ type: "spring", stiffness: 300 }}>
+                <Card className="card-hover h-full cursor-pointer transition-all hover:border-accent-300 dark:hover:border-accent-700 hover:shadow-2xl">
+                  <CardHeader>
+                    <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-accent-500 mb-3 sm:mb-4" />
+                    <CardTitle className="text-lg sm:text-xl">Verified Data</CardTitle>
+                    <CardDescription className="text-sm sm:text-base">
+                      Comprehensive verification process ensuring data quality and accuracy
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            </Link>
+          </FadeInWhenVisible>
         </div>
       </section>
 

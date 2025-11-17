@@ -182,3 +182,4 @@ The tour feels like a premium, polished experience similar to Lenis's smooth scr
 
 **Status:** ✅ Fully implemented and ready to use!
 
+

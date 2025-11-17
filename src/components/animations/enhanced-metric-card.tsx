@@ -108,11 +108,12 @@ export function EnhancedMetricCard({
                 backgroundClip: 'text',
               }}
               animate={{
-                backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+                backgroundPosition: ['0% 50%', '100% 50%'],
               }}
               transition={{
                 duration: 5,
                 repeat: Infinity,
+                repeatType: "reverse",
                 ease: 'linear',
               }}
             >

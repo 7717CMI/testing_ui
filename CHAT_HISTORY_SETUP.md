@@ -51,3 +51,4 @@ The system automatically:
 - Limits each user to 10 chat sessions (deletes oldest when limit exceeded)
 - Cleans up expired chats (90 days) via scheduled MySQL event
 
+

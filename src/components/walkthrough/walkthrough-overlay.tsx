@@ -35,11 +35,12 @@ function ReactiveParticle({
         opacity,
       }}
       animate={{
-        scale: [0.5, 1, 0.5],
+        scale: [0.5, 1],
       }}
       transition={{
         duration: 2 + index * 0.2,
         repeat: Infinity,
+        repeatType: "reverse",
         ease: 'easeInOut',
       }}
     />
@@ -50,9 +51,24 @@ function HighlightCutout({ element }: { element: HTMLElement }) {
   const [rect, setRect] = useState<DOMRect | null>(null)
 
   useEffect(() => {
+    if (!element) {
+      setRect(null)
+      return
+    }
+
     const updateRect = () => {
       if (element) {
-        setRect(element.getBoundingClientRect())
+        const newRect = element.getBoundingClientRect()
+        setRect((prevRect) => {
+          if (!prevRect ||
+              prevRect.left !== newRect.left ||
+              prevRect.top !== newRect.top ||
+              prevRect.width !== newRect.width ||
+              prevRect.height !== newRect.height) {
+            return newRect
+          }
+          return prevRect
+        })
       }
     }
 
@@ -113,7 +129,7 @@ export function WalkthroughOverlay({
 
     document.addEventListener('mousemove', handleMouseMove)
     return () => document.removeEventListener('mousemove', handleMouseMove)
-  }, [isVisible, mouseX, mouseY])
+  }, [isVisible])
 
   const particleCount = Math.floor(10 + progress * 20) // 10-30 particles based on progress
 
@@ -136,12 +152,12 @@ export function WalkthroughOverlay({
               background: [
                 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, rgba(0, 0, 0, 0.6) 50%)',
                 'radial-gradient(circle at 80% 50%, rgba(139, 92, 246, 0.1) 0%, rgba(0, 0, 0, 0.6) 50%)',
-                'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.1) 0%, rgba(0, 0, 0, 0.6) 50%)',
               ],
             }}
             transition={{
               duration: 10,
               repeat: Infinity,
+              repeatType: "reverse",
               ease: 'easeInOut',
             }}
           />
@@ -150,11 +166,12 @@ export function WalkthroughOverlay({
           <motion.div
             className="absolute inset-0 backdrop-blur-md"
             animate={{
-              backdropFilter: [`blur(12px)`, `blur(16px)`, `blur(12px)`],
+              backdropFilter: [`blur(12px)`, `blur(16px)`],
             }}
             transition={{
               duration: 4,
               repeat: Infinity,
+              repeatType: "reverse",
               ease: 'easeInOut',
             }}
             style={{

@@ -5,7 +5,6 @@ import { Providers } from "@/components/providers"
 import { Toaster } from "sonner"
 import { CallModal } from "@/components/call-modal"
 import { AIAssistant } from "@/components/ai-assistant-chat"
-import { DynamicWalkthrough } from "@/components/walkthrough/dynamic-walkthrough"
 import { SmoothScrollProvider } from "@/components/smooth-scroll-provider"
 
 const inter = Inter({
@@ -42,7 +41,6 @@ export default function RootLayout({
             <Toaster position="top-right" richColors />
             <CallModal />
             <AIAssistant />
-            <DynamicWalkthrough />
           </SmoothScrollProvider>
         </Providers>
       </body>

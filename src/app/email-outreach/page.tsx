@@ -3,16 +3,30 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { useEmailCRMStore } from '@/stores/email-crm-store'
+import { useSavedSearchesStore, FacilityData } from '@/stores/saved-searches-store'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Mail, Users, BarChart3, Send, Loader2 } from 'lucide-react'
+import { Mail, Users, BarChart3, Send, Loader2, Bookmark } from 'lucide-react'
 import { toast } from 'sonner'
 import { EmailComposer } from '@/components/email-crm/email-composer'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Button } from '@/components/ui/button'
 
 // Lazy load heavy components
 const FacilitySelector = lazy(() => import('@/components/email-crm/facility-selector').then(m => ({ default: m.FacilitySelector })))
 const LeadDashboard = lazy(() => import('@/components/email-crm/lead-dashboard').then(m => ({ default: m.LeadDashboard })))
 const TrackingPanel = lazy(() => import('@/components/email-crm/tracking-panel').then(m => ({ default: m.TrackingPanel })))
 const EmailOnboardingTour = lazy(() => import('@/components/email-crm/email-onboarding-tour').then(m => ({ default: m.EmailOnboardingTour })))
+const SavedFacilityLists = lazy(() => import('@/components/email-crm/saved-facility-lists').then(m => ({ default: m.SavedFacilityLists })))
 
 // Loading fallback
 const ComponentLoader = () => (
@@ -26,7 +40,14 @@ export default function EmailOutreachPage() {
   const [bulkLeadIds, setBulkLeadIds] = useState<string[]>([])
   const [isComposerOpen, setIsComposerOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('leads')
-  const { leads, clearMockData } = useEmailCRMStore()
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  const [listName, setListName] = useState('')
+  const [listDescription, setListDescription] = useState('')
+  const { leads, clearMockData, importLeads } = useEmailCRMStore()
+  const { addFacilityList } = useSavedSearchesStore()
+
+  // Get selected facilities from leads
+  const selectedFacilities = leads.filter(lead => lead.facilityId)
 
   // Clear old mock data on mount (leads without facilityId)
   useEffect(() => {
@@ -60,6 +81,74 @@ export default function EmailOutreachPage() {
     toast.success('Email sent successfully!')
   }
 
+  const handleSaveFacilities = () => {
+    if (selectedFacilities.length === 0) {
+      toast.error('No facilities selected to save')
+      return
+    }
+
+    if (!listName.trim()) {
+      toast.error('Please enter a name for the list')
+      return
+    }
+
+    // Convert leads to facility data format
+    const facilities: FacilityData[] = selectedFacilities.map(lead => ({
+      id: lead.facilityId!,
+      npi_number: lead.npiNumber || '',
+      provider_name: lead.name,
+      facility_type: '',
+      category: '',
+      business_address_line1: lead.address || '',
+      business_city: lead.city || '',
+      business_state: lead.state || '',
+      business_postal_code: lead.zipCode || '',
+      business_phone: lead.phone,
+      business_fax: null,
+      authorized_person_name: lead.name || null, // Use lead name as authorized person name if available
+      authorized_person_designation: lead.designation || null,
+      authorized_person_phone: lead.phone || null,
+      authorized_person_email: lead.email || null,
+      authorized_person_number: lead.phone || null,
+    }))
+
+    addFacilityList({
+      name: listName,
+      description: listDescription,
+      facilityIds: facilities.map(f => f.id.toString()),
+      facilities: facilities,
+      tags: ['email-outreach'],
+    })
+
+    toast.success(`Saved ${facilities.length} facility(ies) to "${listName}"`)
+    setSaveDialogOpen(false)
+    setListName('')
+    setListDescription('')
+  }
+
+  const handleImportList = (facilities: FacilityData[]) => {
+    // Convert facilities to leads
+    const leads = facilities.map((facility) => ({
+      name: facility.provider_name,
+      designation: facility.authorized_person_name || null,
+      company: facility.provider_name,
+      email: facility.authorized_person_email || null,
+      profileUrl: '',
+      enriched: !!facility.authorized_person_email,
+      facilityId: facility.id,
+      npiNumber: facility.npi_number,
+      address: facility.business_address_line1,
+      city: facility.business_city,
+      state: facility.business_state,
+      zipCode: facility.business_postal_code,
+      phone: facility.business_phone,
+      websiteUrl: '',
+    }))
+    importLeads(leads)
+    toast.success(`Imported ${leads.length} facility(ies) from saved list`)
+    setActiveTab('leads')
+  }
+
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -69,27 +158,94 @@ export default function EmailOutreachPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-3 bg-primary-100 dark:bg-primary-900 rounded-xl">
-              <Mail className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-primary-100 dark:bg-primary-900 rounded-xl">
+                <Mail className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+                  Email Outreach
+                </h1>
+                <p className="text-neutral-600 dark:text-neutral-400 mt-1">
+                  Select facilities, enrich contacts, send personalized emails, and track performance
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-                Email Outreach
-              </h1>
-              <p className="text-neutral-600 dark:text-neutral-400 mt-1">
-                Select facilities, enrich contacts, send personalized emails, and track performance
-              </p>
-            </div>
+            
+            {/* Save Facilities Button */}
+            {selectedFacilities.length > 0 && (
+              <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="lg" variant="outline">
+                    <Bookmark className="h-4 w-4 mr-2" />
+                    Save {selectedFacilities.length} Facility(ies)
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Save Facilities to List</DialogTitle>
+                    <DialogDescription>
+                      Save selected facilities with their details for future email campaigns
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <div>
+                      <Label htmlFor="list-name">List Name *</Label>
+                      <Input
+                        id="list-name"
+                        value={listName}
+                        onChange={(e) => setListName(e.target.value)}
+                        placeholder="e.g., Q4 Outreach Targets"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="list-description">Description</Label>
+                      <Textarea
+                        id="list-description"
+                        value={listDescription}
+                        onChange={(e) => setListDescription(e.target.value)}
+                        placeholder="Optional description..."
+                        rows={3}
+                      />
+                    </div>
+                    <div className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                      <p className="font-medium mb-2">This will save {selectedFacilities.length} facility(ies) including:</p>
+                      <ul className="list-disc list-inside space-y-1 text-xs">
+                        <li>Facility details (name, NPI, address, phone)</li>
+                        <li>Authorized person information</li>
+                        <li>Contact details</li>
+                      </ul>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setSaveDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={handleSaveFacilities}>
+                        <Bookmark className="h-4 w-4 mr-2" />
+                        Save List
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </motion.div>
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-lg grid-cols-4">
             <TabsTrigger value="leads" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Leads
+            </TabsTrigger>
+            <TabsTrigger value="saved" className="flex items-center gap-2">
+              <Bookmark className="h-4 w-4" />
+              Saved Lists
             </TabsTrigger>
             <TabsTrigger value="compose" className="flex items-center gap-2">
               <Send className="h-4 w-4" />
@@ -137,6 +293,17 @@ export default function EmailOutreachPage() {
                 Go to the Leads tab and click "Send Email" on any lead
               </p>
             </motion.div>
+          </TabsContent>
+
+          <TabsContent value="saved" className="space-y-6">
+            <Suspense fallback={<ComponentLoader />}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <SavedFacilityLists onImportList={handleImportList} />
+              </motion.div>
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="tracking">

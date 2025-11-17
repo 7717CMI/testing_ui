@@ -63,11 +63,6 @@ export function AIAssistant() {
       return () => clearTimeout(timer)
     }
   }, [isOpen, showBubble])
-  
-  // Hide AI Assistant on Smart Search page - AFTER all hooks
-  if (pathname === '/search') {
-    return null
-  }
 
   const handleClearChat = () => {
     setMessages([
@@ -194,12 +189,13 @@ export function AIAssistant() {
               <motion.div
                 className="absolute inset-0 rounded-2xl bg-primary-400/20"
                 animate={{
-                  scale: [1, 1.1, 1],
-                  opacity: [0.5, 0.3, 0.5],
+                  scale: [1, 1.1],
+                  opacity: [0.5, 0.3],
                 }}
                 transition={{
                   duration: 3,
                   repeat: Infinity,
+                  repeatType: "reverse",
                   ease: "easeInOut",
                 }}
               />

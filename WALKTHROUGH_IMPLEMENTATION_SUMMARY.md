@@ -292,3 +292,4 @@ All features are complete and working. The walkthrough will automatically appear
 2. Customize steps in `walkthrough-config.ts` if needed
 3. Add `data-tour` attributes to elements you want to highlight
 
+
