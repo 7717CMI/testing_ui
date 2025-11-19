@@ -63,7 +63,7 @@ export function AIAssistant() {
       return () => clearTimeout(timer)
     }
   }, [isOpen, showBubble])
-
+  
   const handleClearChat = () => {
     setMessages([
       {

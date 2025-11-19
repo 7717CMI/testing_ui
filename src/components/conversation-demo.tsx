@@ -6,26 +6,26 @@ import { Sparkles, User } from 'lucide-react'
 import { TypewriterText } from './animations/typewriter-text'
 
 const CONVERSATION = [
-  { 
-    speaker: 'user', 
-    text: 'Show me all hospitals in California with over 500 beds', 
-    name: 'You' 
-  },
-  { 
-    speaker: 'assistant', 
-    text: 'Found 127 hospitals matching your criteria. Filtering by region...', 
-    name: 'HealthData AI' 
-  },
-  { 
-    speaker: 'user', 
-    text: 'Can you generate a report with their contact details?', 
-    name: 'You' 
-  },
-  { 
-    speaker: 'assistant', 
-    text: 'Report generated! Sent to your email with 127 verified contacts. ✓', 
-    name: 'HealthData AI' 
-  },
+    { 
+      speaker: 'user', 
+      text: 'Show me all hospitals in California with over 500 beds', 
+      name: 'You' 
+    },
+    { 
+      speaker: 'assistant', 
+      text: 'Found 127 hospitals matching your criteria. Filtering by region...', 
+      name: 'HealthData AI' 
+    },
+    { 
+      speaker: 'user', 
+      text: 'Can you generate a report with their contact details?', 
+      name: 'You' 
+    },
+    { 
+      speaker: 'assistant', 
+      text: 'Report generated! Sent to your email with 127 verified contacts. ✓', 
+      name: 'HealthData AI' 
+    },
 ] as const
 
 export function ConversationDemo() {
@@ -42,9 +42,9 @@ export function ConversationDemo() {
     if (!isVisible) {
       if (step >= CONVERSATION.length) {
         resetTimeoutRef.current = setTimeout(() => {
-          setStep(0)
-          setIsVisible(true)
-        }, 2000)
+        setStep(0)
+        setIsVisible(true)
+      }, 2000)
       }
       return () => {
         if (resetTimeoutRef.current) {

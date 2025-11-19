@@ -50,8 +50,8 @@ export function EnhancedMetricCard({
       }}
       className={`group ${className}`}
     >
-      <Card className="h-full transition-all duration-300 hover:shadow-xl border-border/50 bg-card/50 backdrop-blur-sm">
-        <CardContent className="p-6">
+      <Card className="h-full transition-all duration-300 hover:shadow-xl border-border/50 bg-card/50 backdrop-blur-sm overflow-visible">
+        <CardContent className="p-4 sm:p-6">
           {/* Header with icon and trend badge */}
           <div className="flex items-start justify-between mb-4">
             {Icon && (
@@ -96,10 +96,10 @@ export function EnhancedMetricCard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: delay + 0.2 }}
-            className="mb-2"
+            className="mb-2 min-h-[3rem] flex items-center"
           >
             <motion.div 
-              className="text-4xl font-bold tracking-tight"
+              className="text-3xl sm:text-4xl font-bold tracking-tight"
               style={{
                 background: 'linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)',
                 backgroundSize: '300% 100%',
@@ -127,7 +127,7 @@ export function EnhancedMetricCard({
           </motion.div>
 
           {/* Label */}
-          <p className="text-sm font-medium text-muted-foreground">
+          <p className="text-xs sm:text-sm font-medium text-muted-foreground line-clamp-2">
             {title}
           </p>
         </CardContent>

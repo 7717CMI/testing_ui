@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { useEmailCRMStore } from '@/stores/email-crm-store'
 import { useSavedSearchesStore, FacilityData } from '@/stores/saved-searches-store'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Mail, Users, BarChart3, Send, Loader2, Bookmark } from 'lucide-react'
+import { Mail, Users, BarChart3, Send, Loader2, Bookmark, Phone } from 'lucide-react'
 import { toast } from 'sonner'
 import { EmailComposer } from '@/components/email-crm/email-composer'
 import {
@@ -27,6 +27,8 @@ const LeadDashboard = lazy(() => import('@/components/email-crm/lead-dashboard')
 const TrackingPanel = lazy(() => import('@/components/email-crm/tracking-panel').then(m => ({ default: m.TrackingPanel })))
 const EmailOnboardingTour = lazy(() => import('@/components/email-crm/email-onboarding-tour').then(m => ({ default: m.EmailOnboardingTour })))
 const SavedFacilityLists = lazy(() => import('@/components/email-crm/saved-facility-lists').then(m => ({ default: m.SavedFacilityLists })))
+const CallDialer = lazy(() => import('@/components/phone-crm/call-dialer').then(m => ({ default: m.CallDialer })))
+const CallHistory = lazy(() => import('@/components/phone-crm/call-history').then(m => ({ default: m.CallHistory })))
 
 // Loading fallback
 const ComponentLoader = () => (
@@ -43,6 +45,7 @@ export default function EmailOutreachPage() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false)
   const [listName, setListName] = useState('')
   const [listDescription, setListDescription] = useState('')
+  const [selectedCallLead, setSelectedCallLead] = useState<{ id: string; phone: string; name: string } | null>(null)
   const { leads, clearMockData, importLeads } = useEmailCRMStore()
   const { addFacilityList } = useSavedSearchesStore()
 
@@ -141,12 +144,24 @@ export default function EmailOutreachPage() {
       city: facility.business_city,
       state: facility.business_state,
       zipCode: facility.business_postal_code,
-      phone: facility.business_phone,
+      phone: facility.business_phone || facility.authorized_person_phone || null,
       websiteUrl: '',
     }))
     importLeads(leads)
     toast.success(`Imported ${leads.length} facility(ies) from saved list`)
     setActiveTab('leads')
+  }
+
+  const handleCall = (leadId: string, phoneNumber: string) => {
+    const lead = leads.find(l => l.id === leadId)
+    if (lead) {
+      setSelectedCallLead({
+        id: leadId,
+        phone: phoneNumber,
+        name: lead.name,
+      })
+      setActiveTab('phone')
+    }
   }
 
   return (
@@ -160,17 +175,17 @@ export default function EmailOutreachPage() {
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-primary-100 dark:bg-primary-900 rounded-xl">
-                <Mail className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-                  Email Outreach
-                </h1>
-                <p className="text-neutral-600 dark:text-neutral-400 mt-1">
-                  Select facilities, enrich contacts, send personalized emails, and track performance
-                </p>
-              </div>
+            <div className="p-3 bg-primary-100 dark:bg-primary-900 rounded-xl">
+              <Mail className="h-6 w-6 text-primary-600 dark:text-primary-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+                Email Outreach
+              </h1>
+              <p className="text-neutral-600 dark:text-neutral-400 mt-1">
+                Select facilities, enrich contacts, send personalized emails, and track performance
+              </p>
+            </div>
             </div>
             
             {/* Save Facilities Button */}
@@ -238,7 +253,7 @@ export default function EmailOutreachPage() {
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-lg grid-cols-4">
+          <TabsList className="grid w-full max-w-2xl grid-cols-5">
             <TabsTrigger value="leads" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Leads
@@ -249,7 +264,11 @@ export default function EmailOutreachPage() {
             </TabsTrigger>
             <TabsTrigger value="compose" className="flex items-center gap-2">
               <Send className="h-4 w-4" />
-              Compose
+              Email
+            </TabsTrigger>
+            <TabsTrigger value="phone" className="flex items-center gap-2">
+              <Phone className="h-4 w-4" />
+              Phone
             </TabsTrigger>
             <TabsTrigger value="tracking" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
@@ -274,6 +293,7 @@ export default function EmailOutreachPage() {
                 <LeadDashboard
                   onSendEmail={handleSendEmail}
                   onBulkSend={handleBulkSend}
+                  onCall={handleCall}
                 />
               </motion.div>
             </Suspense>
@@ -293,6 +313,29 @@ export default function EmailOutreachPage() {
                 Go to the Leads tab and click "Send Email" on any lead
               </p>
             </motion.div>
+          </TabsContent>
+
+          <TabsContent value="phone" className="space-y-6">
+            <Suspense fallback={<ComponentLoader />}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <CallDialer
+                  leadId={selectedCallLead?.id}
+                  phoneNumber={selectedCallLead?.phone || ''}
+                  leadName={selectedCallLead?.name}
+                />
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <CallHistory />
+              </motion.div>
+            </Suspense>
           </TabsContent>
 
           <TabsContent value="saved" className="space-y-6">

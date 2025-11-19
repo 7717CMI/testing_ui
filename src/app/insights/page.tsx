@@ -22,6 +22,7 @@ import { PremiumGuard } from "@/components/premium/premium-guard"
 import { EnhancedMetricCard } from "@/components/animations/enhanced-metric-card"
 import { ScrollReveal } from "@/components/animations/scroll-reveal"
 import { StaggeredList } from "@/components/animations/staggered-list"
+import { NewsTicker } from "@/components/news/news-ticker"
 
 interface Article {
   id?: number
@@ -334,7 +335,7 @@ export default function InsightsPage() {
       <div className="container py-6 relative z-10">
         <div className="flex gap-6">
           {/* Main Content */}
-          <main className="flex-1 space-y-6">
+          <main className="flex-1 space-y-6 min-w-0">
             {/* Header with context info */}
             <div className="space-y-4">
             <div>
@@ -361,83 +362,132 @@ export default function InsightsPage() {
               )}
 
               {/* Market Insights Overview - Enhanced with Meridian-style animations */}
-              {realInsights && !loading && (
-                <motion.div
-                  initial="hidden"
-                  animate="visible"
-                  variants={{
-                    hidden: { opacity: 0 },
-                    visible: {
-                      opacity: 1,
-                      transition: {
-                        staggerChildren: 0.15,
-                        delayChildren: 0.1,
-                      },
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: {
+                      staggerChildren: 0.15,
+                      delayChildren: 0.1,
                     },
-                  }}
-                  className="grid grid-cols-2 md:grid-cols-4 gap-6"
-                >
-                  <EnhancedMetricCard
-                    title="Facilities Mentioned"
-                    value={realInsights.marketInsights.total_facilities_mentioned}
-                    change={12}
-                    trend="up"
-                    icon={Building2}
-                    delay={0}
-                  />
-                  <EnhancedMetricCard
-                    title="Recent Expansions"
-                    value={realInsights.marketInsights.recent_expansions}
-                    change={8}
-                    trend="up"
-                    icon={TrendingUp}
-                    delay={0.15}
-                  />
-                  <EnhancedMetricCard
-                    title="Tech Adoptions"
-                    value={realInsights.marketInsights.technology_adoptions}
-                    change={15}
-                    trend="up"
-                    icon={Zap}
-                    delay={0.3}
-                  />
-                  <EnhancedMetricCard
-                    title="Policy Changes"
-                    value={realInsights.marketInsights.policy_changes}
-                    change={-3}
-                    trend="down"
-                    icon={FileText}
-                    delay={0.45}
-                  />
-                </motion.div>
-              )}
+                  },
+                }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
+              >
+                {loading ? (
+                  <>
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                  </>
+                ) : realInsights ? (
+                  <>
+                    <EnhancedMetricCard
+                      title="Facilities Mentioned"
+                      value={realInsights.marketInsights.total_facilities_mentioned}
+                      change={12}
+                      trend="up"
+                      icon={Building2}
+                      delay={0}
+                    />
+                    <EnhancedMetricCard
+                      title="Recent Expansions"
+                      value={realInsights.marketInsights.recent_expansions}
+                      change={8}
+                      trend="up"
+                      icon={TrendingUp}
+                      delay={0.15}
+                    />
+                    <EnhancedMetricCard
+                      title="Tech Adoptions"
+                      value={realInsights.marketInsights.technology_adoptions}
+                      change={15}
+                      trend="up"
+                      icon={Zap}
+                      delay={0.3}
+                    />
+                    <EnhancedMetricCard
+                      title="Policy Changes"
+                      value={realInsights.marketInsights.policy_changes}
+                      change={-3}
+                      trend="down"
+                      icon={FileText}
+                      delay={0.45}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <EnhancedMetricCard
+                      title="Facilities Mentioned"
+                      value={0}
+                      change={0}
+                      trend="up"
+                      icon={Building2}
+                      delay={0}
+                    />
+                    <EnhancedMetricCard
+                      title="Recent Expansions"
+                      value={0}
+                      change={0}
+                      trend="up"
+                      icon={TrendingUp}
+                      delay={0.15}
+                    />
+                    <EnhancedMetricCard
+                      title="Tech Adoptions"
+                      value={0}
+                      change={0}
+                      trend="up"
+                      icon={Zap}
+                      delay={0.3}
+                    />
+                    <EnhancedMetricCard
+                      title="Policy Changes"
+                      value={0}
+                      change={0}
+                      trend="down"
+                      icon={FileText}
+                      delay={0.45}
+                    />
+                  </>
+                )}
+              </motion.div>
+
+              {/* News Ticker - Latest U.S. Healthcare Headlines */}
+              <NewsTicker category={activeTab as any} />
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <TabsList className="w-full max-w-4xl justify-start">
-                <TabsTrigger value="all">All</TabsTrigger>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                <TabsList className="w-full sm:w-auto justify-start flex-wrap">
+                  <TabsTrigger value="all">All</TabsTrigger>
                   <TabsTrigger value="expansion">Expansion</TabsTrigger>
                   <TabsTrigger value="technology">Technology</TabsTrigger>
-                <TabsTrigger value="policy">Policy</TabsTrigger>
+                  <TabsTrigger value="policy">Policy</TabsTrigger>
                   <TabsTrigger value="market trend">Market Trends</TabsTrigger>
                   <TabsTrigger value="funding">Funding</TabsTrigger>
-              </TabsList>
+                </TabsList>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
                   {/* All Insights (1 Year) Button */}
                   <Link 
                     href={`/entity-news?name=${encodeURIComponent(facilityType || 'Healthcare Facilities')}&type=${encodeURIComponent(category || 'Healthcare')}&location=United States`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    className="flex-shrink-0"
                   >
                     <Button 
                       size="sm" 
-                      className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
+                      className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg whitespace-nowrap w-full sm:w-auto"
                       title="View comprehensive 1-year news timeline for this facility type"
                     >
                       <Newspaper className="h-4 w-4" />
-                      All Insights (1 Year)
+                      <span className="hidden sm:inline">All Insights (1 Year)</span>
+                      <span className="sm:hidden">1 Year News</span>
                     </Button>
                   </Link>
                   
@@ -446,10 +496,10 @@ export default function InsightsPage() {
                     size="sm" 
                     onClick={handleRefresh}
                     disabled={loading}
-                    className="gap-2"
+                    className="gap-2 whitespace-nowrap flex-shrink-0"
                   >
                     <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                    Refresh
+                    <span className="hidden sm:inline">Refresh</span>
                   </Button>
                 </div>
               </div>
@@ -521,8 +571,8 @@ export default function InsightsPage() {
           </main>
 
           {/* Sidebar */}
-          <aside className="hidden lg:block w-80 flex-shrink-0 space-y-6">
-            <div className="sticky top-20 space-y-6">
+          <aside className="hidden lg:block w-80 flex-shrink-0 space-y-6 overflow-visible">
+            <div className="sticky top-20 space-y-6 overflow-visible">
               {/* Trending Topics */}
               <Card>
                 <CardHeader>

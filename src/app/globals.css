@@ -914,3 +914,17 @@ html.lenis {
   pointer-events: none;
 }
 
+/* News Ticker Circular/Marquee Scrolling Animation */
+@keyframes news-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-news-scroll {
+  animation: news-scroll var(--scroll-duration, 60s) linear infinite;
+}
+

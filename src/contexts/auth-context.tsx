@@ -182,18 +182,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // DEVELOPMENT MODE: Use mock authentication to bypass network issues
     if (USE_MOCK_AUTH) {
       console.log("🔧 DEV MODE: Using mock authentication")
+      console.log("📧 Email entered:", email)
+      console.log("🔑 Password entered:", password ? "***" : "(empty)")
       
-      const mockUser = Object.values(MOCK_USERS).find(u => u.email === email)
+      // Normalize email (trim and lowercase)
+      const normalizedEmail = email.trim().toLowerCase()
+      
+      // Find user by email (case-insensitive)
+      const mockUser = Object.values(MOCK_USERS).find(
+        u => u.email.toLowerCase() === normalizedEmail
+      )
       
       if (!mockUser) {
+        console.error("❌ User not found. Available users:", Object.keys(MOCK_USERS))
         toast.error("User not found. Try: demo@healthdata.com or test@healthdata.com")
         throw new Error("User not found")
       }
       
-      if (mockUser.password !== password) {
-        toast.error("Incorrect password")
+      // Normalize password (trim whitespace)
+      const normalizedPassword = password.trim()
+      
+      // Debug: Show exact character codes to detect hidden characters
+      console.log("🔍 Password Comparison Debug:", {
+        stored: mockUser.password,
+        storedLength: mockUser.password.length,
+        storedCodes: mockUser.password.split('').map(c => c.charCodeAt(0)),
+        entered: normalizedPassword,
+        enteredLength: normalizedPassword.length,
+        enteredCodes: normalizedPassword.split('').map(c => c.charCodeAt(0)),
+        match: mockUser.password === normalizedPassword,
+        email: normalizedEmail
+      })
+      
+      if (mockUser.password !== normalizedPassword) {
+        console.error("❌ Password mismatch")
+        console.error("Expected password:", JSON.stringify(mockUser.password))
+        console.error("Entered password:", JSON.stringify(normalizedPassword))
+        toast.error(`Incorrect password. For ${normalizedEmail}, use: ${mockUser.password}`)
         throw new Error("Incorrect password")
       }
+      
+      console.log("✅ Password match successful!")
       
       // Create mock user object
       const user: User = {

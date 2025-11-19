@@ -19,6 +19,7 @@ import {
   Briefcase,
   Search as SearchIcon,
   X,
+  Phone,
 } from 'lucide-react'
 import { useEmailCRMStore, type Lead } from '@/stores/email-crm-store'
 import { formatDistanceToNow } from 'date-fns'
@@ -28,9 +29,10 @@ import { ContactEnricher } from './contact-enricher'
 interface LeadDashboardProps {
   onSendEmail: (leadId: string) => void
   onBulkSend: (leadIds: string[]) => void
+  onCall?: (leadId: string, phoneNumber: string) => void
 }
 
-export function LeadDashboard({ onSendEmail, onBulkSend }: LeadDashboardProps) {
+export function LeadDashboard({ onSendEmail, onBulkSend, onCall }: LeadDashboardProps) {
   const {
     leads,
     selectedLeads,
@@ -283,6 +285,19 @@ export function LeadDashboard({ onSendEmail, onBulkSend }: LeadDashboardProps) {
                           onClick={() => window.open(lead.profileUrl, '_blank')}
                         >
                           <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {onCall && lead.phone && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            onCall(lead.id, lead.phone!)
+                            toast.success('Opening phone dialer...')
+                          }}
+                          title="Call this lead"
+                        >
+                          <Phone className="h-4 w-4 text-primary" />
                         </Button>
                       )}
                       <Button

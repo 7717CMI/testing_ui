@@ -129,31 +129,31 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
 
   return (
     <>
-      <Card className="card-hover cursor-pointer">
+      <Card className="card-hover cursor-pointer overflow-visible">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <Badge className={categoryColors[insight.category] || "bg-gray-100 text-gray-700"}>
+            <div className="flex-1 min-w-0">
+              <Badge className={`${categoryColors[insight.category] || "bg-gray-100 text-gray-700"} mb-2`}>
                 {insight.category}
               </Badge>
-              <h3 className="font-semibold text-lg mt-2 line-clamp-2">
+              <h3 className="font-semibold text-lg mt-2 line-clamp-2 break-words">
                 {insight.title}
               </h3>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground line-clamp-3">
+        <CardContent className="space-y-4 overflow-visible">
+          <p className="text-sm text-muted-foreground line-clamp-3 break-words">
             {insight.summary}
           </p>
 
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Eye className="h-3 w-3" />
-              <span>{insight.views.toLocaleString()}</span>
+          <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <Eye className="h-3.5 w-3.5 flex-shrink-0" />
+              <span className="font-medium">{insight.views.toLocaleString()} views</span>
             </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 flex-shrink-0" />
               <span>{formatDate(insight.date)}</span>
             </div>
           </div>
@@ -166,7 +166,7 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
             ))}
           </div>
 
-          <div className="flex items-center gap-2 pt-2 border-t flex-wrap">
+          <div className="flex items-center gap-2 pt-3 border-t flex-wrap">
             <Button 
               size="sm" 
               variant="ghost" 
@@ -179,9 +179,16 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
               ) : (
                 <Bookmark className="h-4 w-4" />
               )}
+              <span className="sr-only">{isBookmarked ? "Remove from saved" : "Save for later"}</span>
             </Button>
-            <Button size="sm" variant="ghost" onClick={onShare} title="Share article">
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              onClick={onShare} 
+              title="Share article"
+            >
               <Share2 className="h-4 w-4" />
+              <span className="sr-only">Share article</span>
             </Button>
             
             {/* View News Timeline Button */}
@@ -190,22 +197,24 @@ export function InsightCard({ insight, onBookmark, onShare, onViewArticle }: Ins
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="ml-auto"
+              className="ml-auto flex-shrink-0"
             >
               <Button 
                 size="sm" 
                 variant="outline"
-                className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                className="gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/20 whitespace-nowrap"
                 title="View 1-year news timeline for this facility"
               >
                 <TrendingUp className="h-3 w-3" />
-                News Timeline
+                <span className="hidden sm:inline">News Timeline</span>
+                <span className="sm:hidden">Timeline</span>
               </Button>
             </Link>
             
             <Button 
               size="sm" 
               onClick={() => setShowFullArticle(true)}
+              className="flex-shrink-0 whitespace-nowrap"
             >
               Read More
             </Button>

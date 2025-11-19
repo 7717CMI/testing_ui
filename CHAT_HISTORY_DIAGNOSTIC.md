@@ -96,3 +96,4 @@ curl -X POST http://localhost:3000/api/chat-sessions/init
 **The fixes are now in place. Check your server console for detailed error information!**
 
 
+
