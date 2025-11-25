@@ -1,0 +1,454 @@
+╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+║                         HEALTHCARE INTELLIGENCE PLATFORM                                     ║
+║                              COMPLETE ARCHITECTURE DIAGRAM                                   ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃                                    CLIENT BROWSER                                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+          │
+          ├─────────────────────────────────────────────────────────────────────────┐
+          │                                                                         │
+          ▼                                                                         ▼
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓                             ┏━━━━━━━━━━━━━━━━━━━━━━━┓
+┃     NEXT.JS 15 FRONTEND (Port 3001)   ┃                             ┃   FASTAPI BACKEND     ┃
+┃           React 19 + TypeScript       ┃                             ┃     (Port 8000)       ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛                             ┗━━━━━━━━━━━━━━━━━━━━━━━┛
+          │                                                                         │
+          ├──────────────────────────────────┐                                    │
+          │                                  │                                    │
+          ▼                                  ▼                                    ▼
+┏━━━━━━━━━━━━━━━━━━━┓          ┏━━━━━━━━━━━━━━━━━━━━━━┓              ┏━━━━━━━━━━━━━━━━━━━━━━┓
+┃   PAGES (RSC)     ┃          ┃  NEXT.JS API ROUTES  ┃              ┃   FASTAPI ROUTES    ┃
+┃                   ┃          ┃  /api/v1/catalog/*   ┃              ┃   /api/v1/catalog/* ┃
+┃ ├── /data-catalog ┃          ┃                      ┃              ┃                     ┃
+┃ ├── /search       ┃────────▶ ┃ ├── /overview        ┃◀─────────────┤ ├── /overview      ┃
+┃ ├── /insights     ┃          ┃ ├── /categories      ┃              ┃ ├── /categories    ┃
+┃ ├── /graph-linkage┃          ┃ ├── /providers       ┃              ┃ ├── /providers     ┃
+┃ ├── /saved-searches┃         ┃ └── /hospitals/*     ┃              ┃ ├── /search        ┃
+┃ └── /alerts       ┃          ┃                      ┃              ┃ └── /statistics    ┃
+┗━━━━━━━━━━━━━━━━━━━┛          ┗━━━━━━━━━━━━━━━━━━━━━━┛              ┗━━━━━━━━━━━━━━━━━━━━━━┛
+          │                                  │                                    │
+          │                                  │                                    │
+          ▼                                  ▼                                    ▼
+┏━━━━━━━━━━━━━━━━━━━┓          ┏━━━━━━━━━━━━━━━━━━━━━━┓              ┏━━━━━━━━━━━━━━━━━━━━━━┓
+┃  UI COMPONENTS    ┃          ┃   lib/database.ts    ┃              ┃  SERVICE LAYER      ┃
+┃                   ┃          ┃   (pg Pool)          ┃              ┃  catalog_service.py ┃
+┃ ├── Navbar        ┃          ┃                      ┃              ┃  schema_service.py  ┃
+┃ ├── Cards         ┃          ┃  Connection Pool:    ┃              ┃                     ┃
+┃ ├── Tables        ┃          ┃  - Host: 127.0.0.1  ┃              ┃  SQLAlchemy Engine: ┃
+┃ ├── Filters       ┃          ┃  - Port: 5433        ┃              ┃  - Pool Size: 10    ┃
+┃ └── Modals        ┃          ┃  - Database: postgres┃              ┃  - Pool Recycle:300s┃
+┗━━━━━━━━━━━━━━━━━━━┛          ┃  - Schema: healthcare┃              ┗━━━━━━━━━━━━━━━━━━━━━━┛
+          │                    ┃    _production       ┃                          │
+          │                    ┃  - Max Conn: 10      ┃                          │
+          ▼                    ┗━━━━━━━━━━━━━━━━━━━━━━┛                          │
+┏━━━━━━━━━━━━━━━━━━━┓                    │                                       │
+┃  STATE MANAGEMENT ┃                    │                                       │
+┃                   ┃                    ▼                                       ▼
+┃ ├── Zustand Stores┃          ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ │   ├── auth      ┃          ┃               POSTGRESQL DATABASE (Port 5433)              ┃
+┃ │   ├── filters   ┃          ┃               Database: postgres                           ┃
+┃ │   ├── notifications ┃       ┃               Schema: healthcare_production                ┃
+┃ │   └── searches  ┃          ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+┃ │                 ┃                    │
+┃ └── TanStack Query┃                    ├──────────────────────────────────────┐
+┃     (Server State)┃                    │                                      │
+┗━━━━━━━━━━━━━━━━━━━┛                    ▼                                      ▼
+                              ┏━━━━━━━━━━━━━━━━━━━━━━┓          ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
+                              ┃ CORE TABLES          ┃          ┃ REFERENCE TABLES       ┃
+                              ┃                      ┃          ┃                        ┃
+                              ┃ ┌──────────────────┐ ┃          ┃ ┌──────────────────┐  ┃
+                              ┃ │ healthcare_      │ ┃          ┃ │ facility_        │  ┃
+                              ┃ │ providers        │ ┃          ┃ │ categories       │  ┃
+                              ┃ │ (~6.5M rows)     │ ┃          ┃ │ (~12 rows)       │  ┃
+                              ┃ │                  │ ┃          ┃ └──────────────────┘  ┃
+                              ┃ │ Columns:         │ ┃          ┃                        ┃
+                              ┃ │ • id (PK)        │ ┃          ┃ ┌──────────────────┐  ┃
+                              ┃ │ • npi_number     │ ┃          ┃ │ facility_types   │  ┃
+                              ┃ │ • provider_name  │ ┃          ┃ │ (~50+ rows)      │  ┃
+                              ┃ │ • facility_      │ ┃          ┃ └──────────────────┘  ┃
+                              ┃ │   category_id(FK)│ ┃          ┃                        ┃
+                              ┃ │ • facility_      │ ┃          ┃ ┌──────────────────┐  ┃
+                              ┃ │   type_id (FK)   │ ┃          ┃ │ states           │  ┃
+                              ┃ │ • business_      │ ┃          ┃ │ (~50+ rows)      │  ┃
+                              ┃ │   address        │ ┃          ┃ └──────────────────┘  ┃
+                              ┃ │ • business_city  │ ┃          ┃                        ┃
+                              ┃ │ • business_      │ ┃          ┃ ┌──────────────────┐  ┃
+                              ┃ │   state_id (FK)  │ ┃          ┃ │ entity_types     │  ┃
+                              ┃ │ • business_phone │ ┃          ┃ │ (~10+ rows)      │  ┃
+                              ┃ │ • is_active      │ ┃          ┃ └──────────────────┘  ┃
+                              ┃ │ • created_at     │ ┃          ┃                        ┃
+                              ┃ │ • updated_at     │ ┃          ┃ ┌──────────────────┐  ┃
+                              ┃ └──────────────────┘ ┃          ┃ │ taxonomy_codes   │  ┃
+                              ┃                      ┃          ┃ │ (~1000+ rows)    │  ┃
+                              ┗━━━━━━━━━━━━━━━━━━━━━━┛          ┃ └──────────────────┘  ┃
+                                        │                       ┗━━━━━━━━━━━━━━━━━━━━━━━━┛
+                                        │
+                                        ▼
+                              ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+                              ┃ DATABASE RELATIONSHIPS                                     ┃
+                              ┃                                                            ┃
+                              ┃  facility_categories (1) ───has_many──▶ facility_types (N)┃
+                              ┃           │                                     │          ┃
+                              ┃           │                                     │          ┃
+                              ┃           └──────────has_many──────────────────┘          ┃
+                              ┃                        │                                   ┃
+                              ┃                        ▼                                   ┃
+                              ┃               healthcare_providers (N)                     ┃
+                              ┃                        │                                   ┃
+                              ┃           ┌────────────┴────────────┐                     ┃
+                              ┃           │                         │                     ┃
+                              ┃           ▼                         ▼                     ┃
+                              ┃    states (N)              entity_types (N)               ┃
+                              ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+║                           OPTIONAL: NEO4J GRAPH DATABASE                                     ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+
+                              ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+                              ┃         NEO4J GRAPH DATABASE (Port 7687)                   ┃
+                              ┃         Status: OPTIONAL (Currently using mock data)       ┃
+                              ┃                                                            ┃
+                              ┃  ┌────────────────────────────────────────────────────┐  ┃
+                              ┃  │  Graph Nodes:                                      │  ┃
+                              ┃  │  ├── State                                         │  ┃
+                              ┃  │  ├── County                                        │  ┃
+                              ┃  │  ├── Zipcode                                       │  ┃
+                              ┃  │  ├── Hospital                                      │  ┃
+                              ┃  │  └── Drug                                          │  ┃
+                              ┃  │                                                     │  ┃
+                              ┃  │  Graph Relationships:                              │  ┃
+                              ┃  │  ├── State ─CONTAINS─▶ County                     │  ┃
+                              ┃  │  ├── County ─CONTAINS─▶ Zipcode                   │  ┃
+                              ┃  │  ├── Zipcode ─HAS_HOSPITAL─▶ Hospital             │  ┃
+                              ┃  │  └── Hospital ─PRESCRIBES─▶ Drug                  │  ┃
+                              ┃  └────────────────────────────────────────────────────┘  ┃
+                              ┃                            │                               ┃
+                              ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┿━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+                                                           │
+                                                           ▼
+                                    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+                                    ┃  /graph-linkage page uses this for        ┃
+                                    ┃  entity relationship visualization         ┃
+                                    ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+║                              DATA FLOW - REQUEST LIFECYCLE                                   ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+
+ User Action                  Frontend                     API Layer              Database
+ ─────────────────────────────────────────────────────────────────────────────────────────────
+
+    [1]                          [2]                          [3]                   [4]
+ Navigate to         ──▶    Page Component        ──▶    Next.js API Route  ──▶   PostgreSQL
+ /data-catalog                loads with                  /api/v1/catalog/         Query:
+                              useQuery()                  overview/route.ts        SELECT...
+                                                                                   FROM...
+                                                                                   JOIN...
+    │                           │                           │                      │
+    │                           │                           │                      │
+    │                           │       [5]                 │        [6]           │
+    │                           │   ◀─── TanStack      ◀─── │   ◀──── Results ◀───┤
+    │                           │        Query Cache        │        (JSON)        │
+    │                           │        (5 min TTL)        │                      │
+    │                           │                           │                      │
+    │       [7]                 │                           │                      │
+    └─── ◀──── UI Renders  ◀────┘                           │                      │
+         Categories Grid         Component                  │                      │
+         with Counts            State Update                │                      │
+                                                            │                      │
+                                                            │                      │
+    ┌──────────────────────────────────────────────────────┘                      │
+    │                                                                              │
+    │  Alternative Path: FastAPI Backend                                          │
+    │                                                                              │
+    │  [1]                    [2]                    [3]                  [4]      │
+    └──▶ HTTP Request  ──▶  FastAPI Route   ──▶  Service Layer  ──▶  SQLAlchemy ──┘
+         (Direct)           /api/v1/catalog/     CatalogService      Raw SQL
+                            overview             .get_overview()     Query
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+║                         TECHNOLOGY STACK BREAKDOWN                                           ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓   ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓   ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃   FRONTEND TECH STACK    ┃   ┃   BACKEND TECH STACK     ┃   ┃   DATABASE TECH STACK    ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛   ┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛   ┗━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+ Framework                     Framework                     Primary Database
+ ├── Next.js 15               ├── FastAPI 0.104             ├── PostgreSQL 15+
+ └── React 19                 └── Uvicorn (ASGI)            │   Host: 127.0.0.1:5433
+                                                            │   Schema: healthcare_production
+ Language                      Language                      │
+ └── TypeScript 5             └── Python 3.9+               Graph Database (Optional)
+                                                            └── Neo4j 6.0
+ State Management             ORM / Database                    Host: 127.0.0.1:7687
+ ├── Zustand 5.0              ├── SQLAlchemy 2.0            
+ └── TanStack Query 5.90      ├── psycopg2-binary           Database Drivers
+                              └── Alembic (migrations)      ├── pg (node-postgres) 8.16
+ UI Components                                              └── neo4j-driver 6.0
+ ├── Radix UI                 Validation
+ ├── Tailwind CSS 3.4         ├── Pydantic 2.5
+ ├── Shadcn UI                └── Pydantic Settings
+ └── Lucide Icons
+                              API Documentation
+ Animation                    ├── OpenAPI (Swagger)
+ ├── Framer Motion 12         └── ReDoc
+ └── GSAP 3.13
+
+ Data Visualization
+ ├── Recharts 3.2
+ ├── Plotly.js 3.1
+ ├── Three.js 0.180
+ └── React Force Graph 3D
+
+ Forms & Validation
+ ├── React Hook Form 7.64
+ └── Zod 4.1
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+║                         KEY FEATURES & IMPLEMENTATION                                        ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 1. DATA CATALOG (Primary Feature)                                                          │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                             │
+│  Navigation Hierarchy:                                                                      │
+│  ┌────────────────┐         ┌────────────────┐         ┌────────────────┐                │
+│  │ Category Level │  ────▶  │  Type Level    │  ────▶  │  Provider Level│                │
+│  │                │         │                │         │                │                │
+│  │ 12 Categories  │         │ 50+ Types      │         │ 6.5M Providers │                │
+│  │ (Hospitals,    │         │ (Acute Care,   │         │ (Actual        │                │
+│  │  Clinics...)   │         │  Critical      │         │  Healthcare    │                │
+│  │                │         │  Access...)    │         │  Facilities)   │                │
+│  └────────────────┘         └────────────────┘         └────────────────┘                │
+│         │                           │                           │                          │
+│         │                           │                           │                          │
+│         ▼                           ▼                           ▼                          │
+│  /data-catalog         /data-catalog/hospitals    /data-catalog/hospitals/acute-care      │
+│  (Overview)            (Category Page)            (Data Table)                             │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 2. SEARCH & FILTERING                                                                       │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                             │
+│  Filter Categories:                                                                         │
+│  ├── Facility Type (Hospital, Clinic, Urgent Care...)                                      │
+│  ├── Ownership (Public, Private, Non-Profit)                                               │
+│  ├── Location (State, City, Zip Code)                                                      │
+│  ├── Bed Count Range (Slider: 0 - 1000+)                                                   │
+│  ├── Rating Range (Slider: 1 - 5 stars)                                                    │
+│  └── Accreditation (Joint Commission, NCQA, CARF...)                                       │
+│                                                                                             │
+│  Implementation:                                                                            │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐                              │
+│  │ User selects │ ──▶ │ Zustand store│ ──▶ │ API query    │                              │
+│  │ filters      │     │ updates state│     │ with params  │                              │
+│  └──────────────┘     └──────────────┘     └──────────────┘                              │
+│                                                     │                                       │
+│                                                     ▼                                       │
+│                                            ┌──────────────┐                                │
+│                                            │ PostgreSQL   │                                │
+│                                            │ WHERE clause │                                │
+│                                            └──────────────┘                                │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 3. SAVED SEARCHES & ALERTS                                                                  │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                             │
+│  Workflow:                                                                                  │
+│  [1] User performs search ──▶ [2] Clicks "Save Search" ──▶ [3] Names & configures         │
+│         │                              │                            │                      │
+│         ▼                              ▼                            ▼                      │
+│  [4] Stored in localStorage ──▶ [5] Can enable auto-refresh ──▶ [6] Email notifications  │
+│                                                                                             │
+│  Features:                                                                                  │
+│  ├── Save search criteria                                                                   │
+│  ├── Create custom facility lists                                                          │
+│  ├── Auto-refresh saved searches                                                           │
+│  ├── Email notifications for new results                                                   │
+│  └── 8 alert types with priority levels                                                    │
+│                                                                                             │
+│  Storage:                                                                                   │
+│  ┌────────────────────────────────────────────┐                                           │
+│  │ Browser localStorage                       │                                           │
+│  │ ├── saved-searches-storage                 │                                           │
+│  │ └── notifications-storage                  │                                           │
+│  │                                             │                                           │
+│  │ Zustand persist middleware                 │                                           │
+│  └────────────────────────────────────────────┘                                           │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 4. GRAPH VISUALIZATION                                                                      │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                             │
+│  Entity Relationships:                                                                      │
+│  ┌────────┐                                                                                │
+│  │ State  │ ─── CONTAINS ───▶ ┌────────┐                                                  │
+│  └────────┘                    │ County │ ─── CONTAINS ───▶ ┌─────────┐                   │
+│                                └────────┘                    │ Zipcode │                   │
+│                                                              └─────────┘                   │
+│                                                                   │                         │
+│                                                                   │ HAS_HOSPITAL            │
+│                                                                   ▼                         │
+│                                                              ┌──────────┐                   │
+│                                                              │ Hospital │                   │
+│                                                              └──────────┘                   │
+│                                                                   │                         │
+│                                                                   │ PRESCRIBES              │
+│                                                                   ▼                         │
+│                                                              ┌──────────┐                   │
+│                                                              │   Drug   │                   │
+│                                                              └──────────┘                   │
+│                                                                                             │
+│  Visualization:                                                                             │
+│  ├── Force-directed graph layout (D3.js based)                                             │
+│  ├── Interactive node exploration                                                          │
+│  ├── Color-coded by entity type                                                            │
+│  └── Hover for details                                                                     │
+│                                                                                             │
+│  Data Source:                                                                               │
+│  ├── Neo4j database (when configured)                                                      │
+│  └── Mock data (default)                                                                   │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ 5. INSIGHTS FEED                                                                            │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                             │
+│  Content Types:                                                                             │
+│  ├── M&A Activity (Mergers & Acquisitions)                                                 │
+│  ├── Facility Expansion Announcements                                                      │
+│  ├── Policy Updates & Regulatory Changes                                                   │
+│  ├── Technology Adoption News                                                              │
+│  └── Healthcare Funding & Investments                                                      │
+│                                                                                             │
+│  Features:                                                                                  │
+│  ├── Tabbed interface by category                                                          │
+│  ├── Trending topics sidebar                                                               │
+│  ├── Bookmark functionality                                                                │
+│  ├── Share options                                                                         │
+│  └── View count tracking                                                                   │
+│                                                                                             │
+│  Data Source:                                                                               │
+│  ├── Mock data: /public/mock-data/insights.json                                            │
+│  └── Future: Real-time API integration                                                     │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+║                         CACHING & PERFORMANCE STRATEGY                                       ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Multi-Level Caching Architecture                                                            │
+├─────────────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                             │
+│  Level 1: Browser Cache (Client)                                                           │
+│  ┌────────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ TanStack Query Cache                                                               │   │
+│  │ ├── Default stale time: 5 minutes                                                  │   │
+│  │ ├── Background refetch on stale                                                    │   │
+│  │ ├── Automatic deduplication                                                        │   │
+│  │ └── Query invalidation on mutations                                                │   │
+│  └────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                             │
+│  Level 2: API Route Cache (Server)                                                         │
+│  ┌────────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ In-Memory Cache (Next.js API Routes)                                               │   │
+│  │ ├── TTL: 5 minutes                                                                  │   │
+│  │ ├── Stores: Catalog overview, categories                                           │   │
+│  │ └── Reduces database load                                                          │   │
+│  └────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                             │
+│  Level 3: Connection Pooling (Database)                                                    │
+│  ┌────────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ PostgreSQL Connection Pool                                                         │   │
+│  │ ├── Max connections: 10                                                             │   │
+│  │ ├── Min connections: 2                                                              │   │
+│  │ ├── Idle timeout: 10 seconds                                                        │   │
+│  │ ├── Connection reuse                                                                │   │
+│  │ └── Pre-ping health checks                                                          │   │
+│  └────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                             │
+│  Future: Redis Cache (Planned)                                                             │
+│  ┌────────────────────────────────────────────────────────────────────────────────────┐   │
+│  │ Distributed Cache Layer                                                            │   │
+│  │ ├── Shared across instances                                                         │   │
+│  │ ├── Configurable TTL                                                                │   │
+│  │ └── Cache invalidation strategies                                                   │   │
+│  └────────────────────────────────────────────────────────────────────────────────────┘   │
+│                                                                                             │
+└─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════════════╗
+║                         DEPLOYMENT ARCHITECTURE (FUTURE)                                     ║
+╚══════════════════════════════════════════════════════════════════════════════════════════════╝
+
+                              ┌─────────────────────────────────────┐
+                              │        LOAD BALANCER                │
+                              │        (NGINX / AWS ALB)            │
+                              └─────────────────┬───────────────────┘
+                                                │
+                        ┌───────────────────────┴───────────────────────┐
+                        │                                               │
+                        ▼                                               ▼
+              ┌─────────────────────┐                       ┌─────────────────────┐
+              │   NEXT.JS APP (x3)  │                       │   FASTAPI APP (x3)  │
+              │   (Containerized)   │                       │   (Containerized)   │
+              │   Port: 3000        │                       │   Port: 8000        │
+              └──────────┬──────────┘                       └──────────┬──────────┘
+                         │                                             │
+                         │                                             │
+                         └─────────────────┬───────────────────────────┘
+                                           │
+                                           ▼
+                              ┌─────────────────────────────────────┐
+                              │       REDIS CLUSTER                 │
+                              │       (Caching Layer)               │
+                              └─────────────────┬───────────────────┘
+                                                │
+                        ┌───────────────────────┴───────────────────────┐
+                        │                                               │
+                        ▼                                               ▼
+              ┌─────────────────────┐                       ┌─────────────────────┐
+              │ POSTGRESQL PRIMARY  │ ─── replication ───▶  │ POSTGRESQL READ     │
+              │ (Write/Read)        │                       │ REPLICAS (x2)       │
+              │                     │                       │ (Read-only)         │
+              └─────────────────────┘                       └─────────────────────┘
+                                                │
+                                                │
+                                                ▼
+                                      ┌─────────────────────┐
+                                      │   NEO4J CLUSTER     │
+                                      │   (Graph Data)      │
+                                      └─────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════════════════════
+                              END OF ARCHITECTURE DIAGRAM
+═══════════════════════════════════════════════════════════════════════════════════════════════
+
+Document Version: 1.0
+Last Updated: January 20, 2025
+Author: Architecture Analysis & Documentation
+
+
+
+

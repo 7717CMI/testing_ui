@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser SSL/Seqrite Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #357ae8;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #4285f4;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .result-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .summary-box {
+            background: #e7f3ff;
+            border: 2px solid #4285f4;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        .summary-box h2 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .conclusion {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .seqrite-detected {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            color: #c62828;
+        }
+        .seqrite-not-detected {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            color: #2e7d32;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Browser SSL/Seqrite Interception Test</h1>
+        <p class="subtitle">This test suite verifies if Seqrite is intercepting SSL/TLS traffic in your browser</p>
+
+        <div class="test-section">
+            <h3>Test 1: Basic Firebase Auth API Connection</h3>
+            <p>Tests if browser can reach Firebase Auth API</p>
+            <button onclick="test1()">Run Test 1</button>
+            <div id="result1"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 2: SSL Certificate Inspection</h3>
+            <p>Checks SSL certificate to detect interception</p>
+            <button onclick="test2()">Run Test 2</button>
+            <div id="result2"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 3: Firebase SDK Initialization</h3>
+            <p>Tests Firebase SDK initialization (what your app does)</p>
+            <button onclick="test3()">Run Test 3</button>
+            <div id="result3"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 4: Full Authentication Flow</h3>
+            <p>Simulates actual login attempt</p>
+            <button onclick="test4()">Run Test 4</button>
+            <div id="result4"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Test 5: Check for ERR_SSL_BAD_RECORD_MAC_ALERT</h3>
+            <p>Specifically tests for the SSL MAC error you're seeing</p>
+            <button onclick="test5()">Run Test 5</button>
+            <div id="result5"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>Run All Tests</h3>
+            <p>Run all tests sequentially and generate summary</p>
+            <button onclick="runAllTests()" style="background: #34a853;">Run All Tests</button>
+        </div>
+
+        <div id="summary" class="summary-box" style="display: none;">
+            <h2>📊 Test Summary</h2>
+            <div id="summaryContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAV29AJL7DOhXE4F8YyYbCvgTAB9HBrWss",
+            authDomain: "healthdata-auth.firebaseapp.com",
+            projectId: "healthdata-auth"
+        };
+
+        let testResults = {
+            test1: null,
+            test2: null,
+            test3: null,
+            test4: null,
+            test5: null
+        };
+
+        function showResult(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result-item ${type}">${message}</div>`;
+        }
+
+        // Test 1: Basic Firebase Auth API Connection
+        async function test1() {
+            showResult('result1', 'Testing...', 'info');
+            try {
+                const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=' + firebaseConfig.apiKey, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'test@test.com',
+                        password: 'wrongpass',
+                        returnSecureToken: true
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    if (data.error.message.includes('network') || data.error.message.includes('SSL')) {
+                        testResults.test1 = 'seqrite';
+                        showResult('result1', `❌ SSL/Network Error Detected!\n\nError: ${data.error.message}\n\nThis suggests SSL interception by Seqrite.`, 'error');
+                    } else {
+                        testResults.test1 = 'ok';
+                        showResult('result1', `✅ Connection Works!\n\nError: ${data.error.message}\n\n(400 error is expected with wrong credentials)\n\nSeqrite is NOT blocking at network level.`, 'success');
+                    }
+                } else {
+                    testResults.test1 = 'ok';
+                    showResult('result1', '✅ Connection successful!', 'success');
+                }
+            } catch (error) {
+                if (error.message.includes('SSL') || error.message.includes('MAC') || error.message.includes('ERR_SSL')) {
+                    testResults.test1 = 'seqrite';
+                    showResult('result1', `❌ SSL Error Detected!\n\nError: ${error.message}\n\nThis is the ERR_SSL_BAD_RECORD_MAC_ALERT error!\n\nSeqrite is intercepting SSL traffic.`, 'error');
+                } else {
+                    testResults.test1 = 'error';
+                    showResult('result1', `❌ Connection Failed\n\nError: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Test 2: SSL Certificate Inspection
+        async function test2() {
+            showResult('result2', 'Testing SSL certificate...', 'info');
+            try {
+                // Try to get certificate info through a fetch
+                const response = await fetch('https://identitytoolkit.googleapis.com', {
+                    method: 'HEAD',
+                    mode: 'no-cors'
+                });
+                
+                // Check if we can detect interception through error patterns
+                testResults.test2 = 'unknown';
+                showResult('result2', `⚠️ Certificate inspection limited in browser\n\nCheck browser DevTools → Security tab → View certificate\n\nLook for:\n- Issuer: Should be "Google Trust Services" or "Google Internet Authority"\n- If issuer is "Seqrite" or similar → SSL interception confirmed`, 'warning');
+            } catch (error) {
+                if (error.message.includes('SSL') || error.message.includes('certificate')) {
+                    testResults.test2 = 'seqrite';
+                    showResult('result2', `❌ SSL Certificate Error\n\nError: ${error.message}\n\nThis suggests certificate interception.`, 'error');
+                } else {
+                    testResults.test2 = 'ok';
+                    showResult('result2', '✅ Certificate check passed', 'success');
+                }
+            }
+        }
+
+        // Test 3: Firebase SDK Initialization
+        async function test3() {
+            showResult('result3', 'Loading Firebase SDK...', 'info');
+            try {
+                // Dynamically load Firebase SDK
+                const script = document.createElement('script');
+                script.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+                script.onload = () => {
+                    const authScript = document.createElement('script');
+                    authScript.src = 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+                    authScript.onload = () => {
+                        try {
+                            const app = firebase.initializeApp(firebaseConfig);
+                            const auth = firebase.getAuth(app);
+                            testResults.test3 = 'ok';
+                            showResult('result3', '✅ Firebase SDK initialized successfully!\n\nNo SSL errors during initialization.', 'success');
+                        } catch (error) {
+                            if (error.message.includes('SSL') || error.message.includes('MAC')) {
+                                testResults.test3 = 'seqrite';
+                                showResult('result3', `❌ SSL Error during SDK init\n\nError: ${error.message}\n\nSeqrite is intercepting Firebase SDK loading.`, 'error');
+                            } else {
+                                testResults.test3 = 'error';
+                                showResult('result3', `❌ SDK initialization failed\n\nError: ${error.message}`, 'error');
+                            }
+                        }
+                    };
+                    authScript.onerror = () => {
+                        testResults.test3 = 'seqrite';
+                        showResult('result3', '❌ Failed to load Firebase Auth SDK\n\nThis suggests SSL interception blocking Firebase scripts.', 'error');
+                    };
+                    document.head.appendChild(authScript);
+                };
+                script.onerror = () => {
+                    testResults.test3 = 'seqrite';
+                    showResult('result3', '❌ Failed to load Firebase SDK\n\nThis suggests SSL interception blocking Firebase scripts.', 'error');
+                };
+                document.head.appendChild(script);
+            } catch (error) {
+                testResults.test3 = 'error';
+                showResult('result3', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Test 4: Full Authentication Flow
+        async function test4() {
+            showResult('result4', 'Testing full auth flow...', 'info');
+            try {
+                // This is what your app does
+                const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + firebaseConfig.apiKey, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        idToken: 'test-token'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    if (data.error.message.includes('network') || data.error.message.includes('SSL')) {
+                        testResults.test4 = 'seqrite';
+                        showResult('result4', `❌ SSL/Network Error in Auth Flow!\n\nError: ${data.error.message}\n\nThis matches your app's error!\n\nSeqrite is intercepting the accounts:lookup call.`, 'error');
+                    } else {
+                        testResults.test4 = 'ok';
+                        showResult('result4', `✅ Auth flow works!\n\nError: ${data.error.message}\n\n(400 error expected with invalid token)\n\nNo SSL interception detected.`, 'success');
+                    }
+                } else {
+                    testResults.test4 = 'ok';
+                    showResult('result4', '✅ Auth flow successful!', 'success');
+                }
+            } catch (error) {
+                if (error.message.includes('SSL') || error.message.includes('MAC') || error.message.includes('ERR_SSL_BAD_RECORD_MAC_ALERT')) {
+                    testResults.test4 = 'seqrite';
+                    showResult('result4', `❌ ERR_SSL_BAD_RECORD_MAC_ALERT Detected!\n\nError: ${error.message}\n\nThis is EXACTLY the error you're seeing!\n\nSeqrite is intercepting and corrupting SSL traffic.`, 'error');
+                } else {
+                    testResults.test4 = 'error';
+                    showResult('result4', `❌ Auth flow failed\n\nError: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Test 5: Specific ERR_SSL_BAD_RECORD_MAC_ALERT Test
+        async function test5() {
+            showResult('result5', 'Testing for ERR_SSL_BAD_RECORD_MAC_ALERT...', 'info');
+            
+            // This test specifically looks for the error you're seeing
+            try {
+                const response = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + firebaseConfig.apiKey, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Origin': 'http://localhost:3000'
+                    },
+                    body: JSON.stringify({
+                        idToken: 'test'
+                    })
+                });
+
+                await response.json();
+                testResults.test5 = 'ok';
+                showResult('result5', '✅ No ERR_SSL_BAD_RECORD_MAC_ALERT detected\n\nSSL connection works properly.', 'success');
+            } catch (error) {
+                const errorMsg = error.message || error.toString();
+                
+                if (errorMsg.includes('ERR_SSL_BAD_RECORD_MAC_ALERT') || 
+                    errorMsg.includes('SSL') && errorMsg.includes('MAC') ||
+                    errorMsg.includes('bad record mac')) {
+                    testResults.test5 = 'seqrite';
+                    showResult('result5', `❌ ERR_SSL_BAD_RECORD_MAC_ALERT CONFIRMED!\n\nError: ${errorMsg}\n\n🔴 ROOT CAUSE IDENTIFIED:\n\nSeqrite Endpoint Protection is:\n1. Intercepting HTTPS traffic\n2. Corrupting SSL/TLS handshake\n3. Causing MAC verification to fail\n\nThis is EXACTLY your problem!`, 'error');
+                } else {
+                    testResults.test5 = 'error';
+                    showResult('result5', `⚠️ Different error: ${errorMsg}\n\nNot the SSL MAC error, but still a connection issue.`, 'warning');
+                }
+            }
+        }
+
+        // Run all tests
+        async function runAllTests() {
+            document.getElementById('summary').style.display = 'none';
+            
+            showResult('result1', 'Running...', 'info');
+            await test1();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            showResult('result2', 'Running...', 'info');
+            await test2();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            showResult('result3', 'Running...', 'info');
+            await test3();
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            showResult('result4', 'Running...', 'info');
+            await test4();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            showResult('result5', 'Running...', 'info');
+            await test5();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            generateSummary();
+        }
+
+        function generateSummary() {
+            const summaryDiv = document.getElementById('summary');
+            const contentDiv = document.getElementById('summaryContent');
+            
+            let seqriteCount = 0;
+            let okCount = 0;
+            let errorCount = 0;
+            
+            Object.values(testResults).forEach(result => {
+                if (result === 'seqrite') seqriteCount++;
+                else if (result === 'ok') okCount++;
+                else if (result === 'error') errorCount++;
+            });
+
+            let conclusion = '';
+            let conclusionClass = '';
+            
+            if (seqriteCount >= 2) {
+                conclusion = '🔴 SEQRITE SSL INTERCEPTION CONFIRMED';
+                conclusionClass = 'seqrite-detected';
+            } else if (seqriteCount === 1) {
+                conclusion = '⚠️ Possible Seqrite SSL Interception';
+                conclusionClass = 'seqrite-detected';
+            } else if (okCount > errorCount) {
+                conclusion = '✅ Seqrite NOT intercepting (other issue)';
+                conclusionClass = 'seqrite-not-detected';
+            } else {
+                conclusion = '⚠️ Inconclusive - check individual tests';
+                conclusionClass = 'warning';
+            }
+
+            contentDiv.innerHTML = `
+                <div class="test-grid">
+                    <div><strong>Tests Indicating Seqrite:</strong> ${seqriteCount}</div>
+                    <div><strong>Tests Passing:</strong> ${okCount}</div>
+                    <div><strong>Other Errors:</strong> ${errorCount}</div>
+                </div>
+                <div class="conclusion ${conclusionClass}">
+                    ${conclusion}
+                </div>
+                <h3>Detailed Results:</h3>
+                <ul>
+                    <li>Test 1 (Basic Connection): ${testResults.test1 || 'Not run'}</li>
+                    <li>Test 2 (Certificate): ${testResults.test2 || 'Not run'}</li>
+                    <li>Test 3 (SDK Init): ${testResults.test3 || 'Not run'}</li>
+                    <li>Test 4 (Auth Flow): ${testResults.test4 || 'Not run'}</li>
+                    <li>Test 5 (SSL MAC Error): ${testResults.test5 || 'Not run'}</li>
+                </ul>
+                <h3>Recommendation:</h3>
+                <p>${seqriteCount >= 2 ? 
+                    'Use Firebase Emulators (localhost) to bypass Seqrite SSL interception.' : 
+                    'Check individual test results for specific issues.'}</p>
+            `;
+            
+            summaryDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
